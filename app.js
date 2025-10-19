@@ -272,4 +272,282 @@ function renderAdvice() {
 /* ---------- Wiring ---------- */
 function wire() {
   // Nav buttons
-  $$(".ta
+  $$(".tabbar [data-nav], [data-nav]").forEach(btn => {
+    btn.addEventListener("click", () => show(btn.getAttribute("data-nav")));
+  });
+
+  // Onboarding
+  $("#onboardingForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    // read selected radio
+    const focus = document.querySelector('input[name="focus"]:checked')?.value;
+    const fd = new FormData(e.target);
+    state.profile = {
+      focus: focus || "",
+      quitDate: fd.get("quitDate"),
+      motivation: (fd.get("motivation") || "").trim()
+    };
+    save();
+    show("advice"); // go straight to tailored tips
+  });
+
+  // Check-in
+  $("#checkinForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const entry = {
+      dateISO: new Date().toISOString(),
+      mood: Number(fd.get("mood")),
+      urge: Number(fd.get("urge")),
+      note: (fd.get("note") || "").trim()
+    };
+    state.checkins.push(entry);
+    save();
+    e.target.reset();
+    show("dashboard");
+  });
+
+  // Journal
+  $("#journalForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const text = (fd.get("entry") || "").trim();
+    if (!text) return;
+    state.journal.push({ id: crypto.randomUUID(), text, ts: Date.now() });
+    save();
+    e.target.reset();
+    renderJournal();
+  });
+
+  // SOS timer
+  const timerEl = $("#timer");
+  if (timerEl) {
+    let timerId = null, remaining = 60;
+    const updateTimer = () => {
+      const m = String(Math.floor(remaining / 60)).padStart(2, "0");
+      const s = String(remaining % 60).padStart(2, "0");
+      timerEl.textContent = `${m}:${s}`;
+    };
+    $("#startTimer")?.addEventListener("click", () => {
+      if (timerId) return;
+      remaining = 60; updateTimer();
+      timerId = setInterval(() => {
+        remaining -= 1; updateTimer();
+        if (remaining <= 0) { clearInterval(timerId); timerId = null; }
+      }, 1000);
+    });
+    $("#resetTimer")?.addEventListener("click", () => {
+      clearInterval(timerId); timerId = null; remaining = 60; updateTimer();
+    });
+    updateTimer();
+  }
+
+  // SOS save note
+  $("#saveSos")?.addEventListener("click", () => {
+    const text = ($("#sosNote").value || "").trim();
+    if (!text) return;
+    state.journal.push({ id: crypto.randomUUID(), text: `[SOS] ${text}`, ts: Date.now() });
+    $("#sosNote").value = "";
+    save();
+    alert("Saved to journal.");
+  });
+
+  // Settings: profile save
+  $("#profileForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    state.profile = {
+      ...(state.profile || {}),
+      focus: fd.get("focus") || "",
+      quitDate: fd.get("quitDate") || "",
+      motivation: (fd.get("motivation") || "").trim()
+    };
+    save();
+    alert("Profile saved.");
+  });
+
+  // Export / Import / Reset
+  $("#exportBtn")?.addEventListener("click", () => {
+    const data = { profile: state.profile, checkins: state.checkins, journal: state.journal };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), { href: url, download: "rehabit-backup.json" });
+    a.click(); URL.revokeObjectURL(url);
+  });
+  $("#importFile")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const txt = await file.text(); const data = JSON.parse(txt);
+    if (confirm("Import will overwrite current local data. Continue?")) {
+      state.profile = data.profile || null;
+      state.checkins = data.checkins || [];
+      state.journal  = data.journal || [];
+      save();
+      alert("Import complete.");
+      renderDashboard(); renderJournal(); renderSettings(); renderHome();
+    }
+    e.target.value = "";
+  });
+  $("#resetBtn")?.addEventListener("click", () => {
+    if (!confirm("This will erase local data on this device. Continue?")) return;
+    localStorage.removeItem(STORAGE.PROFILE);
+    localStorage.removeItem(STORAGE.CHECKINS);
+    localStorage.removeItem(STORAGE.JOURNAL);
+    localStorage.removeItem(STORAGE.CHECKLIST_DONE);
+    load();
+    show("onboarding");
+  });
+
+  // Install prompt
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $("#installBtn").hidden = false;
+  });
+  $("#installBtn")?.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    $("#installBtn").hidden = true;
+  });
+
+  // Notifications (while app is open)
+  $("#notifyBtn")?.addEventListener("click", async () => {
+    if (!("Notification" in window)) return alert("Notifications not supported");
+    let perm = Notification.permission;
+    if (perm !== "granted") perm = await Notification.requestPermission();
+    if (perm !== "granted") return alert("Notifications blocked");
+    localStorage.setItem(STORAGE.NOTIFY, "1");
+    alert("Daily reminder enabled (fires around 09:00 while the app is open).");
+  });
+  setInterval(() => {
+    if (localStorage.getItem(STORAGE.NOTIFY) !== "1") return;
+    const d = new Date();
+    if (d.getHours() === 9 && d.getMinutes() === 0) {
+      new Notification("ReHabit — daily check", { body: "Take 1 minute to check in and review your checklist." });
+    }
+  }, 60 * 1000);
+
+  // Footer year
+  $("#year").textContent = new Date().getFullYear();
+}
+
+/* ---------- Firebase chat (optional; requires valid config) ---------- */
+let auth = null, db = null, me = null, dmUnsub = null;
+async function initFirebase() {
+  if (!(window.firebase && firebase.apps?.length)) return; // not configured
+  auth = firebase.auth(); db = firebase.firestore();
+  await auth.signInAnonymously();
+  me = auth.currentUser;
+  await db.collection("users").doc(me.uid).set({ createdAt: Date.now() }, { merge: true });
+}
+function esc(s){ return String(s).replace(/[&<>\"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[m])); }
+function wireCommunity() {
+  if (!db || !me) return;
+
+  // Global stream
+  db.collection("rooms").doc("global").collection("messages")
+    .orderBy("ts","asc").limit(200)
+    .onSnapshot(snap => {
+      const box = $("#globalChat"); if (!box) return;
+      box.innerHTML = "";
+      snap.forEach(doc => {
+        const m = doc.data();
+        const who = m.uid === me.uid ? "You" : (m.name || m.uid.slice(0,6));
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+
+  // Send to global
+  $("#globalForm")?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const msg = new FormData(e.target).get("msg")?.toString().trim();
+    if (!msg) return;
+    await db.collection("rooms").doc("global").collection("messages").add({ uid: me.uid, text: msg, ts: Date.now() });
+    e.target.reset();
+  });
+
+  // Friends
+  $("#myUid").textContent = me.uid;
+  loadFriends();
+  $("#addFriendForm")?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const uid = new FormData(e.target).get("uid")?.toString().trim();
+    if (!uid) return;
+    await db.collection("users").doc(me.uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
+    await db.collection("users").doc(uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(me.uid) }, { merge: true });
+    e.target.reset();
+    loadFriends();
+  });
+}
+async function loadFriends() {
+  if (!db || !me) return;
+  const meDoc = await db.collection("users").doc(me.uid).get();
+  const friends = (meDoc.data()?.friends)||[];
+  const ul = $("#friendList"); ul.innerHTML = "";
+  friends.forEach(uid=>{
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${uid}</span><button class="btn" data-dm="${uid}">Chat</button>`;
+    li.querySelector("button").onclick = ()=> openDM(uid);
+    ul.appendChild(li);
+  });
+}
+function dmRoom(a,b){ return [a,b].sort().join("_"); }
+function openDM(friendUid){
+  if (!db || !me) return;
+  dmUnsub?.();
+  const roomId = dmRoom(me.uid, friendUid);
+  dmUnsub = db.collection("rooms").doc(roomId).collection("messages")
+    .orderBy("ts","asc").limit(200)
+    .onSnapshot(snap=>{
+      const box = $("#dmWrap"); box.innerHTML = "";
+      snap.forEach(doc=>{
+        const m = doc.data();
+        const who = m.uid === me.uid ? "You" : m.uid.slice(0,6);
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+
+  const form = $("#dmForm");
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const msg = new FormData(e.target).get("msg")?.toString().trim();
+    if (!msg) return;
+    await db.collection("rooms").doc(roomId).collection("messages").add({ uid: me.uid, text: msg, ts: Date.now() });
+    e.target.reset();
+  };
+
+  show("friends");
+}
+
+/* ---------- BOOT ---------- */
+load();
+
+window.addEventListener("DOMContentLoaded", async () => {
+  if (!state.profile) { show("onboarding"); }
+  else { show("home"); }            // Home exists now, so it will render correctly
+
+  wire();
+
+  // Firebase (optional)
+  try {
+    await initFirebase();           // signs in anonymously if configured
+    wireCommunity();
+  } catch (err) { console.warn("Firebase not configured or failed:", err); }
+});
+
+// PWA service worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(console.error);
+  });
+}
