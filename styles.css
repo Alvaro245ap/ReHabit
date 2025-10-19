@@ -1,5 +1,4 @@
 :root{
-  /* Vivid palette */
   --bg:#f4f7ff; --surface:#ffffff; --soft:#eef2ff; --text:#0b1324; --muted:#64748b;
   --primary:#275efe; --success:#16a34a; --danger:#ef4444;
   --radius:16px; --shadow:0 14px 30px rgba(2,6,23,.10);
@@ -9,7 +8,7 @@
 html,body{margin:0;padding:0;height:100%}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--text)}
 .fancy{font-family:"Playfair Display",serif}
-.app-header{display:flex;justify-content:space-between;align-items:center;padding:12px clamp(12px,3vw,24px);background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.app-header{display:flex;justify-content:space-between;align-items:center;padding:12px clamp(12px,3vw,24px);background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;object-fit:cover;border-radius:8px}
 h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
@@ -19,6 +18,18 @@ h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
 .header-actions{display:flex;align-items:center;gap:10px}
 #langSelect{border:1px solid #cbd5e1;border-radius:10px;padding:6px 8px;background:#fff}
 
+/* Hamburger + Drawer */
+.hamburger{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
+.drawer{position:fixed;inset:0 auto 0 0;width:300px;background:#fff;border-right:1px solid #dbe1ff;box-shadow:0 20px 60px rgba(8,15,40,.24);transform:translateX(-105%);transition:transform .2s ease;z-index:30;display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6ebff}
+.drawer-nav{display:grid;padding:12px}
+.drawer-link{padding:12px 10px;border:1px solid #e6ebff;margin-bottom:10px;border-radius:12px;background:#f8faff;cursor:pointer;text-align:left;font-weight:700}
+.drawer-link:hover{background:#eef2ff}
+.drawer-link.danger{border-color:#ffd5d9;background:#fff2f3;color:#991b1b}
+.backdrop{position:fixed;inset:0;background:rgba(12,18,36,.35);backdrop-filter:blur(2px);z-index:25}
+
+/* Layout */
 .container{margin:12px auto clamp(84px,8vh,96px);max-width:var(--maxw);padding:0 clamp(12px,3vw,24px);display:grid;gap:var(--gap)}
 .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(14px,2.4vw,22px);border:1px solid #dbe1ff}
 .card.soft{background:var(--soft)}
@@ -40,8 +51,8 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .crisis-mini{position:sticky;top:64px;display:flex;justify-content:flex-end;max-width:var(--maxw);margin:2px auto 0;padding:0 clamp(12px,3vw,24px)}
 .crisis-mini a{background:#ffe0e5;border:1px solid #ffc8d0;color:#9f1239;text-decoration:none;padding:6px 10px;border-radius:999px;font-size:12px}
 
-/* Tabbar (centered, professional) */
-.tabbar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(8,1fr);background:#ffffffd9;border-top:1px solid #dbe1ff;backdrop-filter:blur(10px)}
+/* Tabbar (ONLY 3) */
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);background:#ffffffd9;border-top:1px solid #dbe1ff;backdrop-filter:blur(10px);z-index:15}
 .tabbtn{appearance:none;background:transparent;border:0;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:grid;place-items:center;gap:4px}
 .tabbtn:focus{outline:2px solid var(--primary);outline-offset:-2px}.ico{width:22px;height:22px;display:block}
 
@@ -92,7 +103,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .day .d{font-weight:700;font-size:12px;color:#334155}
 .day .m{font-size:12px}
 
-/* SOS (red styling) */
+/* SOS */
 .sos h2{color:#991b1b}
 .sos .btn{border-color:#fecaca}
 .sos .card.soft{background:#fff1f2;border-color:#fecdd3}
@@ -100,6 +111,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .radios{display:flex;gap:16px;align-items:center;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
 .pro-form small{color:#475569}
 
-/* Guide tabs */
+/* Guide tabs & choice */
 .guide-tabs{display:flex;gap:8px;margin-bottom:8px;justify-content:center}
 .tabpane[hidden]{display:none}
+.guide-choice{margin-bottom:10px}
