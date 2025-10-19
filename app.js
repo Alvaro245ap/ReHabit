@@ -443,7 +443,8 @@ function renderAdvice() {
       motivation: (fd.get("motivation") || "").trim()
     };
     save();
-    show("dashboard");
+    show("advice");
+
   });
 
   // Check-in
