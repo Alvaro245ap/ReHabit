@@ -116,6 +116,6 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .tabpane[hidden]{display:none}
 .guide-choice{margin-bottom:10px}
 
-/* --- Drawer icons: ensure they render --- */
+/* Drawer icons: ensure they render */
 .drawer-link{display:flex;align-items:center;gap:8px}
 .drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block}
