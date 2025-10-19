@@ -1,5 +1,5 @@
-// Basic offline caching (cache first for app shell)
-const CACHE = "rehabit-v2";
+// Cache updated to include possible asset icons for addiction types.
+const CACHE = "rehabit-v3";
 const ASSETS = [
   "./",
   "./index.html",
