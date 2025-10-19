@@ -1,7 +1,7 @@
 {
   "name": "ReHabit",
   "short_name": "ReHabit",
-  "description": "Private, offline-first recovery companion for daily check-ins, cravings, and progress.",
+  "description": "Private, offline-first recovery companion: check-ins, SOS, checklist, charts, and optional chat.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1220",
