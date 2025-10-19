@@ -115,19 +115,8 @@ input[type="range"] { width: 100%; }
   margin: 16px auto 72px; max-width: var(--maxw);
   padding: 0 16px;
 }
-/* Addiction chooser */
-.addiction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; }
-.addiction-card {
-  display: grid; gap: 8px; justify-items: center; padding: 12px;
-  border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #111;
-  cursor: pointer; transition: transform .1s ease;
-}
-.addiction-card:hover { transform: translateY(-2px); }
-.addiction-card img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; }
-.addiction-card input { display: none; }
-.addiction-card input:checked + img, .addiction-card input:checked ~ img { outline: 3px solid var(--primary); outline-offset: 4px; }
-.addiction-card span { font-weight: 600; }
-/* Light hero */
+
+/* Light hero on Home */
 .home-hero {
   background: linear-gradient(180deg, #f8fafc, #ffffff);
   color: #111;
@@ -140,7 +129,22 @@ input[type="range"] { width: 100%; }
 .home-hero h2 { margin: 0 0 6px; }
 .home-hero p { margin: 0 0 12px; color: #374151; }
 .hero-actions .btn { background: #f3f4f6; color: #111; border: 1px solid #e5e7eb; }
-.hero-actions .btn.primary { background: var(--primary); color: #000; border-color: transparent;}
+.hero-actions .btn.primary { background: var(--primary); color: #000; border-color: transparent; }
+
+/* Addiction chooser */
+.addiction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; }
+.addiction-card {
+  display: grid; gap: 8px; justify-items: center; padding: 12px;
+  border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #111;
+  cursor: pointer; transition: transform .1s ease;
+}
+.addiction-card:hover { transform: translateY(-2px); }
+.addiction-card img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; }
+.addiction-card input { display: none; }
+.addiction-card input:checked + img, .addiction-card input:checked ~ img { outline: 3px solid var(--primary); outline-offset: 4px; }
+.addiction-card span { font-weight: 600; }
+
+/* Chat UI */
 .chat-box {
   height: 260px; overflow: auto; padding: 10px;
   border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #111;
