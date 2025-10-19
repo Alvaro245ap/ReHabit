@@ -7,14 +7,16 @@
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <!-- Posh fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Firebase SDKs (optional for real chat/friends) -->
+  <!-- (Optional) Firebase for live chat/friends -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    // (Optional) Put your real config to enable live chat/friends
+    // Paste your real config to turn on live chat/friends; otherwise examples work offline.
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -27,38 +29,61 @@
 <body>
   <header class="app-header">
     <div class="brand">
-      <h1>ReHabit</h1>
       <img class="logo" alt="ReHabit logo"
            src="https://lh3.googleusercontent.com/sitesv/AICyYdbmcgQFK2Z29ZvnRBGLzvgYafySguNCTxosCMSM_PGX7OGYt0LoXrL3tZZkvSHOsxfMorAK2TMOgcI7Uull0sWjV48H97Z4Zq0RgywqJwNmpry9rQyah--LGPICtxYg02Sf83XsCphrz_g29TLwoLcVyEZRKJsFq2RWkp4aAhwurDxv813Tvw0VNUw=w1280"
            onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/sitesv/AICyYdY_Wr1HnVjspVtEZ1_M0u3rLNcWCaDPPA0SvH--yEgG7CO6VWtW-meSog-0J6QtVa9skMbP9_bIN0JZdaivhZ2ZcnVfCs6E6Q4AcmH0xU2_pkWJ5pWo5MadTraTNyJ0usYN4VYOu1xtGZGEKw--wUMC0qhcFcZGGLWQgvMnVMMJfRszcO-SLWCI09w=w1280'">
+      <h1 class="fancy">ReHabit</h1>
+
+      <!-- Slogans beside logo -->
+      <div class="slogans-inline">
+        <span class="chip">ReBuild</span>
+        <span class="chip">ReWire</span>
+        <span class="chip primary">ReHabit</span>
+      </div>
     </div>
-    <button id="installBtn" class="btn subtle" aria-label="Install app" hidden>Install</button>
+
+    <div class="header-actions">
+      <select id="langSelect" aria-label="Language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+      <button id="installBtn" class="btn subtle" aria-label="Install app" hidden>Install</button>
+    </div>
   </header>
 
-  <section class="slogans">
-    <span class="chip">ReBuild</span>
-    <span class="chip">ReWire</span>
-    <span class="chip primary">ReHabit</span>
-  </section>
-
-  <!-- Smaller, tucked crisis note -->
+  <!-- Tiny crisis pill -->
   <aside class="crisis-mini" role="note" aria-label="Crisis support">
-    <a href="https://www.iasp.info/crisis-centres-helplines/" target="_blank" rel="noopener" title="Find helplines">If in danger, get help</a>
+    <a href="https://www.iasp.info/crisis-centres-helplines/" target="_blank" rel="noopener" data-i18n="danger">If in danger, get help</a>
   </aside>
 
   <main id="app" class="container">
 
-    <!-- Onboarding -->
+    <!-- Onboarding (restrict to 4 addictions) -->
     <section id="view-onboarding" class="card">
       <h2 data-i18n="welcome">Welcome 👋</h2>
       <p data-i18n="selectFocus">Select your focus and a target date to start tracking progress.</p>
 
       <div class="addiction-grid" style="margin-bottom:12px">
-        <label class="addiction-card"><input type="radio" name="focus" value="Technology" required><img src="assets/tech.png" alt="Technology"><span>Technology</span></label>
-        <label class="addiction-card"><input type="radio" name="focus" value="Smoking" required><img src="assets/smoking.png" alt="Smoking"><span>Smoking</span></label>
-        <label class="addiction-card"><input type="radio" name="focus" value="Alcohol" required><img src="assets/alcohol.png" alt="Alcohol"><span>Alcohol</span></label>
-        <label class="addiction-card"><input type="radio" name="focus" value="Gambling" required><img src="assets/gambling.png" alt="Gambling"><span>Gambling</span></label>
-        <label class="addiction-card"><input type="radio" name="focus" value="Other drugs" required><img src="assets/drugs.png" alt="Other drugs"><span>Other drugs</span></label>
+        <label class="addiction-card">
+          <input type="checkbox" name="focus" value="Technology">
+          <img src="assets/tech.png" alt="Technology">
+          <span data-i18n="a_tech">Technology</span>
+        </label>
+        <label class="addiction-card">
+          <input type="checkbox" name="focus" value="Smoking">
+          <img src="assets/smoking.png" alt="Smoking">
+          <span data-i18n="a_smoke">Smoking</span>
+        </label>
+        <label class="addiction-card">
+          <input type="checkbox" name="focus" value="Alcohol">
+          <img src="assets/alcohol.png" alt="Alcohol">
+          <span data-i18n="a_alcohol">Alcohol</span>
+        </label>
+        <label class="addiction-card">
+          <input type="checkbox" name="focus" value="Gambling">
+          <img src="assets/gambling.png" alt="Gambling">
+          <span data-i18n="a_gambling">Gambling</span>
+        </label>
       </div>
 
       <form id="onboardingForm" class="grid">
@@ -72,241 +97,172 @@
     <section id="view-home" class="card" hidden>
       <div class="home-hero">
         <div class="hero-left">
-          <h2>Welcome to ReHabit</h2>
-          <p>Your private companion to build healthier habits—one day at a time.</p>
+          <h2 class="fancy" data-i18n="homeTitle">Welcome to ReHabit</h2>
+          <p data-i18n="homeLead">Your private companion to build healthier habits—one day at a time.</p>
           <div class="hero-actions">
-            <button class="btn primary" data-nav="checklist">Today’s checklist</button>
-            <button class="btn" data-nav="calendar">Calendar</button>
-            <button class="btn" data-nav="advice">Tips for my addiction</button>
-            <button class="btn" data-nav="program">10-step program</button>
-            <button class="btn" data-nav="deepguide">Deep Guide</button>
+            <button class="btn primary" data-nav="checkin" data-i18n="checkin">Daily Check-in</button>
+            <button class="btn" data-nav="calendar" data-i18n="calendar">Calendar</button>
+            <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
+            <button class="btn" data-nav="community" data-i18n="chat">Community</button>
           </div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="card soft">
-          <h3>Calendar (this month)</h3>
-          <div class="calendar-head">
-            <button class="btn subtle" id="prevMonth" aria-label="Previous month">‹</button>
-            <div id="monthLabel"></div>
-            <button class="btn subtle" id="nextMonth" aria-label="Next month">›</button>
-          </div>
-          <div id="calendarGrid" class="calendar"></div>
-          <p class="muted">Click a day to toggle: • blank → ✅ success → ❌ slip</p>
-        </div>
-        <div class="card soft">
-          <h3>Quick actions</h3>
-          <ul class="list">
-            <li><span>Mark today</span><button class="btn" id="markTodayOk">✅</button><button class="btn danger" id="markTodaySlip">❌</button></li>
-            <li><span>Open Badges</span><button class="btn" data-nav="badges">Badges</button></li>
-            <li><span>Community</span><button class="btn" data-nav="community">Chat</button></li>
-          </ul>
         </div>
       </div>
     </section>
 
-    <!-- Calendar full page (optional access) -->
+    <!-- Calendar -->
     <section id="view-calendar" class="card" hidden>
-      <h2>Calendar</h2>
+      <h2 data-i18n="calendar">Calendar</h2>
       <div class="calendar-head">
-        <button class="btn subtle" id="prevMonth2">‹</button>
-        <div id="monthLabel2"></div>
-        <button class="btn subtle" id="nextMonth2">›</button>
+        <button class="btn subtle" id="prevMonth">‹</button>
+        <div id="monthLabel"></div>
+        <button class="btn subtle" id="nextMonth">›</button>
       </div>
-      <div id="calendarGrid2" class="calendar"></div>
-      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+      <div id="calendarGrid" class="calendar"></div>
+      <p class="muted" data-i18n="calendarHelp">Click a day to toggle: blank → ✅ success → ❌ slip.</p>
+      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Check-in -->
+    <!-- Check-in (expanded) -->
     <section id="view-checkin" class="card" hidden>
-      <h2>Daily Check-in</h2>
-      <form id="checkinForm" class="grid">
-        <label>Mood (0–10)<input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value"><small>Value: <span id="moodVal">5</span></small></label>
-        <label>Urge (0–10)<input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value"><small>Value: <span id="urgeVal">3</span></small></label>
-        <label>Note (optional)<textarea name="note" rows="3" placeholder="What’s going on today?"></textarea></label>
-        <div class="actions"><button class="btn primary" type="submit">Save check-in</button><button class="btn subtle" data-nav="dashboard" type="button">Back</button></div>
-      </form>
-    </section>
-
-    <!-- SOS -->
-    <section id="view-sos" class="card" hidden>
-      <h2>Craving SOS</h2>
-      <p class="muted">Peer support only; not monitored; doesn’t replace professional care.</p>
-      <ol class="sos-steps">
-        <li><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
-        <li><strong>Urge surfing.</strong> Notice the urge rising and falling.</li>
-        <li><strong>Do one alternative action.</strong> Walk, shower, text a friend, drink water.</li>
-      </ol>
+      <h2 data-i18n="checkin">Daily Check-in</h2>
       <div class="grid-2">
         <div class="card soft">
-          <h3>Breathing Timer (1:00)</h3><div id="timer" aria-live="polite">01:00</div>
-          <div class="actions"><button class="btn" id="startTimer">Start</button><button class="btn subtle" id="resetTimer">Reset</button></div>
-        </div>
-        <div class="card soft">
-          <h3>Quick Notes</h3>
-          <textarea id="sosNote" rows="3" placeholder="What triggered this? What helped?"></textarea>
-          <div class="actions"><button class="btn" id="saveSos">Save note</button></div>
-        </div>
-      </div>
-      <div class="resources"><h3>Helpful actions</h3><div class="chips" id="copingChips"></div></div>
-      <div class="actions"><button class="btn subtle" data-nav="dashboard">Back</button></div>
-    </section>
-
-    <!-- Journal -->
-    <section id="view-journal" class="card" hidden>
-      <h2>Journal & Triggers</h2>
-      <form id="journalForm" class="grid"><label>Add a trigger or thought<input type="text" name="entry" maxlength="160" placeholder="e.g., Stress after work; I wanted to…"></label><button class="btn" type="submit">Add</button></form>
-      <ul id="journalList" class="list"></ul>
-      <div class="actions"><button class="btn subtle" data-nav="dashboard">Back</button></div>
-    </section>
-
-    <!-- Settings -->
-    <section id="view-settings" class="card" hidden>
-      <h2>Settings</h2>
-      <div class="grid-2">
-        <div class="card soft">
-          <h3>Profile</h3>
-          <form id="profileForm" class="grid">
-            <label>Primary addiction<select name="primary"></select></label>
-            <label>Add addiction<input type="text" name="addAddiction" placeholder="e.g., Caffeine"><small class="muted">Press “Add” to include below.</small></label>
-            <div class="actions"><button class="btn" id="addAddictionBtn" type="button">Add</button></div>
-            <div id="addictionsChips" class="chips"></div>
-            <label>Target date<input type="date" name="quitDate"></label>
-            <label>Motivation<input type="text" name="motivation" maxlength="120"></label>
-            <label>Language<select name="lang"><option value="en">English</option><option value="es">Español</option></select></label>
-            <button class="btn" type="submit">Save</button>
+          <img src="assets/encourage.jpg" alt="Encouragement" class="encourage">
+          <p id="encouragement" class="big"></p>
+          <form id="checkinForm" class="grid">
+            <label><span data-i18n="mood">Mood (0–10)</span>
+              <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
+              <small><span data-i18n="value">Value:</span> <span id="moodVal">5</span></small>
+            </label>
+            <label><span data-i18n="urge">Urge (0–10)</span>
+              <input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value">
+              <small><span data-i18n="value">Value:</span> <span id="urgeVal">3</span></small>
+            </label>
+            <label><span data-i18n="sleep">Hours of sleep</span><input type="number" name="sleep" min="0" max="24" value="7"></label>
+            <label><span data-i18n="actionTook">Helpful action you took</span><input type="text" name="action" maxlength="120" placeholder="Walk, water, texted a friend..."></label>
+            <label><span data-i18n="note">Note (optional)</span><textarea name="note" rows="3"></textarea></label>
+            <div class="actions">
+              <button class="btn primary" type="submit" data-i18n="save">Save check-in</button>
+              <button class="btn subtle" data-nav="home" type="button" data-i18n="back">Back</button>
+            </div>
           </form>
         </div>
         <div class="card soft">
-          <h3>Data</h3>
+          <h3 data-i18n="todayShortcuts">Today’s shortcuts</h3>
           <div class="actions">
-            <button class="btn" id="exportBtn">Export JSON</button>
-            <label class="file"><input type="file" id="importFile" accept="application/json"><span class="btn">Import JSON</span></label>
-            <button class="btn danger" id="resetBtn">Factory Reset</button>
+            <button class="btn" id="markTodayOk">✅ <span data-i18n="markSuccess">Mark success</span></button>
+            <button class="btn danger" id="markTodaySlip">❌ <span data-i18n="markSlip">Mark slip</span></button>
           </div>
+          <ul id="recentNotes" class="list"></ul>
         </div>
       </div>
-      <div class="actions"><button class="btn subtle" data-nav="dashboard">Back</button></div>
     </section>
 
-    <!-- Checklist -->
-    <section id="view-checklist" class="card" hidden>
-      <h2>Daily checklist</h2>
-      <ul id="checklistFull" class="list"></ul>
-      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+    <!-- SOS (red) -->
+    <section id="view-sos" class="card sos" hidden>
+      <h2>🚨 <span data-i18n="sos">Craving SOS</span></h2>
+      <ol class="sos-steps">
+        <li data-i18n="s1"><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
+        <li data-i18n="s2"><strong>Urge surfing.</strong> Notice the urge rising and falling.</li>
+        <li data-i18n="s3"><strong>Do one alternative action.</strong> Walk, shower, text a friend, drink water.</li>
+      </ol>
+      <div class="grid-2">
+        <div class="card soft">
+          <h3 data-i18n="timer">Breathing Timer (1:00)</h3>
+          <div id="timer" aria-live="polite">01:00</div>
+          <div class="actions"><button class="btn" id="startTimer" data-i18n="start">Start</button><button class="btn subtle" id="resetTimer" data-i18n="reset">Reset</button></div>
+        </div>
+        <div class="card soft">
+          <h3 data-i18n="quickNotes">Quick Notes</h3>
+          <textarea id="sosNote" rows="3" placeholder="What triggered this? What helped?"></textarea>
+          <div class="actions"><button class="btn" id="saveSos" data-i18n="save">Save</button></div>
+        </div>
+      </div>
+      <div class="resources"><h3 data-i18n="helpful">Helpful actions</h3><div class="chips" id="copingChips"></div></div>
+      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Progress (kept but simplified note) -->
-    <section id="view-progress" class="card" hidden>
-      <h2>Progress</h2>
-      <p class="muted">Track progress in the calendar. Badges are awarded automatically.</p>
-      <div class="actions"><button class="btn" data-nav="calendar">Open calendar</button></div>
-      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
-    </section>
+    <!-- Combined Guide (Tips + 10 Steps + Deep Guide) -->
+    <section id="view-guide" class="card" hidden>
+      <h2 id="guideTitle">Guide</h2>
+      <div class="guide-tabs">
+        <button class="btn tab" data-tab="tips" data-i18n="tips">Tips</button>
+        <button class="btn tab" data-tab="steps" data-i18n="steps">10 Steps</button>
+        <button class="btn tab" data-tab="deep" data-i18n="deep">Deep Guide</button>
+      </div>
+      <div id="tab-tips" class="tabpane"></div>
+      <ol id="tab-steps" class="tabpane program" hidden></ol>
+      <div id="tab-deep" class="tabpane" hidden></div>
 
-    <!-- Advice -->
-    <section id="view-advice" class="card" hidden>
-      <h2 id="adviceTitle">Advice</h2>
-      <div id="adviceBody"></div>
       <div class="actions">
-        <button class="btn" data-nav="program">Open 10-step program</button>
-        <button class="btn subtle" data-nav="home">Back</button>
+        <button class="btn" data-nav="program" data-i18n="materials">Helpful materials</button>
+        <button class="btn subtle" data-nav="home" data-i18n="back">Back</button>
       </div>
     </section>
 
-    <!-- Deep Guide (long explanation per addiction) -->
-    <section id="view-deepguide" class="card" hidden>
-      <h2 id="deepTitle">Deep Guide</h2>
-      <div id="deepBody"></div>
-      <div class="actions">
-        <button class="btn" data-nav="program">10-step program</button>
-        <button class="btn subtle" data-nav="home">Back</button>
-      </div>
-    </section>
-
-    <!-- 10-step Program -->
+    <!-- Helpful materials + contribution gate -->
     <section id="view-program" class="card" hidden>
-      <h2 id="programTitle">10-Step Program</h2>
-      <ol id="programList" class="program"></ol>
-      <div id="materialsWrap" class="supporting">
-        <h3>Helpful materials & tips</h3>
-        <ul id="materialsList" class="list bullets"></ul>
-      </div>
+      <h2 id="programTitle">Helpful materials</h2>
+      <ul id="materialsList" class="list bullets"></ul>
       <div id="contribWrap" class="contrib" hidden>
-        <h3>Contribute tips (1-year badge required)</h3>
-        <form id="contribForm" class="grid"><label>Your tip or resource<textarea name="tip" rows="3" maxlength="500" placeholder="Write something that helped you..."></textarea></label><button class="btn">Submit tip</button></form>
-        <p class="muted">Contributions may appear on Advice/Program pages for your addiction.</p>
+        <h3 data-i18n="contribTitle">Contribute tips (1-year badge required)</h3>
+        <form id="contribForm" class="grid"><label data-i18n="yourTip">Your tip or resource<textarea name="tip" rows="3" maxlength="500"></textarea></label><button class="btn" data-i18n="submit">Submit tip</button></form>
+        <p class="muted" data-i18n="contribNote">Contributions may appear for your addiction.</p>
       </div>
-      <div class="actions"><button class="btn subtle" data-nav="advice">Back</button></div>
+      <div class="actions"><button class="btn subtle" data-nav="guide" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Badges (separate page) -->
+    <!-- Badges -->
     <section id="view-badges" class="card" hidden>
-      <h2>Badges & Titles</h2>
-      <h3>Sobriety badges</h3>
+      <h2 data-i18n="badges">Badges & Titles</h2>
+      <h3 data-i18n="sobriety">Sobriety badges</h3>
       <div id="sobrietyBadges" class="badges"></div>
-      <h3>Social badges</h3>
+      <h3 data-i18n="social">Social badges</h3>
       <div id="socialBadges" class="badges"></div>
-      <h3>Your current chat title</h3>
+      <h3 data-i18n="currentTitle">Your current chat title</h3>
       <p id="currentTitle" class="muted">—</p>
-      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
     <!-- Community -->
     <section id="view-community" class="card" hidden>
-      <h2>Community chat</h2>
-      <p class="muted">Peer support only—unmoderated; not a substitute for professional care. Click a name to send a friend request.</p>
+      <h2 data-i18n="chat">Community chat</h2>
+      <p class="muted" data-i18n="chatNote">Peer support only—unmoderated; click a name to befriend.</p>
       <div id="globalChat" class="chat-box"></div>
       <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
         <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
-        <button class="btn">Send</button>
+        <button class="btn" data-i18n="send">Send</button>
       </form>
       <div class="actions">
-        <button class="btn" data-nav="friends">Friends</button>
-        <button class="btn subtle" data-nav="home">Back</button>
+        <button class="btn" data-nav="friends" data-i18n="friends">Friends</button>
+        <button class="btn subtle" data-nav="home" data-i18n="back">Back</button>
       </div>
     </section>
 
     <!-- Friends / Requests -->
     <section id="view-friends" class="card" hidden>
-      <h2>Friends</h2>
-      <p>Your code: <code id="myUid">—</code></p>
-      <h3>Requests</h3>
+      <h2 data-i18n="friends">Friends</h2>
+      <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
+      <h3 data-i18n="requests">Requests</h3>
       <ul id="requestsList" class="list"></ul>
-      <h3>Friends</h3>
+      <h3 data-i18n="friendsList">Friends</h3>
       <ul id="friendList" class="list"></ul>
-      <div class="actions"><button class="btn subtle" data-nav="community">Back</button></div>
+      <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
   </main>
 
-  <!-- Tabbar -->
+  <!-- Tabbar (now includes Guide + Badges) -->
   <nav class="tabbar" aria-label="Primary">
-    <button data-nav="home" aria-label="Home" class="tabbtn">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg>
-      <span>Home</span>
-    </button>
-    <button data-nav="checkin" aria-label="Check-in" class="tabbtn">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
-      <span>Check-in</span>
-    </button>
-    <button data-nav="sos" aria-label="SOS" class="tabbtn">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M12 2 1 21h22L12 2zm0 6a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1zm0 9a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 12 17z" fill="currentColor"/></svg>
-      <span>SOS</span>
-    </button>
-    <button data-nav="community" aria-label="Community" class="tabbtn">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
-      <span>Chat</span>
-    </button>
-    <button data-nav="settings" aria-label="Settings" class="tabbtn">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm-8.5 4a8.5 8.5 0 0 1 .2-1.8l-2-1.5 2-3.4 2.3 1a8.6 8.6 0 0 1 3-1.8l.4-2.5h4l.4 2.5a8.6 8.6 0 0 1 3 1.8l2.3-1 2 3.4-2 1.5c.14.6.2 1.2.2 1.8s-.06 1.2-.2 1.8l2 1.5-2 3.4-2.3-1a8.6 8.6 0 0 1-3 1.8l-.4 2.5h-4l-.4-2.5a8.6 8.6 0 0 1-3-1.8l-2.3 1-2-3.4 2-1.5c-.14-.6-.2-1.2-.2-1.8z" fill="currentColor"/></svg>
-      <span>Settings</span>
-    </button>
+    <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
+    <button data-nav="checkin" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg><span data-i18n="checkin">Check-in</span></button>
+    <button data-nav="calendar" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg><span data-i18n="calendar">Calendar</span></button>
+    <button data-nav="guide" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg><span data-i18n="guide">Guide</span></button>
+    <button data-nav="badges" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg><span data-i18n="badges">Badges</span></button>
   </nav>
 
   <footer class="legal">
-    <small>© <span id="year"></span> ReHabit. For support only—does not replace professional treatment.</small>
+    <small>© <span id="year"></span> ReHabit. <span data-i18n="footer">For support only—does not replace professional treatment.</span></small>
   </footer>
 
   <script src="app.js"></script>
