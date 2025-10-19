@@ -31,6 +31,17 @@ const ADVICE = {
     "Eat, sleep, hydrate—withdrawal is harder when depleted.",
     "Seek professional help; consider support groups."
   ]
+  // Firebase handles
+let auth = null, db = null, me = null;
+async function initFirebase() {
+  auth = firebase.auth();
+  db = firebase.firestore();
+  await auth.signInAnonymously();
+  me = auth.currentUser;
+  // Ensure user doc
+  await db.collection("users").doc(me.uid).set({ createdAt: Date.now() }, { merge: true });
+}
+
 };
 
 // basic daily checklist (you can customize later)
