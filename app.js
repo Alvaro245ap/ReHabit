@@ -2,6 +2,13 @@
    Settings (name + multi-addictions incl. Other drugs); bots in chat
    (click name to befriend); Guide fully localized EN/ES and tailored per
    addiction; choose addiction on entering Guide if multiple; richer Tips/Steps/Deep.
+
+   ADDITIONS IN THIS VERSION (as requested):
+   - Friend code helpers + BOT_CODES
+   - Community chat sends with Display Name or Anonymous
+   - Offline chat works; bots can be befriended by click or code
+   - Friends page: show my code + add-by-code (offline + Firebase)
+   - i18n key for chatNote
 */
 
 const $ = s => document.querySelector(s);
@@ -57,7 +64,9 @@ const D = {
     w0:"Sun", w1:"Mon", w2:"Tue", w3:"Wed", w4:"Thu", w5:"Fri", w6:"Sat",
     researchTitle:"Evidence-based roadmap",
     settings:"Settings", displayName:"Display name", chooseAddictions:"Choose addictions",
-    chooseAddiction:"Choose addiction", emergency:"Emergency"
+    chooseAddiction:"Choose addiction", emergency:"Emergency",
+    // NEW i18n key for Community note:
+    chatNote:"Community chat: unmoderated peer support. Click a name (including bots) to send a friend request."
   },
   es:{
     install:"Instalar",
@@ -80,11 +89,29 @@ const D = {
     w0:"Dom", w1:"Lun", w2:"Mar", w3:"Mié", w4:"Jue", w5:"Vie", w6:"Sáb",
     researchTitle:"Hoja de ruta basada en evidencia",
     settings:"Ajustes", displayName:"Nombre visible", chooseAddictions:"Elige adicciones",
-    chooseAddiction:"Elige adicción", emergency:"Emergencia"
+    chooseAddiction:"Elige adicción", emergency:"Emergencia",
+    // NEW translation
+    chatNote:"Chat comunitario: apoyo entre pares no moderado. Pulsa un nombre (incluidos bots) para enviar solicitud de amistad."
   }
 };
 function t(k){ const L=document.documentElement.getAttribute("data-lang")||"en"; return (D[L] && D[L][k]) || D.en[k] || k; }
 function applyI18N(){ $$("[data-i18n]").forEach(el => el.textContent = t(el.getAttribute("data-i18n"))); }
+
+/* ---------------- NEW: Friend code + Bot codes ---------------- */
+const CODE_KEY = "rehabit_mycode";
+function getMyCode(){
+  if (window.firebase && firebase.apps?.length && firebase.auth()?.currentUser?.uid) {
+    return "RH-" + firebase.auth().currentUser.uid.slice(0,6).toUpperCase();
+  }
+  let c = localStorage.getItem(CODE_KEY);
+  if (!c) { c = "RH-" + crypto.randomUUID().slice(0,6).toUpperCase(); localStorage.setItem(CODE_KEY, c); }
+  return c;
+}
+const BOT_CODES = {
+  "RH-COACH": { uid:"bot_coach", name:"CoachBot" },
+  "RH-CALM":  { uid:"bot_calm",  name:"CalmBot"  },
+  "RH-PEER":  { uid:"bot_peer",  name:"PeerBot"  }
+};
 
 /* ---------------- Content (per addiction, EN/ES) ---------------- */
 const ADDICTIONS = ["Technology","Smoking","Alcohol","Gambling","Other"]; // Other = Other drugs
@@ -822,7 +849,25 @@ function researchText(){
 }
 function renderResearch(){ $("#researchBody").innerHTML = researchText(); }
 
-/* ---------------- Chat & Friends (bots + friend on click) ---------------- */
+/* ---------------- NEW: Local friends storage (offline demo) ---------------- */
+const LOCAL_FRIENDS_KEY = "rehabit_local_friends";
+const LOCAL_REQUESTS_KEY = "rehabit_local_requests";
+function getLocalFriends(){ return JSON.parse(localStorage.getItem(LOCAL_FRIENDS_KEY) || "[]"); }
+function setLocalFriends(arr){ localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stringify(arr)); }
+function addLocalFriend(uid, label){
+  const f=getLocalFriends(); if(!f.find(x=>x.uid===uid)) f.push({uid,label}); setLocalFriends(f);
+}
+function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]"); }
+function addLocalRequest(uid, label){
+  const r=getLocalRequests(); if(!r.find(x=>x.uid===uid)) r.push({uid,label});
+  localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
+}
+function removeLocalRequest(uid){
+  const r=getLocalRequests().filter(x=>x.uid!==uid);
+  localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
+}
+
+/* ---------------- Chat & Friends (bots + friend on click/code) ---------------- */
 let auth=null, db=null, me=null, unsub=null;
 async function initFirebase(){
   if(!(window.firebase&&firebase.apps?.length)) return;
@@ -851,52 +896,128 @@ function wireCommunity(){
   const box=$("#globalChat"); box.innerHTML="";
   if(!(window.firebase&&firebase.apps?.length)){
     seedChat(box);
+
+    // show my friend code in offline mode
+    $("#myUid").textContent = getMyCode();
+
     $("#globalForm").onsubmit=(e)=>{ e.preventDefault();
       const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
       state.social.chatted=true; save(); renderBadges();
-      const name = state.profile?.displayName ? `${state.profile.displayName} (${currentTitle()})` : `You (${currentTitle()})`;
+      const rawName = (state.profile?.displayName || "").trim();
+      const whoYouAre = rawName ? `${rawName} (${currentTitle()})` : "Anonymous";
       const div=document.createElement("div"); div.className="chat-msg";
-      div.innerHTML=`<strong class="chat-name" data-uid="you">${escapeHTML(name)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+      div.innerHTML=`<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
       box.appendChild(div); box.scrollTop=box.scrollHeight; e.target.reset();
     };
-    box.onclick=(e)=>{ const n=e.target.closest(".chat-name"); if(!n) return;
+
+    box.onclick=(e)=>{
+      const n=e.target.closest(".chat-name"); if(!n) return;
       const uid=n.getAttribute("data-uid"); if(!uid) return;
       state.social.friended=true; save(); renderBadges();
+      addLocalRequest(uid, n.textContent.trim());
       alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+      renderFriendsLocal();
     };
-    $("#myUid").textContent="—"; renderFriendsLocal();
+
+    renderFriendsLocal();
     return;
   }
   // Live mode
   initFirebase().then(()=>{
-    $("#myUid").textContent=me.uid;
+    $("#myUid").textContent= getMyCode();
     unsub = db.collection("rooms").doc("global").collection("messages").orderBy("ts","asc").limit(200)
       .onSnapshot(snap=>{
         box.innerHTML=""; if(snap.empty) seedChat(box);
         snap.forEach(doc=>{
-          const m=doc.data(); const who = m.uid===me.uid ? (state.profile?.displayName?state.profile.displayName:"You")+" ("+currentTitle()+")" : (m.name||m.uid.slice(0,6));
+          const m=doc.data();
+          const who = (m.uid===me.uid)
+            ? ((state.profile?.displayName||"Anonymous")+" ("+currentTitle()+")")
+            : (m.name || m.uid.slice(0,6));
           const div=document.createElement("div"); div.className="chat-msg";
           div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
           box.appendChild(div);
         }); box.scrollTop=box.scrollHeight;
       });
-    $("#globalForm").onsubmit=async (e)=>{ e.preventDefault();
+
+    $("#globalForm").onsubmit=async (e)=>{
+      e.preventDefault();
       const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
-      await db.collection("rooms").doc("global").collection("messages").add({uid:me.uid,text:msg,ts:Date.now(),name:state.profile?.displayName||null});
+      const rawName = (state.profile?.displayName || "").trim();
+      const nameToStore = rawName ? rawName : "Anonymous";
+      await db.collection("rooms").doc("global").collection("messages").add({uid:me.uid,text:msg,ts:Date.now(),name:nameToStore});
       state.social.chatted=true; save(); renderBadges(); e.target.reset();
     };
+
     $("#globalChat").onclick=async (e)=>{ const n=e.target.closest(".chat-name"); if(!n) return;
       const uid=n.getAttribute("data-uid"); if(!uid||uid===me.uid) return;
       await db.collection("users").doc(uid).set({requests: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
       state.social.friended=true; save(); renderBadges();
       alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
     };
+
     loadFriends();
   });
 }
 function renderFriendsLocal(){
-  $("#requestsList").innerHTML=`<li><span>No requests (offline demo)</span></li>`;
-  $("#friendList").innerHTML=`<li><span>No friends yet</span></li>`;
+  // Show my code
+  $("#myUid").textContent = getMyCode();
+
+  // "Add by code" form (offline demo supports bot codes)
+  const form = $("#addFriendForm");
+  if(form){
+    form.onsubmit = (e)=>{
+      e.preventDefault();
+      const code = (new FormData(form).get("code") || "").trim().toUpperCase();
+      if(!code) return;
+      if(BOT_CODES[code]){
+        addLocalRequest(BOT_CODES[code].uid, BOT_CODES[code].name);
+        alert((state.i18n==="es")?"Solicitud enviada.":"Request sent.");
+        renderFriendsLocal();
+        form.reset();
+        return;
+      }
+      alert((state.i18n==="es")?"Código no encontrado en modo sin conexión.":"Code not found in offline demo.");
+    };
+  }
+
+  // Requests
+  const reqs = getLocalRequests();
+  const reqList=$("#requestsList"); reqList.innerHTML=reqs.length?"":`<li><span>No requests (offline demo)</span></li>`;
+  reqs.forEach(r=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span>${escapeHTML(r.label||r.uid)}</span>
+      <div class="actions">
+        <button class="btn" data-acc="${r.uid}">Accept</button>
+        <button class="btn subtle" data-rej="${r.uid}">Decline</button>
+      </div>`;
+    reqList.appendChild(li);
+  });
+  reqList.onclick=(e)=>{
+    const acc=e.target.getAttribute("data-acc");
+    const rej=e.target.getAttribute("data-rej");
+    if(acc){
+      addLocalFriend(acc, (reqs.find(x=>x.uid===acc)?.label)||acc);
+      removeLocalRequest(acc);
+      renderFriendsLocal();
+    }else if(rej){
+      removeLocalRequest(rej);
+      renderFriendsLocal();
+    }
+  };
+
+  // Friends
+  const fr=getLocalFriends();
+  const frList=$("#friendList"); frList.innerHTML=fr.length?"":`<li><span>No friends yet</span></li>`;
+  fr.forEach(x=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span>${escapeHTML(x.label||x.uid)}</span><button class="btn subtle" data-rem="${x.uid}">Remove</button>`;
+    frList.appendChild(li);
+  });
+  frList.onclick=(e)=>{
+    const uid=e.target.getAttribute("data-rem"); if(!uid) return;
+    const next=getLocalFriends().filter(x=>x.uid!==uid);
+    setLocalFriends(next); renderFriendsLocal();
+  };
 }
 async function loadFriends(){
   if(!db||!me) return;
@@ -930,6 +1051,22 @@ async function loadFriends(){
     await db.collection("users").doc(uid).set({friends: firebase.firestore.FieldValue.arrayRemove(me.uid)},{merge:true});
     loadFriends();
   };
+
+  // NEW: add-by-code in Firebase (bots supported)
+  const codeForm = $("#addFriendForm");
+  if(codeForm){
+    codeForm.onsubmit = async (e)=>{
+      e.preventDefault();
+      const code = (new FormData(codeForm).get("code") || "").trim().toUpperCase();
+      if(!code) return;
+      if(BOT_CODES[code]){
+        await db.collection("users").doc(BOT_CODES[code].uid).set({requests: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
+        alert((state.i18n==="es")?"Solicitud enviada.":"Request sent.");
+        codeForm.reset(); return;
+      }
+      alert((state.i18n==="es")?"Código no encontrado.":"Code not found.");
+    };
+  }
 }
 
 /* ---------------- Navigation, Drawer & Wiring ---------------- */
