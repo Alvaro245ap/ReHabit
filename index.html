@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <!-- Posh + UI fonts -->
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
@@ -58,37 +58,38 @@
       <strong class="fancy">Menu</strong>
       <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
     </div>
-  <nav class="drawer-nav">
-  <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
-    <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
-    <span>Daily Check-in</span>
-  </button>
-  <button class="drawer-link" data-nav="calendar" data-i18n="calendar">
-    <svg viewBox="0 0 24 24"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg>
-    <span>Calendar</span>
-  </button>
-  <button class="drawer-link" data-nav="guide" data-i18n="guide">
-    <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
-    <span>Guide</span>
-  </button>
-  <button class="drawer-link" data-nav="badges" data-i18n="badges">
-    <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
-    <span>Badges</span>
-  </button>
-  <button class="drawer-link" data-nav="research" data-i18n="research">
-    <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
-    <span>Research</span>
-  </button>
-  <button class="drawer-link" data-nav="settings" data-i18n="settings">
-    <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
-    <span>Settings</span>
-  </button>
-  <button class="drawer-link danger" data-nav="sos" data-i18n="emergency">
-    <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
-    <span>Emergency</span>
-  </button>
-</nav>
 
+    <!-- CHANGED: icons added inside each button -->
+    <nav class="drawer-nav">
+      <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
+        <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
+        <span>Daily Check-in</span>
+      </button>
+      <button class="drawer-link" data-nav="calendar" data-i18n="calendar">
+        <svg viewBox="0 0 24 24"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg>
+        <span>Calendar</span>
+      </button>
+      <button class="drawer-link" data-nav="guide" data-i18n="guide">
+        <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
+        <span>Guide</span>
+      </button>
+      <button class="drawer-link" data-nav="badges" data-i18n="badges">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
+        <span>Badges</span>
+      </button>
+      <button class="drawer-link" data-nav="research" data-i18n="research">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
+        <span>Research</span>
+      </button>
+      <button class="drawer-link" data-nav="settings" data-i18n="settings">
+        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
+        <span>Settings</span>
+      </button>
+      <button class="drawer-link danger" data-nav="sos" data-i18n="emergency">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
+        <span>Emergency</span>
+      </button>
+    </nav>
   </aside>
   <div id="backdrop" class="backdrop" hidden></div>
 
@@ -139,7 +140,7 @@
       </form>
     </section>
 
-    <!-- Home (kept) -->
+    <!-- Home -->
     <section id="view-home" class="card" hidden>
       <div class="home-hero">
         <div class="hero-left">
@@ -281,7 +282,6 @@
     <!-- Guide -->
     <section id="view-guide" class="card" hidden>
       <h2 class="fancy" id="guideTitle">Guide</h2>
-      <!-- Addiction chooser shown only if multiple selected -->
       <div id="guideChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
@@ -342,6 +342,8 @@
     <!-- Community -->
     <section id="view-community" class="card" hidden>
       <h2 class="fancy" data-i18n="chat">Community chat</h2>
+
+      <!-- CHANGED: note text -->
       <p class="muted" data-i18n="chatNote">Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.</p>
 
       <div id="globalChat" class="chat-box"></div>
@@ -359,11 +361,13 @@
     <section id="view-friends" class="card" hidden>
       <h2 class="fancy" data-i18n="friends">Friends</h2>
       <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
+
+      <!-- NEW: add-by-code form just below your code -->
       <form id="addFriendForm" class="grid" style="grid-template-columns:1fr auto; margin:8px 0;">
-  <input type="text" name="code" placeholder="Enter friend code (e.g., RH-COACH)" maxlength="40" />
-  <button class="btn" type="submit" data-i18n="send">Send</button>
-</form>
-<p class="muted" id="friendCodeHint">Try codes: RH-COACH, RH-CALM, RH-PEER.</p>
+        <input type="text" name="code" placeholder="Enter friend code (e.g., RH-COACH)" maxlength="40" />
+        <button class="btn" type="submit" data-i18n="send">Send</button>
+      </form>
+      <p class="muted" id="friendCodeHint">Try codes: RH-COACH, RH-CALM, RH-PEER.</p>
 
       <h3 class="fancy" data-i18n="requests">Requests</h3>
       <ul id="requestsList" class="list"></ul>
