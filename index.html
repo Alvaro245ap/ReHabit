@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <!-- Posh fonts -->
+  <!-- Posh + UI fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
@@ -33,21 +33,18 @@
            src="https://lh3.googleusercontent.com/sitesv/AICyYdbmcgQFK2Z29ZvnRBGLzvgYafySguNCTxosCMSM_PGX7OGYt0LoXrL3tZZkvSHOsxfMorAK2TMOgcI7Uull0sWjV48H97Z4Zq0RgywqJwNmpry9rQyah--LGPICtxYg02Sf83XsCphrz_g29TLwoLcVyEZRKJsFq2RWkp4aAhwurDxv813Tvw0VNUw=w1280"
            onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/sitesv/AICyYdY_Wr1HnVjspVtEZ1_M0u3rLNcWCaDPPA0SvH--yEgG7CO6VWtW-meSog-0J6QtVa9skMbP9_bIN0JZdaivhZ2ZcnVfCs6E6Q4AcmH0xU2_pkWJ5pWo5MadTraTNyJ0usYN4VYOu1xtGZGEKw--wUMC0qhcFcZGGLWQgvMnVMMJfRszcO-SLWCI09w=w1280'">
       <h1 class="fancy">ReHabit</h1>
-
-      <!-- Slogans beside logo -->
       <div class="slogans-inline">
         <span class="chip">ReBuild</span>
         <span class="chip">ReWire</span>
         <span class="chip primary">ReHabit</span>
       </div>
     </div>
-
     <div class="header-actions">
       <select id="langSelect" aria-label="Language">
         <option value="en">English</option>
         <option value="es">Español</option>
       </select>
-      <button id="installBtn" class="btn subtle" aria-label="Install app" hidden>Install</button>
+      <button id="installBtn" class="btn subtle" aria-label="Install" hidden data-i18n="install">Install</button>
     </div>
   </header>
 
@@ -58,9 +55,9 @@
 
   <main id="app" class="container">
 
-    <!-- Onboarding (restrict to 4 addictions) -->
+    <!-- Onboarding -->
     <section id="view-onboarding" class="card">
-      <h2 data-i18n="welcome">Welcome 👋</h2>
+      <h2 class="fancy" data-i18n="welcome">Welcome 👋</h2>
       <p data-i18n="selectFocus">Select your focus and a target date to start tracking progress.</p>
 
       <div class="addiction-grid" style="margin-bottom:12px">
@@ -93,7 +90,7 @@
       </form>
     </section>
 
-    <!-- Home -->
+    <!-- Home (calendar + quick actions) -->
     <section id="view-home" class="card" hidden>
       <div class="home-hero">
         <div class="hero-left">
@@ -103,56 +100,106 @@
             <button class="btn primary" data-nav="checkin" data-i18n="checkin">Daily Check-in</button>
             <button class="btn" data-nav="calendar" data-i18n="calendar">Calendar</button>
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
-            <button class="btn" data-nav="community" data-i18n="chat">Community</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card soft">
+          <h3 class="fancy" data-i18n="monthCard">Calendar (this month)</h3>
+          <div class="calendar-head">
+            <button class="btn subtle" id="prevMonth" aria-label="Previous month">‹</button>
+            <div id="monthLabel"></div>
+            <button class="btn subtle" id="nextMonth" aria-label="Next month">›</button>
+          </div>
+          <div id="calendarGrid" class="calendar"></div>
+          <p class="muted" data-i18n="calendarHelp">Click a day to toggle: blank → Success → Slip.</p>
+        </div>
+
+        <div class="card soft">
+          <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
+          <div class="actions pro-actions">
+            <button class="btn success" id="markTodayOk" data-i18n="markSuccess">Record success today</button>
+            <button class="btn danger" id="markTodaySlip" data-i18n="markSlip">Record slip today</button>
+          </div>
+
+          <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
+          <div class="actions">
+            <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
+            <button class="btn" data-nav="badges" data-i18n="badges">Badges</button>
+            <button class="btn" data-nav="research" data-i18n="research">Research</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Calendar -->
+    <!-- Calendar full -->
     <section id="view-calendar" class="card" hidden>
-      <h2 data-i18n="calendar">Calendar</h2>
+      <h2 class="fancy" data-i18n="calendar">Calendar</h2>
       <div class="calendar-head">
-        <button class="btn subtle" id="prevMonth">‹</button>
-        <div id="monthLabel"></div>
-        <button class="btn subtle" id="nextMonth">›</button>
+        <button class="btn subtle" id="prevMonth2">‹</button>
+        <div id="monthLabel2"></div>
+        <button class="btn subtle" id="nextMonth2">›</button>
       </div>
-      <div id="calendarGrid" class="calendar"></div>
-      <p class="muted" data-i18n="calendarHelp">Click a day to toggle: blank → ✅ success → ❌ slip.</p>
+      <div id="calendarGrid2" class="calendar"></div>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Check-in (expanded) -->
+    <!-- Check-in (professional) -->
     <section id="view-checkin" class="card" hidden>
-      <h2 data-i18n="checkin">Daily Check-in</h2>
+      <h2 class="fancy" data-i18n="checkin">Daily Check-in</h2>
       <div class="grid-2">
         <div class="card soft">
-          <img src="assets/encourage.jpg" alt="Encouragement" class="encourage">
-          <p id="encouragement" class="big"></p>
-          <form id="checkinForm" class="grid">
-            <label><span data-i18n="mood">Mood (0–10)</span>
-              <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
-              <small><span data-i18n="value">Value:</span> <span id="moodVal">5</span></small>
-            </label>
-            <label><span data-i18n="urge">Urge (0–10)</span>
-              <input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value">
-              <small><span data-i18n="value">Value:</span> <span id="urgeVal">3</span></small>
-            </label>
-            <label><span data-i18n="sleep">Hours of sleep</span><input type="number" name="sleep" min="0" max="24" value="7"></label>
+          <p id="encouragement" class="encouragement big"></p>
+
+          <form id="checkinForm" class="grid pro-form">
+            <div class="grid-2">
+              <label><span data-i18n="mood">Mood (0–10)</span>
+                <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
+                <small><span data-i18n="value">Value:</span> <span id="moodVal">5</span></small>
+              </label>
+              <label><span data-i18n="urge">Urge (0–10)</span>
+                <input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value">
+                <small><span data-i18n="value">Value:</span> <span id="urgeVal">3</span></small>
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label><span data-i18n="sleep">Hours of sleep</span><input type="number" name="sleep" min="0" max="24" value="7"></label>
+              <label><span data-i18n="cravingWindow">Craving window</span>
+                <select name="window">
+                  <option value="morning" data-i18n="morning">Morning</option>
+                  <option value="afternoon" data-i18n="afternoon">Afternoon</option>
+                  <option value="evening" data-i18n="evening">Evening</option>
+                  <option value="night" data-i18n="night">Night</option>
+                </select>
+              </label>
+            </div>
+
             <label><span data-i18n="actionTook">Helpful action you took</span><input type="text" name="action" maxlength="120" placeholder="Walk, water, texted a friend..."></label>
-            <label><span data-i18n="note">Note (optional)</span><textarea name="note" rows="3"></textarea></label>
+            <label><span data-i18n="note">Note (optional)</span><textarea name="note" rows="3" placeholder=""></textarea></label>
+
+            <fieldset class="radios">
+              <legend class="fancy" data-i18n="exposure">Exposure level today</legend>
+              <label><input type="radio" name="exposure" value="low" checked> <span data-i18n="low">Low</span></label>
+              <label><input type="radio" name="exposure" value="medium"> <span data-i18n="medium">Medium</span></label>
+              <label><input type="radio" name="exposure" value="high"> <span data-i18n="high">High</span></label>
+            </fieldset>
+
             <div class="actions">
               <button class="btn primary" type="submit" data-i18n="save">Save check-in</button>
               <button class="btn subtle" data-nav="home" type="button" data-i18n="back">Back</button>
             </div>
           </form>
         </div>
+
         <div class="card soft">
-          <h3 data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <div class="actions">
-            <button class="btn" id="markTodayOk">✅ <span data-i18n="markSuccess">Mark success</span></button>
-            <button class="btn danger" id="markTodaySlip">❌ <span data-i18n="markSlip">Mark slip</span></button>
+          <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
+          <div class="actions pro-actions">
+            <button class="btn success" id="markTodayOk2" data-i18n="markSuccess">Record success today</button>
+            <button class="btn danger" id="markTodaySlip2" data-i18n="markSlip">Record slip today</button>
           </div>
+          <h3 class="fancy" data-i18n="recent">Recent notes</h3>
           <ul id="recentNotes" class="list"></ul>
         </div>
       </div>
@@ -160,7 +207,7 @@
 
     <!-- SOS (red) -->
     <section id="view-sos" class="card sos" hidden>
-      <h2>🚨 <span data-i18n="sos">Craving SOS</span></h2>
+      <h2 class="fancy">🚨 <span data-i18n="sos">Craving SOS</span></h2>
       <ol class="sos-steps">
         <li data-i18n="s1"><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
         <li data-i18n="s2"><strong>Urge surfing.</strong> Notice the urge rising and falling.</li>
@@ -174,7 +221,7 @@
         </div>
         <div class="card soft">
           <h3 data-i18n="quickNotes">Quick Notes</h3>
-          <textarea id="sosNote" rows="3" placeholder="What triggered this? What helped?"></textarea>
+          <textarea id="sosNote" rows="3" placeholder=""></textarea>
           <div class="actions"><button class="btn" id="saveSos" data-i18n="save">Save</button></div>
         </div>
       </div>
@@ -182,9 +229,9 @@
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Combined Guide (Tips + 10 Steps + Deep Guide) -->
+    <!-- Guide (tips + steps + deep) -->
     <section id="view-guide" class="card" hidden>
-      <h2 id="guideTitle">Guide</h2>
+      <h2 class="fancy" id="guideTitle">Guide</h2>
       <div class="guide-tabs">
         <button class="btn tab" data-tab="tips" data-i18n="tips">Tips</button>
         <button class="btn tab" data-tab="steps" data-i18n="steps">10 Steps</button>
@@ -200,9 +247,9 @@
       </div>
     </section>
 
-    <!-- Helpful materials + contribution gate -->
+    <!-- Materials -->
     <section id="view-program" class="card" hidden>
-      <h2 id="programTitle">Helpful materials</h2>
+      <h2 class="fancy" id="programTitle">Helpful materials</h2>
       <ul id="materialsList" class="list bullets"></ul>
       <div id="contribWrap" class="contrib" hidden>
         <h3 data-i18n="contribTitle">Contribute tips (1-year badge required)</h3>
@@ -214,19 +261,30 @@
 
     <!-- Badges -->
     <section id="view-badges" class="card" hidden>
-      <h2 data-i18n="badges">Badges & Titles</h2>
-      <h3 data-i18n="sobriety">Sobriety badges</h3>
-      <div id="sobrietyBadges" class="badges"></div>
-      <h3 data-i18n="social">Social badges</h3>
-      <div id="socialBadges" class="badges"></div>
-      <h3 data-i18n="currentTitle">Your current chat title</h3>
+      <h2 class="fancy" data-i18n="badges">Badges & Titles</h2>
+
+      <h3 class="fancy" data-i18n="sobriety">Sobriety badges</h3>
+      <div id="sobrietyGrid" class="badge-grid"></div>
+
+      <h3 class="fancy" data-i18n="social">Social badges</h3>
+      <div id="socialGrid" class="badge-grid"></div>
+
+      <h3 class="fancy" data-i18n="currentTitle">Your current chat title</h3>
       <p id="currentTitle" class="muted">—</p>
+
+      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
+    </section>
+
+    <!-- Research (≈20 lines, evidence-based) -->
+    <section id="view-research" class="card" hidden>
+      <h2 class="fancy" data-i18n="research">Research</h2>
+      <div id="researchBody"></div>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
     <!-- Community -->
     <section id="view-community" class="card" hidden>
-      <h2 data-i18n="chat">Community chat</h2>
+      <h2 class="fancy" data-i18n="chat">Community chat</h2>
       <p class="muted" data-i18n="chatNote">Peer support only—unmoderated; click a name to befriend.</p>
       <div id="globalChat" class="chat-box"></div>
       <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
@@ -239,26 +297,29 @@
       </div>
     </section>
 
-    <!-- Friends / Requests -->
+    <!-- Friends -->
     <section id="view-friends" class="card" hidden>
-      <h2 data-i18n="friends">Friends</h2>
+      <h2 class="fancy" data-i18n="friends">Friends</h2>
       <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
-      <h3 data-i18n="requests">Requests</h3>
+      <h3 class="fancy" data-i18n="requests">Requests</h3>
       <ul id="requestsList" class="list"></ul>
-      <h3 data-i18n="friendsList">Friends</h3>
+      <h3 class="fancy" data-i18n="friendsList">Friends</h3>
       <ul id="friendList" class="list"></ul>
       <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
   </main>
 
-  <!-- Tabbar (now includes Guide + Badges) -->
+  <!-- Tabbar: 8 centered tabs -->
   <nav class="tabbar" aria-label="Primary">
     <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
     <button data-nav="checkin" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg><span data-i18n="checkin">Check-in</span></button>
     <button data-nav="calendar" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg><span data-i18n="calendar">Calendar</span></button>
     <button data-nav="guide" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg><span data-i18n="guide">Guide</span></button>
     <button data-nav="badges" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg><span data-i18n="badges">Badges</span></button>
+    <button data-nav="research" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg><span data-i18n="research">Research</span></button>
+    <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Chat</span></button>
+    <button data-nav="friends" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg><span data-i18n="friends">Friends</span></button>
   </nav>
 
   <footer class="legal">
