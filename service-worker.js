@@ -1,5 +1,5 @@
 // Basic offline caching (cache first for app shell)
-const CACHE = "rehabit-v1";
+const CACHE = "rehabit-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,7 +8,12 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
-  "./assets/favicon.png"
+  "./assets/favicon.png",
+  "./assets/tech.png",
+  "./assets/smoking.png",
+  "./assets/alcohol.png",
+  "./assets/gambling.png",
+  "./assets/drugs.png"
 ];
 
 self.addEventListener("install", (e) => {
@@ -28,7 +33,6 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     caches.match(req).then(cached => cached ||
       fetch(req).then(res => {
-        // cache GET same-origin files
         if (req.method === "GET" && new URL(req.url).origin === self.location.origin) {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(req, clone));
