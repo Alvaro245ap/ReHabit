@@ -1,5 +1,4 @@
-// Cache updated to include possible asset icons for addiction types.
-const CACHE = "rehabit-v3";
+const CACHE = "rehabit-light-v1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,7 +18,6 @@ const ASSETS = [
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
-
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -27,7 +25,6 @@ self.addEventListener("activate", (e) => {
     ).then(() => self.clients.claim())
   );
 });
-
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   e.respondWith(
