@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReHabit — Your Recovery Companion</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>ReHabit</h1>
+    <button id="installBtn" class="btn subtle" aria-label="Install app" hidden>Install</button>
+  </header>
+
+  <section class="crisis-banner" role="region" aria-label="Crisis support">
+    <p><strong>If you’re in immediate danger:</strong> contact local emergency services. If you feel at risk of self-harm, seek help now:
+      <a href="https://www.iasp.info/crisis-centres-helplines/" target="_blank" rel="noopener">Find helplines worldwide</a>.
+      ReHabit does not replace professional care.
+    </p>
+  </section>
+
+  <main id="app" class="container">
+    <!-- Onboarding -->
+    <section id="view-onboarding" class="card" hidden>
+      <h2>Welcome 👋</h2>
+      <p>Set your focus area and a quit/reduction date to start tracking progress.</p>
+      <form id="onboardingForm" class="grid">
+        <label>
+          Focus area
+          <select name="focus" required>
+            <option value="" disabled selected>Select one</option>
+            <option>Alcohol</option>
+            <option>Nicotine</option>
+            <option>Drugs</option>
+            <option>Gambling</option>
+            <option>Screen time</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>
+          Quit/target date
+          <input type="date" name="quitDate" required>
+        </label>
+        <label>
+          Your main motivation (optional)
+          <input type="text" name="motivation" maxlength="120" placeholder="e.g., Be healthier for my family" />
+        </label>
+        <button class="btn primary" type="submit">Start ReHabit</button>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="view-dashboard" hidden>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Today</h2>
+          <p id="todayDate"></p>
+          <p><strong>Days since target:</strong> <span id="streakDays">0</span></p>
+          <p><strong>Focus:</strong> <span id="focusLabel">—</span></p>
+          <div class="actions">
+            <button class="btn" data-nav="checkin">Daily Check-in</button>
+            <button class="btn" data-nav="sos">SOS (Craving)</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Recent notes</h2>
+          <ul id="recentNotes" class="list"></ul>
+          <div class="actions">
+            <button class="btn" data-nav="journal">Open Journal</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Check-in -->
+    <section id="view-checkin" class="card" hidden>
+      <h2>Daily Check-in</h2>
+      <form id="checkinForm" class="grid">
+        <label>
+          Mood (0–10)
+          <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
+          <small>Value: <span id="moodVal">5</span></small>
+        </label>
+        <label>
+          Urge (0–10)
+          <input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value">
+          <small>Value: <span id="urgeVal">3</span></small>
+        </label>
+        <label>
+          Note (optional)
+          <textarea name="note" rows="3" placeholder="What’s going on today?"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save check-in</button>
+          <button class="btn subtle" data-nav="dashboard" type="button">Back</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SOS (Craving) -->
+    <section id="view-sos" class="card" hidden>
+      <h2>Craving SOS</h2>
+      <ol class="sos-steps">
+        <li><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
+        <li><strong>Urge surfing.</strong> Notice the urge rising and falling like a wave. It will pass.</li>
+        <li><strong>Do one alternative action.</strong> Walk, shower, text a friend, drink water.</li>
+      </ol>
+
+      <div class="grid-2">
+        <div class="card soft">
+          <h3>Breathing Timer (1:00)</h3>
+          <div id="timer" aria-live="polite">01:00</div>
+          <div class="actions">
+            <button class="btn" id="startTimer">Start</button>
+            <button class="btn subtle" id="resetTimer">Reset</button>
+          </div>
+        </div>
+        <div class="card soft">
+          <h3>Quick Notes</h3>
+          <textarea id="sosNote" rows="3" placeholder="What triggered this? What helped?"></textarea>
+          <div class="actions">
+            <button class="btn" id="saveSos">Save note</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="resources">
+        <h3>Helpful actions</h3>
+        <div class="chips" id="copingChips"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn subtle" data-nav="dashboard">Back</button>
+      </div>
+    </section>
+
+    <!-- Journal & Triggers -->
+    <section id="view-journal" class="card" hidden>
+      <h2>Journal & Triggers</h2>
+      <form id="journalForm" class="grid">
+        <label>
+          Add a trigger or thought
+          <input type="text" name="entry" maxlength="160" placeholder="e.g., Stress after work; I wanted to…">
+        </label>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <ul id="journalList" class="list"></ul>
+      <div class="actions">
+        <button class="btn subtle" data-nav="dashboard">Back</button>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="card" hidden>
+      <h2>Settings</h2>
+      <div class="grid-2">
+        <div class="card soft">
+          <h3>Profile</h3>
+          <form id="profileForm" class="grid">
+            <label>
+              Focus area
+              <input type="text" name="focus">
+            </label>
+            <label>
+              Target date
+              <input type="date" name="quitDate">
+            </label>
+            <label>
+              Motivation
+              <input type="text" name="motivation" maxlength="120">
+            </label>
+            <button class="btn" type="submit">Save</button>
+          </form>
+        </div>
+        <div class="card soft">
+          <h3>Data</h3>
+          <div class="actions">
+            <button class="btn" id="exportBtn">Export JSON</button>
+            <label class="file">
+              <input type="file" id="importFile" accept="application/json">
+              <span class="btn">Import JSON</span>
+            </label>
+            <button class="btn danger" id="resetBtn">Factory Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn subtle" data-nav="dashboard">Back</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Primary">
+    <button data-nav="dashboard" aria-label="Dashboard">🏠</button>
+    <button data-nav="checkin" aria-label="Check-in">📝</button>
+    <button data-nav="sos" aria-label="SOS">🆘</button>
+    <button data-nav="journal" aria-label="Journal">📒</button>
+    <button data-nav="settings" aria-label="Settings">⚙️</button>
+  </nav>
+
+  <footer class="legal">
+    <small>© <span id="year"></span> ReHabit. For support only—does not replace professional treatment.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
