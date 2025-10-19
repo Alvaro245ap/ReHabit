@@ -115,3 +115,15 @@ input[type="range"] { width: 100%; }
   margin: 16px auto 72px; max-width: var(--maxw);
   padding: 0 16px;
 }
+/* Addiction chooser */
+.addiction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; }
+.addiction-card {
+  display: grid; gap: 8px; justify-items: center; padding: 12px;
+  border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; color: #111;
+  cursor: pointer; transition: transform .1s ease;
+}
+.addiction-card:hover { transform: translateY(-2px); }
+.addiction-card img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; }
+.addiction-card input { display: none; }
+.addiction-card input:checked + img, .addiction-card input:checked ~ img { outline: 3px solid var(--primary); outline-offset: 4px; }
+.addiction-card span { font-weight: 600; }
