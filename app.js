@@ -4,6 +4,53 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 const state = {
+  // simple suggestions per addiction
+const ADVICE = {
+  "Technology": [
+    "Set app limits (start with 30–60 min blocks).",
+    "Keep the phone outside the bedroom.",
+    "Replace doom scroll with a 10-min walk."
+  ],
+  "Smoking": [
+    "Delay 5 minutes; drink water; breathe slowly.",
+    "Avoid triggers (coffee + phone) for first week.",
+    "Keep sugar-free gum or carrot sticks handy."
+  ],
+  "Alcohol": [
+    "Track urges; plan alcohol-free evenings.",
+    "Have a script to say 'No thanks, I’m cutting down.'",
+    "Keep non-alcoholic drinks ready."
+  ],
+  "Gambling": [
+    "Self-exclude from sites; block payments/cards.",
+    "Tell a trusted person; share your goals.",
+    "Fill evenings with planned, low-stim tasks."
+  ],
+  "Other drugs": [
+    "Avoid people/places tied to use.",
+    "Eat, sleep, hydrate—withdrawal is harder when depleted.",
+    "Seek professional help; consider support groups."
+  ]
+};
+
+// basic daily checklist (you can customize later)
+const CHECKLIST = [
+  "Drink 2 glasses of water in the morning",
+  "5-minute breathing / meditation",
+  "Move your body for 10 minutes",
+  "Review motivation statement",
+  "Plan one healthy replacement activity"
+];
+
+// store which checklist items are done (by date)
+const doneByDate = () => {
+  const k = "rehabit_checklist_done";
+  return {
+    get: () => JSON.parse(localStorage.getItem(k) || "{}"),
+    set: (obj) => localStorage.setItem(k, JSON.stringify(obj))
+  };
+};
+
   profile: null,
   checkins: [],   // {dateISO, mood, urge, note}
   journal: [],    // {id, text, ts}
@@ -24,6 +71,26 @@ const STORAGE_KEYS = {
   CHECKINS: "rehabit_checkins",
   JOURNAL: "rehabit_journal"
 };
+function drawChart(canvas, values) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  // axes
+  ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(30,10); ctx.lineTo(30,h-20); ctx.lineTo(w-10,h-20); ctx.stroke();
+  if (!values.length) return;
+  const max = Math.max(...values, 1);
+  const dx = (w - 50) / (values.length - 1 || 1);
+  ctx.strokeStyle = "#0ea5e9"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  values.forEach((v,i) => {
+    const x = 30 + i*dx;
+    const y = (h-20) - (v/max)*(h-40);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
 
 function load() {
   try {
@@ -46,6 +113,11 @@ const views = ["onboarding","dashboard","checkin","sos","journal","settings"];
 function show(view) {
   views.forEach(v => document.querySelector(`#view-${v}`)?.setAttribute("hidden", "true"));
   document.querySelector(`#view-${view}`)?.removeAttribute("hidden");
+  if (view === "home") renderHome();
+if (view === "checklist") renderChecklist();
+if (view === "progress") renderProgress();
+if (view === "advice") renderAdvice();
+
   if (view === "dashboard") renderDashboard();
   if (view === "journal")   renderJournal();
   if (view === "settings")  renderSettings();
@@ -149,6 +221,86 @@ function wire() {
       show(v);
     });
   });
+  function renderHome() {
+  document.querySelector("#streakHome").textContent = daysSince(state.profile?.quitDate);
+  // Build a tiny 14-day streak history from checkins (1 if checked in, else 0)
+  const last14 = [];
+  const today = new Date();
+  for (let i=13; i>=0; i--) {
+    const day = new Date(today); day.setDate(today.getDate()-i);
+    const isoDay = day.toISOString().slice(0,10);
+    const has = state.checkins.some(c => c.dateISO.slice(0,10)===isoDay);
+    last14.push(has ? 1 : 0);
+  }
+  drawChart(document.querySelector("#streakChart"), last14);
+  // Mini checklist (today only)
+  const ul = document.querySelector("#checklistToday");
+  ul.innerHTML = "";
+  const store = doneByDate(); const map = store.get();
+  const key = new Date().toISOString().slice(0,10);
+  if (!map[key]) map[key] = {};
+  CHECKLIST.forEach((text, idx) => {
+    const li = document.createElement("li");
+    const id = `today-${idx}`;
+    const checked = !!map[key][idx];
+    li.innerHTML = `
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input type="checkbox" id="${id}" ${checked?"checked":""}>
+        <span>${text}</span>
+      </label>`;
+    li.querySelector("input").onchange = (e) => {
+      map[key][idx] = e.target.checked;
+      store.set(map);
+    };
+    ul.appendChild(li);
+  });
+}
+
+function renderChecklist() {
+  const ul = document.querySelector("#checklistFull");
+  ul.innerHTML = "";
+  const store = doneByDate(); const map = store.get();
+  const key = new Date().toISOString().slice(0,10);
+  if (!map[key]) map[key] = {};
+  CHECKLIST.forEach((text, idx) => {
+    const li = document.createElement("li");
+    const id = `full-${idx}`;
+    const checked = !!map[key][idx];
+    li.innerHTML = `
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input type="checkbox" id="${id}" ${checked?"checked":""}>
+        <span>${text}</span>
+      </label>`;
+    li.querySelector("input").onchange = (e) => {
+      map[key][idx] = e.target.checked; store.set(map);
+    };
+    ul.appendChild(li);
+  });
+}
+
+function renderProgress() {
+  document.querySelector("#streakProgress").textContent = daysSince(state.profile?.quitDate);
+  // Use same last14 data as Home
+  const last14 = [];
+  const today = new Date();
+  for (let i=29; i>=0; i--) {
+    const day = new Date(today); day.setDate(today.getDate()-i);
+    const isoDay = day.toISOString().slice(0,10);
+    const has = state.checkins.some(c => c.dateISO.slice(0,10)===isoDay);
+    last14.push(has ? 1 : 0);
+  }
+  drawChart(document.querySelector("#streakChartBig"), last14);
+}
+
+function renderAdvice() {
+  const a = state.profile?.focus || "Technology";
+  document.querySelector("#adviceTitle").textContent = `${a} — Helpful tips`;
+  const body = document.querySelector("#adviceBody");
+  const items = ADVICE[a] || [];
+  body.innerHTML = items.length ? `<ul>${items.map(t=>`<li>${t}</li>`).join("")}</ul>`
+                               : `<p>No advice found yet.</p>`;
+}
+
 
   // Onboarding
   document.querySelector("#onboardingForm").addEventListener("submit", (e) => {
@@ -302,6 +454,14 @@ window.addEventListener("DOMContentLoaded", () => {
     show("onboarding");
   } else {
     show("dashboard");
+  }
+  wire();
+});
+window.addEventListener("DOMContentLoaded", () => {
+  if (!state.profile) {
+    show("onboarding");
+  } else {
+    show("home"); // go to new Home
   }
   wire();
 });
