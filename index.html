@@ -82,6 +82,34 @@
         </div>
       </div>
     </section>
+          <!-- Home (light hero + quick info) -->
+<section id="view-home" hidden>
+  <div class="home-hero">
+    <h2>Welcome to ReHabit</h2>
+    <p>Your private companion to build healthier habits—one day at a time.</p>
+    <div class="hero-actions">
+      <button class="btn primary" data-nav="checklist">Today’s checklist</button>
+      <button class="btn" data-nav="progress">View progress</button>
+      <button class="btn" data-nav="advice">Tips for my addiction</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card soft">
+      <h3>Streak</h3>
+      <p><strong>Days since target:</strong> <span id="streakHome">0</span></p>
+      <canvas id="streakChart" width="400" height="180" aria-label="Progress chart"></canvas>
+    </div>
+    <div class="card soft">
+      <h3>Today’s checklist</h3>
+      <ul id="checklistToday" class="list"></ul>
+      <div class="actions">
+        <button class="btn" id="notifyBtn">Enable daily reminder</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 
     <!-- Check-in -->
     <section id="view-checkin" class="card" hidden>
@@ -199,6 +227,28 @@
         <button class="btn subtle" data-nav="dashboard">Back</button>
       </div>
     </section>
+          <!-- Checklist page -->
+<section id="view-checklist" class="card" hidden>
+  <h2>Daily checklist</h2>
+  <ul id="checklistFull" class="list"></ul>
+  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+</section>
+
+<!-- Progress page -->
+<section id="view-progress" class="card" hidden>
+  <h2>Progress</h2>
+  <p><strong>Current streak:</strong> <span id="streakProgress">0</span> days</p>
+  <canvas id="streakChartBig" width="600" height="240" aria-label="Progress chart"></canvas>
+  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+</section>
+
+<!-- Advice page (changes by selected addiction) -->
+<section id="view-advice" class="card" hidden>
+  <h2 id="adviceTitle">Advice</h2>
+  <div id="adviceBody"></div>
+  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+</section>
+
   </main>
 
   <nav class="tabbar" aria-label="Primary">
