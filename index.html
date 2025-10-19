@@ -30,27 +30,35 @@
       <form id="onboardingForm" class="grid">
         <label>
           Focus area
-          <select name="focus" required>
-            <option value="" disabled selected>Select one</option>
-            <option>Alcohol</option>
-            <option>Nicotine</option>
-            <option>Drugs</option>
-            <option>Gambling</option>
-            <option>Screen time</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label>
-          Quit/target date
-          <input type="date" name="quitDate" required>
-        </label>
-        <label>
-          Your main motivation (optional)
-          <input type="text" name="motivation" maxlength="120" placeholder="e.g., Be healthier for my family" />
-        </label>
-        <button class="btn primary" type="submit">Start ReHabit</button>
-      </form>
-    </section>
+<!-- replace the Focus select with this -->
+<div class="addiction-grid">
+  <label class="addiction-card">
+    <input type="radio" name="focus" value="Technology" required>
+    <img src="assets/tech.png" alt="Technology">
+    <span>Technology</span>
+  </label>
+  <label class="addiction-card">
+    <input type="radio" name="focus" value="Smoking" required>
+    <img src="assets/smoking.png" alt="Smoking">
+    <span>Smoking</span>
+  </label>
+  <label class="addiction-card">
+    <input type="radio" name="focus" value="Alcohol" required>
+    <img src="assets/alcohol.png" alt="Alcohol">
+    <span>Alcohol</span>
+  </label>
+  <label class="addiction-card">
+    <input type="radio" name="focus" value="Gambling" required>
+    <img src="assets/gambling.png" alt="Gambling">
+    <span>Gambling</span>
+  </label>
+  <label class="addiction-card">
+    <input type="radio" name="focus" value="Other drugs" required>
+    <img src="assets/drugs.png" alt="Other drugs">
+    <span>Other drugs</span>
+  </label>
+</div>
+
 
     <!-- Dashboard -->
     <section id="view-dashboard" hidden>
