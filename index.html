@@ -264,6 +264,41 @@
   <div id="adviceBody"></div>
   <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
 </section>
+<!-- Community (global chat) -->
+<section id="view-community" class="card" hidden>
+  <h2>Community chat</h2>
+  <div id="globalChat" class="chat-box"></div>
+  <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
+    <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
+    <button class="btn">Send</button>
+  </form>
+  <div class="actions">
+    <button class="btn" data-nav="friends">Friends & private chat</button>
+    <button class="btn subtle" data-nav="home">Back</button>
+  </div>
+</section>
+
+<!-- Friends / Private -->
+<section id="view-friends" class="card" hidden>
+  <h2>Friends</h2>
+  <p>Your code: <code id="myUid">—</code></p>
+  <form id="addFriendForm" class="grid-2">
+    <label>Add friend by code (their UID)
+      <input type="text" name="uid" placeholder="friend UID">
+    </label>
+    <button class="btn">Add</button>
+  </form>
+  <ul id="friendList" class="list"></ul>
+
+  <h3>Private chat</h3>
+  <div id="dmWrap" class="chat-box"></div>
+  <form id="dmForm" class="grid" style="grid-template-columns:1fr auto;">
+    <input type="text" name="msg" placeholder="Write a private message…" maxlength="300">
+    <button class="btn">Send</button>
+  </form>
+
+  <div class="actions"><button class="btn subtle" data-nav="community">Back</button></div>
+</section>
 
   </main>
 
