@@ -1,4 +1,4 @@
-// ReHabit – PWA with addiction picker, home view, checklist+notify, charts, and Firebase chat
+// ReHabit – PWA updated UI, 10-step programs, badge system, seeded chat examples
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -24,30 +24,32 @@ const STORAGE = {
   CHECKINS: "rehabit_checkins",
   JOURNAL: "rehabit_journal",
   CHECKLIST_DONE: "rehabit_checklist_done",
-  NOTIFY: "rehabit_notify"
+  NOTIFY: "rehabit_notify",
+  BADGES: "rehabit_badges",
+  MATERIALS: "rehabit_materials" // user-submitted tips, keyed by addiction
 };
 
-// Advice per addiction
+// Advice per addiction (short)
 const ADVICE = {
   "Technology": [
-    "Set app limits (start with 30–60 min blocks).",
-    "Keep the phone outside the bedroom.",
-    "Replace doom scrolling with a 10-minute walk."
+    "Set app limits (30–60 min blocks).",
+    "Charge your phone outside the bedroom.",
+    "Swap doom scrolling for a 10-minute walk."
   ],
   "Smoking": [
     "Delay 5 minutes; drink water; breathe slowly.",
-    "Avoid triggers (coffee + phone) for first week.",
+    "Avoid triggers (coffee + phone) early on.",
     "Keep sugar-free gum or carrot sticks handy."
   ],
   "Alcohol": [
     "Plan alcohol-free evenings.",
-    "Have a script to say “No thanks, I’m cutting down.”",
-    "Keep non-alcoholic drinks ready."
+    "Prepare a script to say “No thanks, I’m cutting down.”",
+    "Stock non-alcoholic drinks you like."
   ],
   "Gambling": [
-    "Self-exclude from sites and block payments/cards.",
-    "Tell a trusted person; share your goals.",
-    "Fill evenings with planned, low-stim tasks."
+    "Self-exclude from sites; block payments/cards.",
+    "Tell a trusted person; share progress weekly.",
+    "Fill evenings with planned, low-stimulation tasks."
   ],
   "Other drugs": [
     "Avoid people/places tied to use.",
@@ -56,13 +58,109 @@ const ADVICE = {
   ]
 };
 
-// Daily checklist items
-const CHECKLIST = [
-  "Drink 2 glasses of water in the morning",
-  "5-minute breathing / meditation",
-  "Move your body for 10 minutes",
-  "Review motivation statement",
-  "Plan one healthy replacement activity"
+// 10-step programs per addiction (high-level, actionable)
+const PROGRAMS = {
+  "Technology": [
+    "Clarify target: screen hours per day and blackout hours (e.g., 10pm–7am).",
+    "Remove friction: log out, uninstall 2 most problematic apps.",
+    "Create a ‘ready’ phone: only essentials on Home Screen.",
+    "Schedule 3 anchor activities daily (walk, call, read).",
+    "Use timers: 25 min focus, 5 min break; repeat.",
+    "Bedtime stack: phone docked away + analog alarm clock.",
+    "Environment: charger outside bedroom; no phone at meals.",
+    "Track urges: write trigger → urge → action → result.",
+    "Relapse plan: what to do after lapses (reset + one action).",
+    "Weekly review: adjust limits, celebrate wins, share with friend."
+  ],
+  "Smoking": [
+    "Set a quit date within 7–14 days; tell one ally.",
+    "List triggers (coffee, commute) and alternatives (gum, walk).",
+    "NRT options: patches/lozenges; prepare ahead.",
+    "Clean environment: wash clothes, remove lighters/ashtrays.",
+    "Delay strategy: 5-min rule + water + deep exhale.",
+    "Mouth & hands: gum, toothpicks, stress ball.",
+    "Urge log: time, intensity, action, outcome.",
+    "Exercise: 10–15 min brisk walk to reduce cravings.",
+    "Relapse plan: one small reset, message your ally.",
+    "Weekly reward: spend saved money on something meaningful."
+  ],
+  "Alcohol": [
+    "Define goal: zero or specific weekly limit.",
+    "Remove cues: clear alcohol at home; avoid first rounds.",
+    "Replacement ritual: fancy NA drink in your glass.",
+    "Plan scripts: 'No thanks, I’m taking a break.'",
+    "Track urges: HALT (Hungry/Angry/Lonely/Tired) check.",
+    "Evening routine: meal → walk → shower → wind-down.",
+    "Social guardrails: arrive late, leave early.",
+    "Stress plan: breathing, call, journaling prompt.",
+    "Relapse plan: limit damage, hydrate, recommit.",
+    "Weekly check-in with a friend; celebrate sober wins."
+  ],
+  "Gambling": [
+    "Self-exclude from sites; enable bank gambling blocks.",
+    "Accountability: share statements with a trusted ally.",
+    "Budget firewall: separate essentials account.",
+    "Trigger map: payday, sports events—add alternative plans.",
+    "Delay + urge surfing: ride the wave 10 min.",
+    "Blockers: DNS/app blockers on all devices.",
+    "Emergency actions: hand cards to ally on trigger days.",
+    "Relapse plan: call ally, lock access, review triggers.",
+    "Build replacement dopamine: exercise, hobbies, volunteering.",
+    "Weekly review with ally; adjust blockers and plans."
+  ],
+  "Other drugs": [
+    "Pick a start date; tell a trusted person.",
+    "Medical check: consult a clinician about withdrawal risks.",
+    "Environment reset: remove paraphernalia; clean spaces.",
+    "Hydration/nutrition/sleep plan for first two weeks.",
+    "Trigger list & avoidance plan (people/places).",
+    "Coping set: breathing, cold water, walk, call list.",
+    "Support: consider groups or counselling.",
+    "Relapse plan: single-use limit, disposal, contact support.",
+    "Daily log: urges, actions, outcomes.",
+    "Weekly reflection & reward; adjust plan with support."
+  ]
+};
+
+// Materials starter per addiction
+const MATERIALS_DEFAULT = {
+  "Technology": [
+    "Book: Digital Minimalism — Cal Newport",
+    "App: Focus modes / site blockers",
+    "Article: The value of stopping (urge surfing basics)"
+  ],
+  "Smoking": [
+    "Guide: How to use nicotine patches safely",
+    "App: Smoke-free day counter",
+    "Article: Delay, deep breathing, drink water"
+  ],
+  "Alcohol": [
+    "Community: Alcohol-free groups",
+    "Drink ideas: NA beers & mocktails",
+    "Article: HALT check before drinking"
+  ],
+  "Gambling": [
+    "Self-exclusion portals",
+    "Bank gambling transaction blocks",
+    "Article: Dopamine replacement activities"
+  ],
+  "Other drugs": [
+    "Hotlines & local services",
+    "Guide: Withdrawal safety basics",
+    "Article: Building a support network"
+  ]
+};
+
+// Badge thresholds (days)
+const BADGE_THRESHOLDS = [
+  { days: 7,  label: "1 week" },
+  { days: 30, label: "1 month" },
+  { days: 60, label: "2 months" },
+  { days: 90, label: "3 months" },
+  { days: 120,label: "4 months" },
+  { days: 150,label: "5 months" },
+  { days: 365,label: "1 year" },
+  { days: 730,label: "2 years" }
 ];
 
 /* ---------- Storage ---------- */
@@ -82,6 +180,18 @@ const checklistStore = {
   get: () => JSON.parse(localStorage.getItem(STORAGE.CHECKLIST_DONE) || "{}"),
   set: (obj) => localStorage.setItem(STORAGE.CHECKLIST_DONE, JSON.stringify(obj))
 };
+function getBadges() { return JSON.parse(localStorage.getItem(STORAGE.BADGES) || "[]"); }
+function setBadges(arr) { localStorage.setItem(STORAGE.BADGES, JSON.stringify(arr)); }
+function getMaterials() {
+  const raw = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
+  return { ...MATERIALS_DEFAULT, ...raw };
+}
+function addMaterial(focus, tip) {
+  const map = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
+  map[focus] = map[focus] || [];
+  map[focus].push(tip);
+  localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(map));
+}
 
 /* ---------- Utils ---------- */
 function formatDate(d) { return new Intl.DateTimeFormat(undefined, { dateStyle: "full" }).format(d); }
@@ -115,7 +225,7 @@ function drawChart(canvas, values) {
 }
 
 /* ---------- Navigation ---------- */
-const views = ["onboarding","dashboard","home","checkin","sos","journal","settings","checklist","progress","advice","community","friends"];
+const views = ["onboarding","dashboard","home","checkin","sos","journal","settings","checklist","progress","advice","program","community","friends"];
 function show(view) {
   views.forEach(v => $(`#view-${v}`)?.setAttribute("hidden", "true"));
   $(`#view-${view}`)?.removeAttribute("hidden");
@@ -127,6 +237,7 @@ function show(view) {
   if (view === "checklist") renderChecklist();
   if (view === "progress")  renderProgress();
   if (view === "advice")    renderAdvice();
+  if (view === "program")   renderProgram();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -153,7 +264,6 @@ function renderDashboard() {
     list.appendChild(li);
   });
 }
-
 function renderJournal() {
   const list = $("#journalList");
   list.innerHTML = "";
@@ -171,7 +281,6 @@ function renderJournal() {
     list.appendChild(li);
   });
 }
-
 function renderSettings() {
   const f = $("#profileForm");
   if (!f) return;
@@ -179,24 +288,33 @@ function renderSettings() {
   f.quitDate.value = state.profile?.quitDate || "";
   f.motivation.value = state.profile?.motivation || "";
 }
-
 function renderSOS() {
   const chipWrap = $("#copingChips");
   chipWrap.innerHTML = "";
   state.coping.forEach(text => {
     const b = document.createElement("button");
-    b.className = "chip";
-    b.textContent = text;
-    b.onclick = () => {
-      $("#sosNote").value = ($("#sosNote").value + "\nTried: " + text).trim();
-    };
+    b.className = "chip"; b.textContent = text;
+    b.onclick = () => { $("#sosNote").value = ($("#sosNote").value + "\nTried: " + text).trim(); };
     chipWrap.appendChild(b);
   });
 }
-
 function renderHome() {
-  $("#streakHome").textContent = daysSince(state.profile?.quitDate);
-  // last 14 days — 1 if any check-in that day, else 0
+  const days = daysSince(state.profile?.quitDate);
+  $("#streakHome").textContent = days;
+
+  // badges
+  const have = new Set(getBadges());
+  BADGE_THRESHOLDS.forEach(b => { if (days >= b.days) have.add(b.days); });
+  setBadges([...have]);
+  const wrap = $("#badgeWrap"); wrap.innerHTML = "";
+  BADGE_THRESHOLDS.forEach(b => {
+    const div = document.createElement("span");
+    div.className = "badge" + (have.has(b.days) ? " earned" : "");
+    div.textContent = b.label;
+    wrap.appendChild(div);
+  });
+
+  // chart last 14 days (1 if any check-in that day)
   const last14 = [];
   const today = new Date();
   for (let i=13; i>=0; i--) {
@@ -208,8 +326,7 @@ function renderHome() {
   drawChart($("#streakChart"), last14);
 
   // Today checklist
-  const ul = $("#checklistToday");
-  ul.innerHTML = "";
+  const ul = $("#checklistToday"); ul.innerHTML = "";
   const store = checklistStore; const map = store.get();
   const key = new Date().toISOString().slice(0,10);
   if (!map[key]) map[key] = {};
@@ -226,7 +343,6 @@ function renderHome() {
     ul.appendChild(li);
   });
 }
-
 function renderChecklist() {
   const ul = $("#checklistFull");
   ul.innerHTML = "";
@@ -246,7 +362,6 @@ function renderChecklist() {
     ul.appendChild(li);
   });
 }
-
 function renderProgress() {
   $("#streakProgress").textContent = daysSince(state.profile?.quitDate);
   const last30 = [];
@@ -259,7 +374,6 @@ function renderProgress() {
   }
   drawChart($("#streakChartBig"), last30);
 }
-
 function renderAdvice() {
   const a = state.profile?.focus || "Technology";
   $("#adviceTitle").textContent = `${a} — Helpful tips`;
@@ -267,6 +381,20 @@ function renderAdvice() {
   const items = ADVICE[a] || [];
   body.innerHTML = items.length ? `<ul>${items.map(t=>`<li>${escapeHTML(t)}</li>`).join("")}</ul>`
                                 : `<p>No advice found yet.</p>`;
+}
+function renderProgram() {
+  const a = state.profile?.focus || "Technology";
+  $("#programTitle").textContent = `${a}: 10-step program`;
+  const steps = PROGRAMS[a] || [];
+  $("#programList").innerHTML = steps.map(s=>`<li>${escapeHTML(s)}</li>`).join("");
+
+  const materials = getMaterials()[a] || [];
+  $("#materialsList").innerHTML = materials.map(m=>`<li>${escapeHTML(m)}</li>`).join("");
+
+  // 1-year badge gate for contributions
+  const hasYear = getBadges().includes(365);
+  const wrap = $("#contribWrap");
+  wrap.hidden = !hasYear;
 }
 
 /* ---------- Wiring ---------- */
@@ -279,7 +407,6 @@ function wire() {
   // Onboarding
   $("#onboardingForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    // read selected radio
     const focus = document.querySelector('input[name="focus"]:checked')?.value;
     const fd = new FormData(e.target);
     state.profile = {
@@ -288,7 +415,7 @@ function wire() {
       motivation: (fd.get("motivation") || "").trim()
     };
     save();
-    show("advice"); // go straight to tailored tips
+    show("advice");
   });
 
   // Check-in
@@ -317,6 +444,18 @@ function wire() {
     save();
     e.target.reset();
     renderJournal();
+  });
+
+  // Program contribution (1-year badge holders)
+  $("#contribForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const tip = (new FormData(e.target).get("tip") || "").trim();
+    if (!tip) return;
+    const a = state.profile?.focus || "Technology";
+    addMaterial(a, tip);
+    e.target.reset();
+    alert("Thanks! Your tip was added.");
+    renderProgram();
   });
 
   // SOS timer
@@ -393,6 +532,8 @@ function wire() {
     localStorage.removeItem(STORAGE.CHECKINS);
     localStorage.removeItem(STORAGE.JOURNAL);
     localStorage.removeItem(STORAGE.CHECKLIST_DONE);
+    localStorage.removeItem(STORAGE.BADGES);
+    localStorage.removeItem(STORAGE.MATERIALS);
     load();
     show("onboarding");
   });
@@ -443,15 +584,36 @@ async function initFirebase() {
   await db.collection("users").doc(me.uid).set({ createdAt: Date.now() }, { merge: true });
 }
 function esc(s){ return String(s).replace(/[&<>\"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[m])); }
+function seedExampleChatIfEmpty(box) {
+  if (!box || box.childElementCount) return;
+  const now = new Date();
+  const examples = [
+    { who: "Maya (2 wks)", text: "Tip that helps me: I set my phone to grayscale at night.", t: new Date(now - 300000) },
+    { who: "Alex (1 mo)",  text: "Daily check-ins keep my streak honest. Small wins add up.", t: new Date(now - 180000) },
+    { who: "You",          text: "Welcome! Say hi and share one thing that helped you today.", t: new Date(now - 60000) }
+  ];
+  examples.forEach(m=>{
+    const div = document.createElement("div");
+    div.className = "chat-msg";
+    div.innerHTML = `<strong>${esc(m.who)}:</strong> ${esc(m.text)} <small>${m.t.toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
 function wireCommunity() {
-  if (!db || !me) return;
+  const box = $("#globalChat");
+  // If Firebase not configured, just seed example messages:
+  if (!firebase.apps?.length || !auth || !db || !me) {
+    seedExampleChatIfEmpty(box);
+    return;
+  }
 
   // Global stream
   db.collection("rooms").doc("global").collection("messages")
     .orderBy("ts","asc").limit(200)
     .onSnapshot(snap => {
-      const box = $("#globalChat"); if (!box) return;
       box.innerHTML = "";
+      if (snap.empty) seedExampleChatIfEmpty(box);
       snap.forEach(doc => {
         const m = doc.data();
         const who = m.uid === me.uid ? "You" : (m.name || m.uid.slice(0,6));
@@ -468,86 +630,18 @@ function wireCommunity() {
     e.preventDefault();
     const msg = new FormData(e.target).get("msg")?.toString().trim();
     if (!msg) return;
+    if (!db || !me) { seedExampleChatIfEmpty(box); e.target.reset(); return; }
     await db.collection("rooms").doc("global").collection("messages").add({ uid: me.uid, text: msg, ts: Date.now() });
     e.target.reset();
   });
 
   // Friends
-  $("#myUid").textContent = me.uid;
+  $("#myUid").textContent = me?.uid || "—";
+  if (!db || !me) return;
   loadFriends();
   $("#addFriendForm")?.addEventListener("submit", async (e)=>{
     e.preventDefault();
     const uid = new FormData(e.target).get("uid")?.toString().trim();
     if (!uid) return;
     await db.collection("users").doc(me.uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
-    await db.collection("users").doc(uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(me.uid) }, { merge: true });
-    e.target.reset();
-    loadFriends();
-  });
-}
-async function loadFriends() {
-  if (!db || !me) return;
-  const meDoc = await db.collection("users").doc(me.uid).get();
-  const friends = (meDoc.data()?.friends)||[];
-  const ul = $("#friendList"); ul.innerHTML = "";
-  friends.forEach(uid=>{
-    const li = document.createElement("li");
-    li.innerHTML = `<span>${uid}</span><button class="btn" data-dm="${uid}">Chat</button>`;
-    li.querySelector("button").onclick = ()=> openDM(uid);
-    ul.appendChild(li);
-  });
-}
-function dmRoom(a,b){ return [a,b].sort().join("_"); }
-function openDM(friendUid){
-  if (!db || !me) return;
-  dmUnsub?.();
-  const roomId = dmRoom(me.uid, friendUid);
-  dmUnsub = db.collection("rooms").doc(roomId).collection("messages")
-    .orderBy("ts","asc").limit(200)
-    .onSnapshot(snap=>{
-      const box = $("#dmWrap"); box.innerHTML = "";
-      snap.forEach(doc=>{
-        const m = doc.data();
-        const who = m.uid === me.uid ? "You" : m.uid.slice(0,6);
-        const div = document.createElement("div");
-        div.className = "chat-msg";
-        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
-        box.appendChild(div);
-      });
-      box.scrollTop = box.scrollHeight;
-    });
-
-  const form = $("#dmForm");
-  form.onsubmit = async (e)=>{
-    e.preventDefault();
-    const msg = new FormData(e.target).get("msg")?.toString().trim();
-    if (!msg) return;
-    await db.collection("rooms").doc(roomId).collection("messages").add({ uid: me.uid, text: msg, ts: Date.now() });
-    e.target.reset();
-  };
-
-  show("friends");
-}
-
-/* ---------- BOOT ---------- */
-load();
-
-window.addEventListener("DOMContentLoaded", async () => {
-  if (!state.profile) { show("onboarding"); }
-  else { show("home"); }            // Home exists now, so it will render correctly
-
-  wire();
-
-  // Firebase (optional)
-  try {
-    await initFirebase();           // signs in anonymously if configured
-    wireCommunity();
-  } catch (err) { console.warn("Firebase not configured or failed:", err); }
-});
-
-// PWA service worker
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(console.error);
-  });
-}
+    await db.collection("users").doc(uid).set({ friends: firebase.firestore.FieldValue.arrayU
