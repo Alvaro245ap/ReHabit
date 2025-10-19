@@ -1,677 +1,602 @@
-// ReHabit – bright UI, slogans, logo, robust boot, programs, badges, chat samples
+// ReHabit – calendar tracking, badges page, deep guide, friend requests, titles, multi-addiction + i18n (EN/ES)
 
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+/* ---------------- State & Storage ---------------- */
+const STORAGE = {
+  PROFILE:"rehabit_profile",
+  CHECKINS:"rehabit_checkins",
+  JOURNAL:"rehabit_journal",
+  CHECKLIST:"rehabit_checklist_done",
+  NOTIFY:"rehabit_notify",
+  BADGES:"rehabit_badges",
+  MATERIALS:"rehabit_materials",
+  CAL:"rehabit_calendar",
+  SOCIAL:"rehabit_social" // {chatted:bool, friended:bool}
+};
 
 const state = {
-  profile: null,
-  checkins: [],   // {dateISO, mood, urge, note}
-  journal: [],    // {id, text, ts}
-  coping: [
-    "Drink water",
-    "Take a brisk 5-min walk",
-    "Call/text a friend",
-    "Breathe 4-6 (inhale 4s / exhale 6s)",
-    "Cold splash on face",
-    "10 pushups / 20 squats",
-    "Write 3 reasons to stay on track",
-    "Listen to a favorite song",
-  ]
+  profile:null,               // {primary, addictions[], quitDate, motivation, lang}
+  checkins:[],                // kept from older feature
+  journal:[],
+  cal: {},                    // { "YYYY-MM-DD": "ok"|"slip" }
+  i18n: "en",
+  social: { chatted:false, friended:false }
 };
 
-const STORAGE = {
-  PROFILE: "rehabit_profile",
-  CHECKINS: "rehabit_checkins",
-  JOURNAL: "rehabit_journal",
-  CHECKLIST_DONE: "rehabit_checklist_done",
-  NOTIFY: "rehabit_notify",
-  BADGES: "rehabit_badges",
-  MATERIALS: "rehabit_materials"
-};
+function load(){
+  try{
+    state.profile = JSON.parse(localStorage.getItem(STORAGE.PROFILE) || "null");
+    state.checkins= JSON.parse(localStorage.getItem(STORAGE.CHECKINS)||"[]");
+    state.journal = JSON.parse(localStorage.getItem(STORAGE.JOURNAL) ||"[]");
+    state.cal     = JSON.parse(localStorage.getItem(STORAGE.CAL)     ||"{}");
+    state.social  = JSON.parse(localStorage.getItem(STORAGE.SOCIAL)  ||"{\"chatted\":false,\"friended\":false}");
+    if(state.profile?.lang) state.i18n = state.profile.lang;
+    document.documentElement.setAttribute("data-lang", state.i18n);
+  }catch(e){console.error(e);}
+}
+function save(){
+  localStorage.setItem(STORAGE.PROFILE, JSON.stringify(state.profile));
+  localStorage.setItem(STORAGE.CAL, JSON.stringify(state.cal));
+  localStorage.setItem(STORAGE.JOURNAL, JSON.stringify(state.journal));
+  localStorage.setItem(STORAGE.CHECKINS, JSON.stringify(state.checkins));
+  localStorage.setItem(STORAGE.SOCIAL, JSON.stringify(state.social));
+}
 
-// Advice per addiction (short)
+/* ---------------- I18N (tiny) ---------------- */
+const dict = {
+  en:{welcome:"Welcome 👋",selectFocus:"Select your focus and a target date to start tracking progress.",quitDate:"Quit/target date",motivation:"Your main motivation (optional)",start:"Start ReHabit"},
+  es:{welcome:"Bienvenido/a 👋",selectFocus:"Elige tu enfoque y una fecha objetivo para empezar a registrar tu progreso.",quitDate:"Fecha objetivo",motivation:"Tu principal motivación (opcional)",start:"Comenzar con ReHabit"}
+};
+function tr(k){ const L = document.documentElement.getAttribute("data-lang")||"en"; return (dict[L]&&dict[L][k])||dict.en[k]||k; }
+function applyI18N(){
+  $$("[data-i18n]").forEach(el=>{ el.textContent = tr(el.getAttribute("data-i18n")); });
+}
+
+/* ---------------- Content: Advice / Programs / Deep Guide ---------------- */
 const ADVICE = {
-  "Technology": [
+  "Technology":[
     "Set app limits (30–60 min blocks).",
     "Charge your phone outside the bedroom.",
     "Swap doom scrolling for a 10-minute walk."
   ],
-  "Smoking": [
+  "Smoking":[
     "Delay 5 minutes; drink water; breathe slowly.",
     "Avoid triggers (coffee + phone) early on.",
     "Keep sugar-free gum or carrot sticks handy."
   ],
-  "Alcohol": [
+  "Alcohol":[
     "Plan alcohol-free evenings.",
     "Prepare a script to say “No thanks, I’m cutting down.”",
     "Stock non-alcoholic drinks you like."
   ],
-  "Gambling": [
+  "Gambling":[
     "Self-exclude from sites; block payments/cards.",
     "Tell a trusted person; share progress weekly.",
     "Fill evenings with planned, low-stimulation tasks."
   ],
-  "Other drugs": [
+  "Other drugs":[
     "Avoid people/places tied to use.",
     "Eat, sleep, hydrate—withdrawal is harder when depleted.",
     "Seek professional help; consider support groups."
   ]
 };
-
-// 10-step programs per addiction (actionable)
 const PROGRAMS = {
-  "Technology": [
+  "Technology":[
     "Clarify target: screen hours per day and blackout hours (e.g., 10pm–7am).",
-    "Remove friction: log out, uninstall 2 most problematic apps.",
+    "Remove friction: log out; uninstall 2 most problematic apps.",
     "Create a ‘ready’ phone: only essentials on Home Screen.",
     "Schedule 3 anchor activities daily (walk, call, read).",
-    "Use timers: 25 min focus, 5 min break; repeat.",
+    "Use timers: 25 min focus / 5 min break.",
     "Bedtime stack: phone docked away + analog alarm clock.",
     "Environment: charger outside bedroom; no phone at meals.",
     "Track urges: trigger → urge → action → result.",
-    "Relapse plan: what to do after lapses (reset + one action).",
-    "Weekly review: adjust limits, celebrate wins, share with friend."
+    "Relapse plan: reset + one helpful action.",
+    "Weekly review: adjust limits, celebrate wins."
   ],
-  "Smoking": [
-    "Set a quit date within 7–14 days; tell one ally.",
-    "List triggers (coffee, commute) and alternatives (gum, walk).",
-    "NRT options: patches/lozenges; prepare ahead.",
-    "Clean environment: wash clothes, remove lighters/ashtrays.",
-    "Delay strategy: 5-min rule + water + deep exhale.",
-    "Mouth & hands: gum, toothpicks, stress ball.",
+  "Smoking":[
+    "Set a quit date within 7–14 days; tell an ally.",
+    "Map triggers (coffee, commute) + alternatives (gum, walk).",
+    "NRT: patches/lozenges; prepare ahead.",
+    "Clean environment: wash clothes; remove lighters/ashtrays.",
+    "Delay: 5-min rule + water + deep exhale.",
+    "Mouth & hands plan: gum, toothpicks, stress ball.",
     "Urge log: time, intensity, action, outcome.",
-    "Exercise: 10–15 min brisk walk to reduce cravings.",
-    "Relapse plan: one small reset, message your ally.",
-    "Weekly reward: spend saved money on something meaningful."
+    "Move 10–15 min to reduce cravings.",
+    "Relapse plan: one small reset; message ally.",
+    "Weekly reward: spend saved money meaningfully."
   ],
-  "Alcohol": [
-    "Define goal: zero or specific weekly limit.",
-    "Remove cues: clear alcohol at home; avoid first rounds.",
+  "Alcohol":[
+    "Define goal: zero or a weekly limit.",
+    "Remove cues at home; skip first rounds.",
     "Replacement ritual: NA drink in your glass.",
-    "Plan scripts: 'No thanks, I’m taking a break.'",
-    "Track urges: HALT (Hungry/Angry/Lonely/Tired) check.",
+    "Scripts: 'No thanks, I’m taking a break.'",
+    "Use HALT check (Hungry/Angry/Lonely/Tired).",
     "Evening routine: meal → walk → shower → wind-down.",
     "Social guardrails: arrive late, leave early.",
-    "Stress plan: breathing, call, journaling prompt.",
+    "Stress plan: breathing, call, journal.",
     "Relapse plan: limit damage, hydrate, recommit.",
-    "Weekly check-in with a friend; celebrate sober wins."
+    "Weekly check-in with a friend."
   ],
-  "Gambling": [
-    "Self-exclude from sites; enable bank gambling blocks.",
-    "Accountability: share statements with a trusted ally.",
+  "Gambling":[
+    "Self-exclude from sites; bank gambling blocks.",
+    "Accountability: share statements with an ally.",
     "Budget firewall: separate essentials account.",
-    "Trigger map: payday, sports events—add alternative plans.",
+    "Trigger map: payday, sports events → alternative plan.",
     "Delay + urge surfing: ride the wave 10 min.",
     "Blockers: DNS/app blockers on all devices.",
-    "Emergency actions: hand cards to ally on trigger days.",
+    "Emergency: give cards to ally on trigger days.",
     "Relapse plan: call ally, lock access, review triggers.",
-    "Build replacement dopamine: exercise, hobbies, volunteering.",
-    "Weekly review with ally; adjust blockers and plans."
+    "Build replacement dopamine: exercise/hobbies/volunteering.",
+    "Weekly review with ally; adjust blockers."
   ],
-  "Other drugs": [
+  "Other drugs":[
     "Pick a start date; tell a trusted person.",
-    "Medical check: consult a clinician about withdrawal risks.",
+    "Medical check: ask a clinician about withdrawal risks.",
     "Environment reset: remove paraphernalia; clean spaces.",
-    "Hydration/nutrition/sleep plan for first two weeks.",
+    "Hydration/nutrition/sleep plan (first two weeks).",
     "Trigger list & avoidance plan (people/places).",
     "Coping set: breathing, cold water, walk, call list.",
-    "Support: consider groups or counselling.",
-    "Relapse plan: single-use limit, disposal, contact support.",
+    "Support: groups/counselling if possible.",
+    "Relapse plan: single-use limit, dispose, contact support.",
     "Daily log: urges, actions, outcomes.",
-    "Weekly reflection & reward; adjust plan with support."
+    "Weekly reflection & reward."
   ]
 };
 
-// Starter materials per addiction
+/* A long Deep Guide (shared skeleton, varies by addiction name) */
+function deepGuideFor(add){
+  return `
+  <p><strong>Overview.</strong> ${add} often persists because it solves a problem (relief, stimulation, belonging). Recovery works when we replace that function with healthier routines—then make those routines easier than the old ones.</p>
+  <h3>1) Clarify your ‘why’</h3>
+  <ul><li>Write 3 reasons that truly matter to you; put them where you’ll see them daily.</li></ul>
+  <h3>2) Define success</h3>
+  <ul><li>Be specific (e.g., “no ${add.toLowerCase()} after 9pm” or “0 days/week”).</li></ul>
+  <h3>3) Shape your environment</h3>
+  <ul><li>Remove cues; add friction to the old behavior; make healthy alternatives obvious and easy.</li></ul>
+  <h3>4) Plan for urges</h3>
+  <ul><li>Use Delay (5 min), Breathe (long exhale), and Do One Alternative Action (water, walk, text).</li></ul>
+  <h3>5) Track tiny wins</h3>
+  <ul><li>Mark the calendar daily (✅ or ❌). Streaks help, but consistency matters most.</li></ul>
+  <h3>6) Build replacement rewards</h3>
+  <ul><li>Novelty and progress release dopamine too—exercise, learning, creativity.</li></ul>
+  <h3>7) Social accountability</h3>
+  <ul><li>Tell one trusted person; check in weekly. Consider groups or counseling when possible.</li></ul>
+  <h3>8) Sleep, food, movement</h3>
+  <ul><li>Cravings are louder when you’re tired or under-fed. Protect basics.</li></ul>
+  <h3>9) Lapse ≠ failure</h3>
+  <ul><li>After a slip: record the trigger → one lesson → one action now.</li></ul>
+  <h3>10) Review & adapt</h3>
+  <ul><li>Every week: what worked? what to adjust? reward yourself.</li></ul>
+  <p class="muted">This guide does not replace professional care. If you’re worried about safety or withdrawal, contact a clinician.</p>`;
+}
+
+/* Materials starter per addiction (for program page) */
 const MATERIALS_DEFAULT = {
-  "Technology": [
-    "Book: Digital Minimalism — Cal Newport",
-    "App: Focus modes / site blockers",
-    "Article: The value of stopping (urge surfing basics)"
-  ],
-  "Smoking": [
-    "Guide: How to use nicotine patches safely",
-    "App: Smoke-free day counter",
-    "Article: Delay, deep breathing, drink water"
-  ],
-  "Alcohol": [
-    "Community: Alcohol-free groups",
-    "Drink ideas: NA beers & mocktails",
-    "Article: HALT check before drinking"
-  ],
-  "Gambling": [
-    "Self-exclusion portals",
-    "Bank gambling transaction blocks",
-    "Article: Dopamine replacement activities"
-  ],
-  "Other drugs": [
-    "Hotlines & local services",
-    "Guide: Withdrawal safety basics",
-    "Article: Building a support network"
-  ]
+  "Technology":[ "Book: Digital Minimalism — Cal Newport","App: Focus modes / site blockers","Article: Urge surfing basics" ],
+  "Smoking":[ "Guide: Nicotine patches & lozenges","App: Smoke-free day counter","Article: Delay, breathe, drink water" ],
+  "Alcohol":[ "Community: Alcohol-free groups","NA drink ideas","Article: HALT check" ],
+  "Gambling":[ "Self-exclusion portals","Bank gambling blocks","Article: Replacement dopamine" ],
+  "Other drugs":[ "Hotlines & local services","Guide: Withdrawal safety","Article: Building a support network" ]
 };
 
-// Badge thresholds (days)
-const BADGE_THRESHOLDS = [
-  { days: 7,  label: "1 week" },
-  { days: 30, label: "1 month" },
-  { days: 60, label: "2 months" },
-  { days: 90, label: "3 months" },
-  { days: 120,label: "4 months" },
-  { days: 150,label: "5 months" },
-  { days: 365,label: "1 year" },
-  { days: 730,label: "2 years" }
+/* Badge thresholds + titles (for sobriety) */
+const SOBRIETY = [
+  {days:7,  label:"1 week",   title:"1-Week Strong"},
+  {days:30, label:"1 month",  title:"1-Month Steady"},
+  {days:60, label:"2 months", title:"2-Month Builder"},
+  {days:90, label:"3 months", title:"Quarter Champion"},
+  {days:120,label:"4 months", title:"Momentum Maker"},
+  {days:150,label:"5 months", title:"Half-Year Near"},
+  {days:365,label:"1 year",   title:"1-Year Resilient"},
+  {days:730,label:"2 years",  title:"Twice-Forged"}
 ];
 
-/* ---------- Storage ---------- */
-function load() {
-  try {
-    state.profile  = JSON.parse(localStorage.getItem(STORAGE.PROFILE)  || "null");
-    state.checkins = JSON.parse(localStorage.getItem(STORAGE.CHECKINS) || "[]");
-    state.journal  = JSON.parse(localStorage.getItem(STORAGE.JOURNAL)  || "[]");
-  } catch (e) { console.error("Load error", e); }
-}
-function save() {
-  localStorage.setItem(STORAGE.PROFILE,  JSON.stringify(state.profile));
-  localStorage.setItem(STORAGE.CHECKINS, JSON.stringify(state.checkins));
-  localStorage.setItem(STORAGE.JOURNAL,  JSON.stringify(state.journal));
-}
-const checklistStore = {
-  get: () => JSON.parse(localStorage.getItem(STORAGE.CHECKLIST_DONE) || "{}"),
-  set: (obj) => localStorage.setItem(STORAGE.CHECKLIST_DONE, JSON.stringify(obj))
-};
-function getBadges() { return JSON.parse(localStorage.getItem(STORAGE.BADGES) || "[]"); }
-function setBadges(arr) { localStorage.setItem(STORAGE.BADGES, JSON.stringify(arr)); }
-function getMaterials() {
-  const raw = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
-  return { ...MATERIALS_DEFAULT, ...raw };
-}
-function addMaterial(focus, tip) {
-  const map = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
-  map[focus] = map[focus] || [];
-  map[focus].push(tip);
-  localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(map));
+/* ---------------- Helpers ---------------- */
+const fmtMonth = (y,m)=> new Date(y,m,1).toLocaleString(undefined,{month:"long",year:"numeric"});
+const daysInMonth = (y,m)=> new Date(y,m+1,0).getDate();
+const pad = n=>String(n).padStart(2,"0");
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function firstDayOffset(y,m){ return new Date(y,m,1).getDay(); } // 0 Sun..6 Sat
+function setCal(dateISO,val){ state.cal[dateISO]=val; localStorage.setItem(STORAGE.CAL, JSON.stringify(state.cal)); }
+
+/* ---------------- Navigation ---------------- */
+const views = ["onboarding","home","calendar","checkin","sos","journal","settings","checklist","progress","advice","program","deepguide","community","friends","badges"];
+function show(v){
+  views.forEach(id=> $(`#view-${id}`)?.setAttribute("hidden","true"));
+  $(`#view-${v}`)?.removeAttribute("hidden");
+  if(v==="home") renderHome();
+  if(v==="calendar") renderCalendar("calendarGrid2","monthLabel2","prevMonth2","nextMonth2");
+  if(v==="advice") renderAdvice();
+  if(v==="program") renderProgram();
+  if(v==="deepguide") renderDeepGuide();
+  if(v==="badges") renderBadges();
+  if(v==="settings") renderSettings();
+  if(v==="community") wireCommunityOnce();
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ---------- Utils ---------- */
-function formatDate(d) { return new Intl.DateTimeFormat(undefined, { dateStyle: "full" }).format(d); }
-function daysSince(dateISO) {
-  if (!dateISO) return 0;
-  const ms = Date.now() - new Date(dateISO).getTime();
-  return Math.max(0, Math.floor(ms / (1000*60*60*24)));
+/* ---------------- Renders ---------------- */
+function renderHome(){
+  renderCalendar("calendarGrid","monthLabel","prevMonth","nextMonth");
 }
-function escapeHTML(s) {
-  return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
-}
-function drawChart(canvas, values) {
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const w = canvas.width, h = canvas.height;
-  ctx.clearRect(0,0,w,h);
-  // axes
-  ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(30,10); ctx.lineTo(30,h-20); ctx.lineTo(w-10,h-20); ctx.stroke();
-  if (!values.length) return;
-  const max = Math.max(...values, 1);
-  const dx = (w - 50) / (values.length - 1 || 1);
-  ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 2;
-  ctx.beginPath();
-  values.forEach((v,i) => {
-    const x = 30 + i*dx;
-    const y = (h-20) - (v/max)*(h-40);
-    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+let calCursor = new Date(); // month cursor
+function renderCalendar(gridId,labelId,prevId,nextId){
+  const grid = document.getElementById(gridId), lbl = document.getElementById(labelId);
+  const y = calCursor.getFullYear(), m = calCursor.getMonth();
+  lbl.textContent = fmtMonth(y,m);
+  grid.innerHTML = "";
+  const offset = firstDayOffset(y,m), days = daysInMonth(y,m);
+  // headers
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(w=>{
+    const hd=document.createElement("div"); hd.className="m muted"; hd.style.textAlign="center"; hd.textContent=w; grid.appendChild(hd);
   });
-  ctx.stroke();
+  // blanks for header row
+  for(let i=0;i<offset;i++){ const b=document.createElement("div"); grid.appendChild(b); }
+  for(let d=1; d<=days; d++){
+    const iso = `${y}-${pad(m+1)}-${pad(d)}`;
+    const cell = document.createElement("div");
+    const mark = state.cal[iso]==="ok"?"✅": state.cal[iso]==="slip"?"❌":"";
+    cell.className = "day" + (state.cal[iso]==="ok"?" s": state.cal[iso]==="slip"?" f":"");
+    cell.innerHTML = `<div class="d">${d}</div><div class="m">${mark}</div>`;
+    cell.tabIndex=0;
+    cell.addEventListener("click", ()=>{
+      const cur = state.cal[iso]||"";
+      const next = cur===""?"ok": cur==="ok"?"slip":"";
+      setCal(iso,next);
+      renderCalendar(gridId,labelId,prevId,nextId);
+      updateSobrietyBadges(); // auto badges
+    });
+    grid.appendChild(cell);
+  }
+  // hooks for nav
+  const prevBtn = document.getElementById(prevId), nextBtn=document.getElementById(nextId);
+  prevBtn.onclick=()=>{ calCursor.setMonth(calCursor.getMonth()-1); renderCalendar(gridId,labelId,prevId,nextId); };
+  nextBtn.onclick=()=>{ calCursor.setMonth(calCursor.getMonth()+1); renderCalendar(gridId,labelId,prevId,nextId); };
+
+  // quick mark today buttons (if on Home)
+  $("#markTodayOk")?.addEventListener("click", ()=>{ setCal(todayISO(),"ok"); renderHome(); updateSobrietyBadges(); });
+  $("#markTodaySlip")?.addEventListener("click", ()=>{ setCal(todayISO(),"slip"); renderHome(); });
 }
 
-/* ---------- Navigation ---------- */
-const views = ["onboarding","dashboard","home","checkin","sos","journal","settings","checklist","progress","advice","program","community","friends"];
-function show(view) {
-  views.forEach(v => $(`#view-${v}`)?.setAttribute("hidden", "true"));
-  const el = $(`#view-${view}`);
-  if (el) el.removeAttribute("hidden");
-  if (view === "dashboard") renderDashboard();
-  if (view === "journal")   renderJournal();
-  if (view === "settings")  renderSettings();
-  if (view === "sos")       renderSOS();
-  if (view === "home")      renderHome();
-  if (view === "checklist") renderChecklist();
-  if (view === "progress")  renderProgress();
-  if (view === "advice")    renderAdvice();
-  if (view === "program")   renderProgram();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+function renderAdvice(){
+  const a = state.profile?.primary || "Technology";
+  $("#adviceTitle").textContent = `${a} — Helpful tips`;
+  const items = ADVICE[a]||[];
+  $("#adviceBody").innerHTML = items.length? `<ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul>` : `<p>No advice yet.</p>`;
 }
 
-/* ---------- Renders ---------- */
-function renderDashboard() {
-  $("#todayDate") && ($("#todayDate").textContent = formatDate(new Date()));
-  $("#focusLabel") && ($("#focusLabel").textContent = state.profile?.focus || "—");
-  $("#streakDays") && ($("#streakDays").textContent = daysSince(state.profile?.quitDate));
+function renderProgram(){
+  const a = state.profile?.primary || "Technology";
+  $("#programTitle").textContent = `${a}: 10-step program`;
+  $("#programList").innerHTML = (PROGRAMS[a]||[]).map(s=>`<li>${s}</li>`).join("");
+  const mats = getMaterials()[a]||[];
+  $("#materialsList").innerHTML = mats.map(m=>`<li>${m}</li>`).join("");
+  const hasYear = currentBestBadgeDays()>=365;
+  $("#contribWrap").hidden = !hasYear;
+}
 
-  const list = $("#recentNotes");
-  if (!list) return;
-  const recent = [...state.checkins].reverse().slice(0, 5);
-  list.innerHTML = recent.length ? "" : `<li><span>No notes yet.</span></li>`;
-  recent.forEach(c => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${new Date(c.dateISO).toLocaleDateString()} — Mood ${c.mood} / Urge ${c.urge}${c.note ? " — " + escapeHTML(c.note) : ""}</span>
-      <button class="btn subtle" data-del="${c.dateISO}">Delete</button>
-    `;
-    li.querySelector("button").onclick = () => {
-      state.checkins = state.checkins.filter(x => x.dateISO !== c.dateISO);
-      save(); renderDashboard();
-    };
-    list.appendChild(li);
+function renderDeepGuide(){
+  const a = state.profile?.primary || "Technology";
+  $("#deepTitle").textContent = `${a} — Deep Guide`;
+  $("#deepBody").innerHTML = deepGuideFor(a);
+}
+
+/* -------- Materials storage (for contributions) -------- */
+function getMaterials(){
+  const raw = JSON.parse(localStorage.getItem(STORAGE.MATERIALS)||"{}");
+  return {...MATERIALS_DEFAULT, ...raw};
+}
+function addMaterial(a, tip){
+  const raw = JSON.parse(localStorage.getItem(STORAGE.MATERIALS)||"{}");
+  raw[a]=raw[a]||[]; raw[a].push(tip);
+  localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(raw));
+}
+
+/* ---------------- Badges & Titles ---------------- */
+function currentBestBadgeDays(){
+  // total “ok” days since quitDate
+  const start = state.profile?.quitDate ? new Date(state.profile.quitDate) : null;
+  if(!start) return 0;
+  let days=0;
+  for(const iso in state.cal){
+    if(state.cal[iso]==="ok" && new Date(iso)>=start) days++;
+  }
+  return days;
+}
+function updateSobrietyBadges(){
+  const okDays = currentBestBadgeDays();
+  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
+  SOBRIETY.forEach(b=>{ if(okDays>=b.days) earned.add(`S:${b.days}`); });
+  localStorage.setItem(STORAGE.BADGES, JSON.stringify([...earned]));
+}
+function renderBadges(){
+  updateSobrietyBadges();
+  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
+  const sob = $("#sobrietyBadges"); sob.innerHTML="";
+  SOBRIETY.forEach(b=>{
+    const span=document.createElement("span");
+    span.className="badge"+(earned.has(`S:${b.days}`)?" earned":"");
+    span.textContent=b.label;
+    sob.appendChild(span);
   });
+  // Social badges
+  const soc = $("#socialBadges"); soc.innerHTML="";
+  const chatted = state.social.chatted, friended = state.social.friended;
+  soc.appendChild(makeBadge("First chat message", chatted));
+  soc.appendChild(makeBadge("First friend added", friended));
+
+  // Current title (highest sobriety title)
+  let title="—"; for(let i=SOBRIETY.length-1;i>=0;i--){ if(earned.has(`S:${SOBRIETY[i].days}`)){ title=SOBRIETY[i].title; break; } }
+  $("#currentTitle").textContent = title;
 }
-function renderJournal() {
-  const list = $("#journalList"); if (!list) return;
-  list.innerHTML = "";
-  if (!state.journal.length) { list.innerHTML = `<li><span>No entries yet.</span></li>`; return; }
-  [...state.journal].reverse().forEach(j => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${new Date(j.ts).toLocaleString()} — ${escapeHTML(j.text)}</span>
-      <button class="btn subtle" data-del="${j.id}">Delete</button>
-    `;
-    li.querySelector("button").onclick = () => {
-      state.journal = state.journal.filter(x => x.id !== j.id);
-      save(); renderJournal();
-    };
-    list.appendChild(li);
-  });
+function makeBadge(label, earned){
+  const b=document.createElement("span"); b.className="badge"+(earned?" earned":""); b.textContent=label; return b;
 }
-function renderSettings() {
-  const f = $("#profileForm"); if (!f) return;
-  f.focus.value = state.profile?.focus || "";
+
+/* ---------------- Settings (multi-addiction + language) ---------------- */
+function renderSettings(){
+  const f=$("#profileForm"); if(!f) return;
+  const adds = state.profile?.addictions || [state.profile?.primary||"Technology"];
+  const primary = state.profile?.primary || adds[0];
+  f.primary.innerHTML = adds.map(a=>`<option ${a===primary?"selected":""}>${a}</option>`).join("");
   f.quitDate.value = state.profile?.quitDate || "";
   f.motivation.value = state.profile?.motivation || "";
+  f.lang.value = state.profile?.lang || "en";
+  // chips
+  const wrap=$("#addictionsChips"); wrap.innerHTML="";
+  adds.forEach(a=>{
+    const btn=document.createElement("button");
+    btn.className="chip"; btn.type="button"; btn.textContent=a+" ✕";
+    btn.onclick=()=>{
+      const list=(state.profile?.addictions||adds).filter(x=>x!==a);
+      state.profile={...(state.profile||{}), addictions:list.length?list:[primary], primary:list[0]||primary};
+      save(); renderSettings();
+    };
+    wrap.appendChild(btn);
+  });
+  // add btn
+  $("#addAddictionBtn").onclick=()=>{
+    const v=(f.addAddiction.value||"").trim(); if(!v) return;
+    const list=new Set([...(state.profile?.addictions||adds), v]);
+    state.profile={...(state.profile||{}), addictions:[...list]};
+    if(!state.profile.primary) state.profile.primary=v;
+    f.addAddiction.value="";
+    save(); renderSettings();
+  };
 }
-function renderSOS() {
-  const chipWrap = $("#copingChips"); if (!chipWrap) return;
-  chipWrap.innerHTML = "";
-  state.coping.forEach(text => {
-    const b = document.createElement("button");
-    b.className = "chip"; b.textContent = text;
-    b.onclick = () => { $("#sosNote").value = ($("#sosNote").value + "\nTried: " + text).trim(); };
-    chipWrap.appendChild(b);
+
+/* ---------------- Friends / Requests & Chat ---------------- */
+let auth=null, db=null, me=null, unsubGlobal=null;
+async function initFirebase(){
+  if(!(window.firebase&&firebase.apps?.length)) return;
+  auth=firebase.auth(); db=firebase.firestore();
+  await auth.signInAnonymously(); me=auth.currentUser;
+  await db.collection("users").doc(me.uid).set({createdAt:Date.now()}, {merge:true});
+}
+function currentTitle(){
+  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
+  for(let i=SOBRIETY.length-1;i>=0;i--){ if(earned.has(`S:${SOBRIETY[i].days}`)) return SOBRIETY[i].title; }
+  return "";
+}
+function wireCommunityOnce(){
+  if(unsubGlobal!==null) return; // already wired
+  const box=$("#globalChat");
+  // If Firebase not configured, seed example messages; names clickable but local only
+  if(!(window.firebase&&firebase.apps?.length)){
+    seedExamples(box);
+    $("#globalForm").addEventListener("submit",e=>{
+      e.preventDefault();
+      const msg = new FormData(e.target).get("msg")?.toString().trim();
+      if(!msg) return;
+      state.social.chatted = true; save(); renderBadges(); // social badge
+      const div=document.createElement("div");
+      div.className="chat-msg";
+      div.innerHTML = `<strong class="chat-name" data-uid="local">You (${currentTitle()||"Newcomer"})</strong>: ${esc(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+      box.appendChild(div); box.scrollTop = box.scrollHeight;
+      e.target.reset();
+    });
+    box.addEventListener("click",(e)=>{
+      const t=e.target.closest(".chat-name"); if(!t) return;
+      alert("Friend requests need Firebase enabled.\n(Your click works; enable Firebase to use real requests.)");
+    });
+    $("#myUid").textContent="—";
+    renderFriendsLocal(); // shows empty lists
+    return;
+  }
+  // With Firebase
+  initFirebase().then(()=>{
+    $("#myUid").textContent=me.uid;
+    // stream
+    unsubGlobal = db.collection("rooms").doc("global").collection("messages")
+      .orderBy("ts","asc").limit(200).onSnapshot(snap=>{
+        box.innerHTML="";
+        if(snap.empty) seedExamples(box);
+        snap.forEach(doc=>{
+          const m=doc.data();
+          const who = m.uid===me.uid ? `You (${currentTitle()||"Newcomer"})` : (m.name || m.uid.slice(0,6));
+          const span = `<strong class="chat-name" data-uid="${m.uid}">${esc(who)}</strong>`;
+          const div=document.createElement("div");
+          div.className="chat-msg";
+          div.innerHTML = `${span}: ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+      });
+
+    // send
+    $("#globalForm").addEventListener("submit",async e=>{
+      e.preventDefault();
+      const msg = new FormData(e.target).get("msg")?.toString().trim();
+      if(!msg) return;
+      await db.collection("rooms").doc("global").collection("messages").add({uid:me.uid,text:msg,ts:Date.now()});
+      state.social.chatted=true; save(); // social badge
+      e.target.reset();
+    });
+
+    // click name -> send request
+    $("#globalChat").addEventListener("click", async (e)=>{
+      const t=e.target.closest(".chat-name"); if(!t) return;
+      const uid=t.getAttribute("data-uid"); if(!uid || uid===me.uid) return;
+      await db.collection("users").doc(uid).set({requests: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
+      alert("Friend request sent.");
+    });
+
+    loadFriends();
   });
 }
-function renderHome() {
-  const days = daysSince(state.profile?.quitDate);
-  $("#streakHome") && ($("#streakHome").textContent = days);
+function seedExamples(box){
+  const now=new Date();
+  const ex=[
+    {who:"Maya (2 wks)", text:"Grayscale at night cuts my scrolling.", t:new Date(now-300000)},
+    {who:"Alex (1 mo)", text:"Calendar ✅ each night is my anchor.", t:new Date(now-180000)},
+    {who:"You", text:"Welcome! Click a name to befriend.", t:new Date(now-60000)}
+  ];
+  ex.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="chat-msg";
+    div.innerHTML=`<strong class="chat-name" data-uid="sample">${esc(m.who)}</strong>: ${esc(m.text)} <small>${m.t.toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+function esc(s){return String(s).replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));}
 
-  // badges
-  const have = new Set(getBadges());
-  BADGE_THRESHOLDS.forEach(b => { if (days >= b.days) have.add(b.days); });
-  setBadges([...have]);
-  const wrap = $("#badgeWrap"); if (wrap) {
-    wrap.innerHTML = "";
-    BADGE_THRESHOLDS.forEach(b => {
-      const div = document.createElement("span");
-      div.className = "badge" + (have.has(b.days) ? " earned" : "");
-      div.textContent = b.label;
-      wrap.appendChild(div);
-    });
-  }
-
-  // chart last 14 days
-  const c = $("#streakChart");
-  if (c) {
-    const last14 = [];
-    const today = new Date();
-    for (let i=13; i>=0; i--) {
-      const d = new Date(today); d.setDate(today.getDate()-i);
-      const dayISO = d.toISOString().slice(0,10);
-      const has = state.checkins.some(x => x.dateISO.slice(0,10) === dayISO);
-      last14.push(has ? 1 : 0);
+async function loadFriends(){
+  if(!db||!me) return;
+  const meDoc = await db.collection("users").doc(me.uid).get();
+  const data = meDoc.data()||{};
+  const requests = data.requests||[];
+  const friends  = data.friends ||[];
+  const reqList=$("#requestsList"); reqList.innerHTML = requests.length? "" : `<li><span>No requests</span></li>`;
+  requests.forEach(uid=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span>${uid}</span><div class="actions"><button class="btn" data-acc="${uid}">Accept</button><button class="btn subtle" data-rej="${uid}">Decline</button></div>`;
+    reqList.appendChild(li);
+  });
+  reqList.onclick=async e=>{
+    const uid=e.target.getAttribute("data-acc")||e.target.getAttribute("data-rej"); if(!uid) return;
+    const accept= !!e.target.getAttribute("data-acc");
+    await db.collection("users").doc(me.uid).set({requests: firebase.firestore.FieldValue.arrayRemove(uid)}, {merge:true});
+    if(accept){
+      await db.collection("users").doc(me.uid).set({friends: firebase.firestore.FieldValue.arrayUnion(uid)}, {merge:true});
+      await db.collection("users").doc(uid).set({friends: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
+      state.social.friended = true; save(); // social badge
     }
-    drawChart(c, last14);
-  }
-
-  // Today checklist
-  const ul = $("#checklistToday"); if (ul) {
-    ul.innerHTML = "";
-    const store = checklistStore; const map = store.get();
-    const key = new Date().toISOString().slice(0,10);
-    if (!map[key]) map[key] = {};
-    ["Drink 2 glasses of water in the morning","5-minute breathing / meditation","Move your body for 10 minutes","Review motivation statement","Plan one healthy replacement activity"].forEach((text, idx) => {
-      const li = document.createElement("li");
-      const id = `today-${idx}`;
-      const checked = !!map[key][idx];
-      li.innerHTML = `
-        <label style="display:flex; gap:8px; align-items:center;">
-          <input type="checkbox" id="${id}" ${checked?"checked":""}>
-          <span>${text}</span>
-        </label>`;
-      li.querySelector("input").onchange = (e) => { map[key][idx] = e.target.checked; store.set(map); };
-      ul.appendChild(li);
-    });
-  }
-}
-function renderChecklist() {
-  const ul = $("#checklistFull"); if (!ul) return;
-  ul.innerHTML = "";
-  const store = checklistStore; const map = store.get();
-  const key = new Date().toISOString().slice(0,10);
-  if (!map[key]) map[key] = {};
-  const CHECKLIST = ["Drink 2 glasses of water in the morning","5-minute breathing / meditation","Move your body for 10 minutes","Review motivation statement","Plan one healthy replacement activity"];
-  CHECKLIST.forEach((text, idx) => {
-    const li = document.createElement("li");
-    const id = `full-${idx}`;
-    const checked = !!map[key][idx];
-    li.innerHTML = `
-      <label style="display:flex; gap:8px; align-items:center;">
-        <input type="checkbox" id="${id}" ${checked?"checked":""}>
-        <span>${text}</span>
-      </label>`;
-    li.querySelector("input").onchange = (e) => { map[key][idx] = e.target.checked; store.set(map); };
-    ul.appendChild(li);
+    loadFriends();
+  };
+  const frList=$("#friendList"); frList.innerHTML = friends.length? "" : `<li><span>No friends yet</span></li>`;
+  friends.forEach(uid=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span>${uid}</span><button class="btn subtle" data-rem="${uid}">Remove</button>`;
+    frList.appendChild(li);
   });
-}
-function renderProgress() {
-  $("#streakProgress") && ($("#streakProgress").textContent = daysSince(state.profile?.quitDate));
-  const canvas = $("#streakChartBig"); if (!canvas) return;
-  const last30 = [];
-  const today = new Date();
-  for (let i=29; i>=0; i--) {
-    const d = new Date(today); d.setDate(today.getDate()-i);
-    const dayISO = d.toISOString().slice(0,10);
-    const has = state.checkins.some(c => c.dateISO.slice(0,10) === dayISO);
-    last30.push(has ? 1 : 0);
-  }
-  drawChart(canvas, last30);
-}
-function renderAdvice() {
-  const a = state.profile?.focus || "Technology";
-  $("#adviceTitle") && ($("#adviceTitle").textContent = `${a} — Helpful tips`);
-  const body = $("#adviceBody"); if (!body) return;
-  const items = ADVICE[a] || [];
-  body.innerHTML = items.length ? `<ul>${items.map(t=>`<li>${escapeHTML(t)}</li>`).join("")}</ul>`
-                                : `<p>No advice found yet.</p>`;
-}
-function renderProgram() {
-  const a = state.profile?.focus || "Technology";
-  $("#programTitle") && ($("#programTitle").textContent = `${a}: 10-step program`);
-  const steps = PROGRAMS[a] || [];
-  const pl = $("#programList"); if (pl) pl.innerHTML = steps.map(s=>`<li>${escapeHTML(s)}</li>`).join("");
-
-  const materials = getMaterials()[a] || [];
-  const ml = $("#materialsList"); if (ml) ml.innerHTML = materials.map(m=>`<li>${escapeHTML(m)}</li>`).join("");
-
-  // 1-year badge gate
-  const hasYear = getBadges().includes(365);
-  const wrap = $("#contribWrap"); if (wrap) wrap.hidden = !hasYear;
+  frList.onclick=async e=>{
+    const uid=e.target.getAttribute("data-rem"); if(!uid) return;
+    await db.collection("users").doc(me.uid).set({friends: firebase.firestore.FieldValue.arrayRemove(uid)}, {merge:true});
+    await db.collection("users").doc(uid).set({friends: firebase.firestore.FieldValue.arrayRemove(me.uid)}, {merge:true});
+    loadFriends();
+  };
 }
 
-/* ---------- Wiring ---------- */
-function wire() {
-  // Nav buttons
-  $$(".tabbar [data-nav], [data-nav]").forEach(btn => {
-    btn.addEventListener("click", () => show(btn.getAttribute("data-nav")));
-  });
+function renderFriendsLocal(){
+  $("#requestsList").innerHTML=`<li><span>Requests need Firebase enabled</span></li>`;
+  $("#friendList").innerHTML=`<li><span>No friends yet</span></li>`;
+}
+
+/* ---------------- Wire UI ---------------- */
+function wire(){
+  // Tab / buttons
+  $$(".tabbar [data-nav], [data-nav]").forEach(b=> b.addEventListener("click",()=>show(b.getAttribute("data-nav"))));
 
   // Onboarding
-  $("#onboardingForm")?.addEventListener("submit", (e) => {
+  $("#onboardingForm")?.addEventListener("submit", (e)=>{
     e.preventDefault();
-    const focus = document.querySelector('input[name="focus"]:checked')?.value;
-    const fd = new FormData(e.target);
+    const focus=document.querySelector('input[name="focus"]:checked')?.value || "Technology";
+    const fd=new FormData(e.target);
     state.profile = {
-      focus: focus || "",
+      primary: focus, addictions: [focus],
       quitDate: fd.get("quitDate"),
-      motivation: (fd.get("motivation") || "").trim()
+      motivation: (fd.get("motivation")||"").trim(),
+      lang: "en"
     };
-    save();
-    show("home");
-  });
-
-  // Check-in
-  $("#checkinForm")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const entry = {
-      dateISO: new Date().toISOString(),
-      mood: Number(fd.get("mood")),
-      urge: Number(fd.get("urge")),
-      note: (fd.get("note") || "").trim()
-    };
-    state.checkins.push(entry);
-    save();
-    e.target.reset();
-    show("dashboard");
+    save(); applyI18N(); show("home");
   });
 
   // Journal
-  $("#journalForm")?.addEventListener("submit", (e) => {
+  $("#journalForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
-    const fd = new FormData(e.target);
-    const text = (fd.get("entry") || "").trim();
-    if (!text) return;
-    state.journal.push({ id: crypto.randomUUID(), text, ts: Date.now() });
-    save();
-    e.target.reset();
-    renderJournal();
+    const t=(new FormData(e.target).get("entry")||"").trim(); if(!t) return;
+    state.journal.push({id:crypto.randomUUID(), text:t, ts:Date.now()}); save(); e.target.reset();
+    const list=$("#journalList"); const li=document.createElement("li"); li.innerHTML=`<span>${new Date().toLocaleString()} — ${t}</span>`; list.prepend(li);
   });
 
-  // Program contribution (1-year badge holders)
-  $("#contribForm")?.addEventListener("submit", (e) => {
+  // Program contribution
+  $("#contribForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
-    const tip = (new FormData(e.target).get("tip") || "").trim();
-    if (!tip) return;
-    const a = state.profile?.focus || "Technology";
-    addMaterial(a, tip);
-    e.target.reset();
-    alert("Thanks! Your tip was added.");
-    renderProgram();
+    const tip=(new FormData(e.target).get("tip")||"").trim(); if(!tip) return;
+    const a=state.profile?.primary||"Technology"; addMaterial(a, tip); e.target.reset(); alert("Thanks! Your tip was added."); renderProgram();
   });
 
-  // SOS timer & note
-  const timerEl = $("#timer");
-  if (timerEl) {
-    let timerId = null, remaining = 60;
-    const updateTimer = () => {
-      const m = String(Math.floor(remaining / 60)).padStart(2, "0");
-      const s = String(remaining % 60).padStart(2, "0");
-      timerEl.textContent = `${m}:${s}`;
-    };
-    $("#startTimer")?.addEventListener("click", () => {
-      if (timerId) return;
-      remaining = 60; updateTimer();
-      timerId = setInterval(() => {
-        remaining -= 1; updateTimer();
-        if (remaining <= 0) { clearInterval(timerId); timerId = null; }
-      }, 1000);
-    });
-    $("#resetTimer")?.addEventListener("click", () => {
-      clearInterval(timerId); timerId = null; remaining = 60; updateTimer();
-    });
-    updateTimer();
+  // SOS timer + note
+  const tEl=$("#timer"); if(tEl){ let timer=null, remain=60;
+    const upd=()=>{ tEl.textContent=`${String(Math.floor(remain/60)).padStart(2,"0")}:${String(remain%60).padStart(2,"0")}`; };
+    $("#startTimer").onclick=()=>{ if(timer) return; remain=60; upd(); timer=setInterval(()=>{remain--; upd(); if(remain<=0){clearInterval(timer); timer=null;} },1000); };
+    $("#resetTimer").onclick=()=>{ clearInterval(timer); timer=null; remain=60; upd(); };
+    $("#saveSos").onclick=()=>{ const val=($("#sosNote").value||"").trim(); if(!val) return; state.journal.push({id:crypto.randomUUID(), text:`[SOS] ${val}`, ts:Date.now()}); $("#sosNote").value=""; save(); alert("Saved."); };
+    upd();
   }
-  $("#saveSos")?.addEventListener("click", () => {
-    const text = ($("#sosNote").value || "").trim();
-    if (!text) return;
-    state.journal.push({ id: crypto.randomUUID(), text: `[SOS] ${text}`, ts: Date.now() });
-    $("#sosNote").value = "";
-    save();
-    alert("Saved to journal.");
-  });
 
-  // Settings
-  $("#profileForm")?.addEventListener("submit", (e) => {
+  // Settings save
+  $("#profileForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
-    const fd = new FormData(e.target);
+    const fd=new FormData(e.target);
+    const primary = fd.get("primary") || state.profile?.primary || "Technology";
+    const lang = fd.get("lang") || "en";
     state.profile = {
-      ...(state.profile || {}),
-      focus: fd.get("focus") || "",
-      quitDate: fd.get("quitDate") || "",
-      motivation: (fd.get("motivation") || "").trim()
+      ...(state.profile||{addictions:[primary]}),
+      primary,
+      quitDate: fd.get("quitDate")||"",
+      motivation: (fd.get("motivation")||"").trim(),
+      lang
     };
-    save();
-    alert("Profile saved.");
+    save(); document.documentElement.setAttribute("data-lang", lang); applyI18N(); alert(lang==="es"?"Guardado.":"Saved.");
   });
 
-  // Export / Import / Reset
-  $("#exportBtn")?.addEventListener("click", () => {
-    const data = { profile: state.profile, checkins: state.checkins, journal: state.journal };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement("a"), { href: url, download: "rehabit-backup.json" });
-    a.click(); URL.revokeObjectURL(url);
-  });
-  $("#importFile")?.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const txt = await file.text(); const data = JSON.parse(txt);
-    if (confirm("Import will overwrite current local data. Continue?")) {
-      state.profile = data.profile || null;
-      state.checkins = data.checkins || [];
-      state.journal  = data.journal || [];
-      save();
-      alert("Import complete.");
-      renderDashboard(); renderJournal(); renderSettings(); renderHome();
-    }
-    e.target.value = "";
-  });
-  $("#resetBtn")?.addEventListener("click", () => {
-    if (!confirm("This will erase local data on this device. Continue?")) return;
-    Object.values(STORAGE).forEach(k => localStorage.removeItem(k));
-    load();
-    show("onboarding");
-  });
+  // Install + notifications kept
+  let deferred=null;
+  window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); deferred=e; $("#installBtn").hidden=false; });
+  $("#installBtn").onclick=async()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; $("#installBtn").hidden=true; deferred=null; };
 
-  // Install prompt
-  let deferredPrompt = null;
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    $("#installBtn").hidden = false;
-  });
-  $("#installBtn")?.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    $("#installBtn").hidden = true;
-  });
+  $("#exportBtn").onclick=()=>{
+    const data = {profile:state.profile, checkins:state.checkins, journal:state.journal, cal:state.cal, social:state.social};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=Object.assign(document.createElement("a"),{href:URL.createObjectURL(blob),download:"rehabit-backup.json"}); a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("#importFile").onchange=async(e)=>{
+    const f=e.target.files?.[0]; if(!f) return; const txt=await f.text(); const d=JSON.parse(txt);
+    if(!confirm("Import will overwrite local data. Continue?")) return;
+    state.profile=d.profile||state.profile; state.checkins=d.checkins||[]; state.journal=d.journal||[]; state.cal=d.cal||{}; state.social=d.social||state.social; save(); alert("Import complete."); show("home");
+  };
+  $("#resetBtn").onclick=()=>{ if(!confirm("Erase local data on this device?")) return; Object.values(STORAGE).forEach(k=>localStorage.removeItem(k)); location.reload(); };
 
-  // Notifications (while app is open)
-  $("#notifyBtn")?.addEventListener("click", async () => {
-    if (!("Notification" in window)) return alert("Notifications not supported");
-    let perm = Notification.permission;
-    if (perm !== "granted") perm = await Notification.requestPermission();
-    if (perm !== "granted") return alert("Notifications blocked");
-    localStorage.setItem(STORAGE.NOTIFY, "1");
-    alert("Daily reminder enabled (fires around 09:00 while the app is open).");
-  });
-  setInterval(() => {
-    if (localStorage.getItem(STORAGE.NOTIFY) !== "1") return;
-    const d = new Date();
-    if (d.getHours() === 9 && d.getMinutes() === 0) {
-      new Notification("ReHabit — daily check", { body: "Take 1 minute to check in and review your checklist." });
-    }
-  }, 60 * 1000);
-
-  // Footer year
-  $("#year") && ($("#year").textContent = new Date().getFullYear());
+  // Footer year + i18n
+  $("#year").textContent=new Date().getFullYear();
+  applyI18N();
 }
 
-/* ---------- Firebase chat (optional; samples shown if not configured) ---------- */
-let auth = null, db = null, me = null, dmUnsub = null;
-async function initFirebase() {
-  if (!(window.firebase && firebase.apps?.length)) return; // not configured
-  auth = firebase.auth(); db = firebase.firestore();
-  await auth.signInAnonymously();
-  me = auth.currentUser;
-  await db.collection("users").doc(me.uid).set({ createdAt: Date.now() }, { merge: true });
-}
-function esc(s){ return String(s).replace(/[&<>\"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[m])); }
-function seedExampleChatIfEmpty(box) {
-  if (!box || box.childElementCount) return;
-}
-function seedExamples(box){
-  if (!box || box.childElementCount) return;
-  const now = new Date();
-  const ex = [
-    { who: "Maya (2 wks)", text: "Tip that helps me: grayscale at night cuts scrolling.", t: new Date(now - 300000) },
-    { who: "Alex (1 mo)",  text: "Daily check-ins keep my streak honest. Small wins add up.", t: new Date(now - 180000) },
-    { who: "You",          text: "Welcome! Say hi and share one thing that helped you today.", t: new Date(now - 60000) }
-  ];
-  ex.forEach(m=>{
-    const div = document.createElement("div");
-    div.className = "chat-msg";
-    div.innerHTML = `<strong>${esc(m.who)}:</strong> ${esc(m.text)} <small>${m.t.toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-  });
-  box.scrollTop = box.scrollHeight;
-}
-function wireCommunity() {
-  const box = $("#globalChat");
-  // If Firebase not configured, just seed example messages & basic send
-  if (!(window.firebase && firebase.apps?.length)) {
-    seedExamples(box);
-    $("#globalForm")?.addEventListener("submit", (e)=>{ e.preventDefault(); });
-    $("#myUid") && ($("#myUid").textContent = "—");
-    return;
-  }
-
-  if (!auth || !db || !me) { seedExamples(box); return; }
-
-  // Global stream
-  db.collection("rooms").doc("global").collection("messages")
-    .orderBy("ts","asc").limit(200)
-    .onSnapshot(snap => {
-      box.innerHTML = "";
-      if (snap.empty) seedExamples(box);
-      snap.forEach(doc => {
-        const m = doc.data();
-        const who = m.uid === me.uid ? "You" : (m.name || m.uid.slice(0,6));
-        const div = document.createElement("div");
-        div.className = "chat-msg";
-        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
-        box.appendChild(div);
-      });
-      box.scrollTop = box.scrollHeight;
-    });
-
-  // Send to global
-  $("#globalForm")?.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    const msg = new FormData(e.target).get("msg")?.toString().trim();
-    if (!msg) return;
-    await db.collection("rooms").doc("global").collection("messages").add({ uid: me.uid, text: msg, ts: Date.now() });
-    e.target.reset();
-  });
-
-  // Friends
-  $("#myUid") && ($("#myUid").textContent = me.uid);
-}
-
-/* ---------- BOOT ---------- */
+/* ---------------- Boot ---------------- */
 load();
-
-// Safe boot: always show something even if errors occur
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
-    if (!state.profile) { show("onboarding"); }
-    else { show("home"); }
-
-    wire();
-
-    try {
-      await initFirebase();   // ok if not configured
-    } catch {}
-    wireCommunity();
-  } catch (err) {
-    console.error(err);
-    // last resort: reveal onboarding so the page isn't empty
-    const onboarding = document.getElementById("view-onboarding");
-    if (onboarding) onboarding.removeAttribute("hidden");
-  }
+window.addEventListener("DOMContentLoaded", async ()=>{
+  if(!state.profile) show("onboarding"); else show("home");
+  wire();
+  try{ await initFirebase(); }catch{}
 });
 
-// PWA SW
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(console.error);
-  });
-}
+/* ---------------- Utilities for badges on actions ---------------- */
+document.addEventListener("submit",(e)=>{
+  if(e.target && e.target.id==="globalForm"){
+    state.social.chatted=true; save();
+  }
+});
