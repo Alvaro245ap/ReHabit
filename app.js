@@ -136,6 +136,107 @@ if (view === "advice") renderAdvice();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function esc(s){ return s.replace(/[&<>\"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[m])); }
+
+// COMMUNITY — global chat
+function wireCommunity() {
+  // Global messages stream
+  db.collection("rooms").doc("global").collection("messages")
+    .orderBy("ts","asc")
+    .limit(200)
+    .onSnapshot(snap => {
+      const box = document.querySelector("#globalChat");
+      if (!box) return;
+      box.innerHTML = "";
+      snap.forEach(doc => {
+        const m = doc.data();
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        const who = m.uid === me.uid ? "You" : (m.name || m.uid.slice(0,6));
+        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+
+  // Send to global
+  document.querySelector("#globalForm")?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const msg = new FormData(e.target).get("msg").toString().trim();
+    if (!msg) return;
+    await db.collection("rooms").doc("global").collection("messages").add({
+      uid: me.uid, text: msg, ts: Date.now()
+    });
+    e.target.reset();
+  });
+
+  // Friends list
+  document.querySelector("#myUid").textContent = me.uid;
+  loadFriends();
+  document.querySelector("#addFriendForm")?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    const uid = new FormData(e.target).get("uid").toString().trim();
+    if (!uid) return;
+    await db.collection("users").doc(me.uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
+    await db.collection("users").doc(uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(me.uid) }, { merge: true });
+    e.target.reset();
+  });
+}
+
+async function loadFriends() {
+  const meDoc = await db.collection("users").doc(me.uid).get();
+  const friends = (meDoc.data()?.friends)||[];
+  const ul = document.querySelector("#friendList");
+  ul.innerHTML = "";
+  friends.forEach(uid=>{
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${uid}</span><button class="btn" data-dm="${uid}">Chat</button>`;
+    li.querySelector("button").onclick = ()=> openDM(uid);
+    ul.appendChild(li);
+  });
+}
+
+// Simple 2-person DM room id
+function dmRoom(a,b){ return [a,b].sort().join("_"); }
+
+let dmUnsub = null;
+function openDM(friendUid){
+  // subscribe
+  dmUnsub?.(); // stop old
+  const roomId = dmRoom(me.uid, friendUid);
+  dmUnsub = db.collection("rooms").doc(roomId).collection("messages")
+    .orderBy("ts","asc")
+    .limit(200)
+    .onSnapshot(snap=>{
+      const box = document.querySelector("#dmWrap");
+      box.innerHTML = "";
+      snap.forEach(doc=>{
+        const m = doc.data();
+        const who = m.uid === me.uid ? "You" : m.uid.slice(0,6);
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        div.innerHTML = `<strong>${esc(who)}:</strong> ${esc(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    });
+
+  // send
+  const form = document.querySelector("#dmForm");
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const msg = new FormData(e.target).get("msg").toString().trim();
+    if (!msg) return;
+    await db.collection("rooms").doc(roomId).collection("messages").add({
+      uid: me.uid, text: msg, ts: Date.now()
+    });
+    e.target.reset();
+  };
+
+  // navigate to Friends view (if not already there)
+  show("friends");
+}
+
 function formatDate(d) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: "full" }).format(d);
 }
@@ -485,6 +586,10 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     show("dashboard");
   }
+  initFirebase().then(() => {
+  wireCommunity(); // set up chat/friends after auth exists
+}).catch(console.error);
+
   wire();
 });
 window.addEventListener("DOMContentLoaded", () => {
