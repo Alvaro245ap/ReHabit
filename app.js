@@ -219,6 +219,25 @@ function wire() {
     btn.addEventListener("click", () => {
       const v = btn.getAttribute("data-nav");
       show(v);
+      // Notification button on Home
+document.querySelector("#notifyBtn")?.addEventListener("click", async () => {
+  if (!("Notification" in window)) return alert("Notifications not supported");
+  let perm = Notification.permission;
+  if (perm !== "granted") perm = await Notification.requestPermission();
+  if (perm !== "granted") return alert("Notifications blocked");
+  localStorage.setItem("rehabit_notify", "1");
+  alert("Daily reminder enabled (while app is open).");
+});
+
+// Simple daily reminder (fires ~at 9:00 local while app is open)
+setInterval(() => {
+  if (localStorage.getItem("rehabit_notify") !== "1") return;
+  const d = new Date();
+  if (d.getHours() === 9 && d.getMinutes() === 0) {
+    new Notification("ReHabit — daily check", { body: "Take 1 minute to check in and review your checklist." });
+  }
+}, 60 * 1000);
+
     });
   });
   function renderHome() {
