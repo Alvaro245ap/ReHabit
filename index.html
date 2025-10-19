@@ -14,15 +14,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    // TODO: Replace with your Firebase config from the Firebase console.
-    // If you don’t need chat now, you can keep these dummy values—chat will just stay inactive.
+    // TODO: Replace with your Firebase config from the Firebase console (for chat to work).
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
       projectId: "YOUR_PROJECT_ID",
       appId: "YOUR_APP_ID"
     };
-    try { firebase.initializeApp(firebaseConfig); } catch(e) { /* ignore init error if not configured */ }
+    try { firebase.initializeApp(firebaseConfig); } catch(e) { /* ignore if not configured */ }
   </script>
 </head>
 <body>
@@ -87,7 +86,7 @@
       </form>
     </section>
 
-    <!-- Dashboard (kept for compatibility) -->
+    <!-- Dashboard (kept) -->
     <section id="view-dashboard" hidden>
       <div class="grid-2">
         <div class="card">
@@ -110,7 +109,7 @@
       </div>
     </section>
 
-    <!-- New Home (light hero + quick info) -->
+    <!-- Home -->
     <section id="view-home" hidden>
       <div class="home-hero">
         <h2>Welcome to ReHabit</h2>
@@ -119,13 +118,15 @@
           <button class="btn primary" data-nav="checklist">Today’s checklist</button>
           <button class="btn" data-nav="progress">View progress</button>
           <button class="btn" data-nav="advice">Tips for my addiction</button>
+          <button class="btn" data-nav="program">10-step program</button>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="card soft">
-          <h3>Streak</h3>
+          <h3>Streak & Badges</h3>
           <p><strong>Days since target:</strong> <span id="streakHome">0</span></p>
+          <div id="badgeWrap" class="badges"></div>
           <canvas id="streakChart" width="400" height="180" aria-label="Progress chart"></canvas>
         </div>
         <div class="card soft">
@@ -163,7 +164,7 @@
       </form>
     </section>
 
-    <!-- SOS (Craving) -->
+    <!-- SOS -->
     <section id="view-sos" class="card" hidden>
       <h2>Craving SOS</h2>
       <p style="margin-top:-6px;color:#9ca3af">Community chat is peer support only; it’s not monitored and doesn’t replace professional care.</p>
@@ -201,7 +202,7 @@
       </div>
     </section>
 
-    <!-- Journal & Triggers -->
+    <!-- Journal -->
     <section id="view-journal" class="card" hidden>
       <h2>Journal & Triggers</h2>
       <form id="journalForm" class="grid">
@@ -256,14 +257,14 @@
       </div>
     </section>
 
-    <!-- Checklist page -->
+    <!-- Checklist -->
     <section id="view-checklist" class="card" hidden>
       <h2>Daily checklist</h2>
       <ul id="checklistFull" class="list"></ul>
       <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
     </section>
 
-    <!-- Progress page -->
+    <!-- Progress -->
     <section id="view-progress" class="card" hidden>
       <h2>Progress</h2>
       <p><strong>Current streak:</strong> <span id="streakProgress">0</span> days</p>
@@ -271,17 +272,46 @@
       <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
     </section>
 
-    <!-- Advice page -->
+    <!-- Advice -->
     <section id="view-advice" class="card" hidden>
       <h2 id="adviceTitle">Advice</h2>
       <div id="adviceBody"></div>
-      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+      <div class="actions">
+        <button class="btn" data-nav="program">Open 10-step program</button>
+        <button class="btn subtle" data-nav="home">Back</button>
+      </div>
     </section>
 
-    <!-- Community (global chat) -->
+    <!-- 10-step Program page -->
+    <section id="view-program" class="card" hidden>
+      <h2 id="programTitle">10-Step Program</h2>
+      <ol id="programList" class="program"></ol>
+
+      <div id="materialsWrap" class="supporting">
+        <h3>Helpful materials & tips</h3>
+        <ul id="materialsList" class="list bullets"></ul>
+      </div>
+
+      <div id="contribWrap" class="contrib" hidden>
+        <h3>Contribute tips (1-year badge required)</h3>
+        <form id="contribForm" class="grid">
+          <label>Your tip or resource (URL optional)
+            <textarea name="tip" rows="3" maxlength="500" placeholder="Write something that helped you..."></textarea>
+          </label>
+          <button class="btn">Submit tip</button>
+        </form>
+        <p class="muted">Your contribution is public and may appear on the Advice/Program pages for your addiction.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn subtle" data-nav="advice">Back</button>
+      </div>
+    </section>
+
+    <!-- Community -->
     <section id="view-community" class="card" hidden>
       <h2>Community chat</h2>
-      <p style="margin-top:-6px;color:#9ca3af">Peer support only—unmoderated; not a substitute for professional care.</p>
+      <p class="muted">Peer support only—unmoderated; not a substitute for professional care.</p>
       <div id="globalChat" class="chat-box"></div>
       <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
         <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
@@ -317,12 +347,28 @@
 
   </main>
 
+  <!-- Clean icon tabbar (inline SVGs for a professional look) -->
   <nav class="tabbar" aria-label="Primary">
-    <button data-nav="home" aria-label="Home">🏠</button>
-    <button data-nav="checkin" aria-label="Check-in">📝</button>
-    <button data-nav="sos" aria-label="SOS">🆘</button>
-    <button data-nav="community" aria-label="Community">💬</button>
-    <button data-nav="settings" aria-label="Settings">⚙️</button>
+    <button data-nav="home" aria-label="Home" class="tabbtn">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg>
+      <span>Home</span>
+    </button>
+    <button data-nav="checkin" aria-label="Check-in" class="tabbtn">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
+      <span>Check-in</span>
+    </button>
+    <button data-nav="sos" aria-label="SOS" class="tabbtn">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 2 1 21h22L12 2zm0 6a1 1 0 0 1 1 1v5a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1zm0 9a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 12 17z" fill="currentColor"/></svg>
+      <span>SOS</span>
+    </button>
+    <button data-nav="community" aria-label="Community" class="tabbtn">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
+      <span>Chat</span>
+    </button>
+    <button data-nav="settings" aria-label="Settings" class="tabbtn">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm-8.5 4a8.5 8.5 0 0 1 .2-1.8l-2-1.5 2-3.4 2.3 1a8.6 8.6 0 0 1 3-1.8l.4-2.5h4l.4 2.5a8.6 8.6 0 0 1 3 1.8l2.3-1 2 3.4-2 1.5c.14.6.2 1.2.2 1.8s-.06 1.2-.2 1.8l2 1.5-2 3.4-2.3-1a8.6 8.6 0 0 1-3 1.8l-.4 2.5h-4l-.4-2.5a8.6 8.6 0 0 1-3-1.8l-2.3 1-2-3.4 2-1.5c-.14-.6-.2-1.2-.2-1.8z" fill="currentColor"/></svg>
+      <span>Settings</span>
+    </button>
   </nav>
 
   <footer class="legal">
