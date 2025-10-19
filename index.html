@@ -8,22 +8,22 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css" />
-  <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<script>
-  // TODO: replace with YOUR config from Firebase console
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    appId: "YOUR_APP_ID",
-  };
-  firebase.initializeApp(firebaseConfig);
-</script>
-
+  <!-- Firebase SDKs (for community/private chat). Leave if you don't want chat yet. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
+    // TODO: Replace with your Firebase config from the Firebase console.
+    // If you don’t need chat now, you can keep these dummy values—chat will just stay inactive.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      appId: "YOUR_APP_ID"
+    };
+    try { firebase.initializeApp(firebaseConfig); } catch(e) { /* ignore init error if not configured */ }
+  </script>
 </head>
 <body>
   <header class="app-header">
@@ -39,44 +39,55 @@
   </section>
 
   <main id="app" class="container">
+
     <!-- Onboarding -->
     <section id="view-onboarding" class="card" hidden>
       <h2>Welcome 👋</h2>
-      <p>Set your focus area and a quit/reduction date to start tracking progress.</p>
+      <p>Select your focus and a target date to start tracking progress.</p>
+
+      <!-- Addiction type chooser with images -->
+      <div class="addiction-grid" style="margin-bottom:12px">
+        <label class="addiction-card">
+          <input type="radio" name="focus" value="Technology" required>
+          <img src="assets/tech.png" alt="Technology">
+          <span>Technology</span>
+        </label>
+        <label class="addiction-card">
+          <input type="radio" name="focus" value="Smoking" required>
+          <img src="assets/smoking.png" alt="Smoking">
+          <span>Smoking</span>
+        </label>
+        <label class="addiction-card">
+          <input type="radio" name="focus" value="Alcohol" required>
+          <img src="assets/alcohol.png" alt="Alcohol">
+          <span>Alcohol</span>
+        </label>
+        <label class="addiction-card">
+          <input type="radio" name="focus" value="Gambling" required>
+          <img src="assets/gambling.png" alt="Gambling">
+          <span>Gambling</span>
+        </label>
+        <label class="addiction-card">
+          <input type="radio" name="focus" value="Other drugs" required>
+          <img src="assets/drugs.png" alt="Other drugs">
+          <span>Other drugs</span>
+        </label>
+      </div>
+
       <form id="onboardingForm" class="grid">
         <label>
-          Focus area
-<!-- replace the Focus select with this -->
-<div class="addiction-grid">
-  <label class="addiction-card">
-    <input type="radio" name="focus" value="Technology" required>
-    <img src="assets/tech.png" alt="Technology">
-    <span>Technology</span>
-  </label>
-  <label class="addiction-card">
-    <input type="radio" name="focus" value="Smoking" required>
-    <img src="assets/smoking.png" alt="Smoking">
-    <span>Smoking</span>
-  </label>
-  <label class="addiction-card">
-    <input type="radio" name="focus" value="Alcohol" required>
-    <img src="assets/alcohol.png" alt="Alcohol">
-    <span>Alcohol</span>
-  </label>
-  <label class="addiction-card">
-    <input type="radio" name="focus" value="Gambling" required>
-    <img src="assets/gambling.png" alt="Gambling">
-    <span>Gambling</span>
-  </label>
-  <label class="addiction-card">
-    <input type="radio" name="focus" value="Other drugs" required>
-    <img src="assets/drugs.png" alt="Other drugs">
-    <span>Other drugs</span>
-  </label>
-</div>
+          Quit/target date
+          <input type="date" name="quitDate" required>
+        </label>
+        <label>
+          Your main motivation (optional)
+          <input type="text" name="motivation" maxlength="120" placeholder="e.g., Be healthier for my family" />
+        </label>
+        <button class="btn primary" type="submit">Start ReHabit</button>
+      </form>
+    </section>
 
-
-    <!-- Dashboard -->
+    <!-- Dashboard (kept for compatibility) -->
     <section id="view-dashboard" hidden>
       <div class="grid-2">
         <div class="card">
@@ -98,34 +109,34 @@
         </div>
       </div>
     </section>
-          <!-- Home (light hero + quick info) -->
-<section id="view-home" hidden>
-  <div class="home-hero">
-    <h2>Welcome to ReHabit</h2>
-    <p>Your private companion to build healthier habits—one day at a time.</p>
-    <div class="hero-actions">
-      <button class="btn primary" data-nav="checklist">Today’s checklist</button>
-      <button class="btn" data-nav="progress">View progress</button>
-      <button class="btn" data-nav="advice">Tips for my addiction</button>
-    </div>
-  </div>
 
-  <div class="grid-2">
-    <div class="card soft">
-      <h3>Streak</h3>
-      <p><strong>Days since target:</strong> <span id="streakHome">0</span></p>
-      <canvas id="streakChart" width="400" height="180" aria-label="Progress chart"></canvas>
-    </div>
-    <div class="card soft">
-      <h3>Today’s checklist</h3>
-      <ul id="checklistToday" class="list"></ul>
-      <div class="actions">
-        <button class="btn" id="notifyBtn">Enable daily reminder</button>
+    <!-- New Home (light hero + quick info) -->
+    <section id="view-home" hidden>
+      <div class="home-hero">
+        <h2>Welcome to ReHabit</h2>
+        <p>Your private, offline-first companion to build healthier habits—one day at a time.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-nav="checklist">Today’s checklist</button>
+          <button class="btn" data-nav="progress">View progress</button>
+          <button class="btn" data-nav="advice">Tips for my addiction</button>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
 
+      <div class="grid-2">
+        <div class="card soft">
+          <h3>Streak</h3>
+          <p><strong>Days since target:</strong> <span id="streakHome">0</span></p>
+          <canvas id="streakChart" width="400" height="180" aria-label="Progress chart"></canvas>
+        </div>
+        <div class="card soft">
+          <h3>Today’s checklist</h3>
+          <ul id="checklistToday" class="list"></ul>
+          <div class="actions">
+            <button class="btn" id="notifyBtn">Enable daily reminder</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Check-in -->
     <section id="view-checkin" class="card" hidden>
@@ -155,6 +166,7 @@
     <!-- SOS (Craving) -->
     <section id="view-sos" class="card" hidden>
       <h2>Craving SOS</h2>
+      <p style="margin-top:-6px;color:#9ca3af">Community chat is peer support only; it’s not monitored and doesn’t replace professional care.</p>
       <ol class="sos-steps">
         <li><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
         <li><strong>Urge surfing.</strong> Notice the urge rising and falling like a wave. It will pass.</li>
@@ -243,73 +255,75 @@
         <button class="btn subtle" data-nav="dashboard">Back</button>
       </div>
     </section>
-          <!-- Checklist page -->
-<section id="view-checklist" class="card" hidden>
-  <h2>Daily checklist</h2>
-  <ul id="checklistFull" class="list"></ul>
-  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
-</section>
 
-<!-- Progress page -->
-<section id="view-progress" class="card" hidden>
-  <h2>Progress</h2>
-  <p><strong>Current streak:</strong> <span id="streakProgress">0</span> days</p>
-  <canvas id="streakChartBig" width="600" height="240" aria-label="Progress chart"></canvas>
-  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
-</section>
+    <!-- Checklist page -->
+    <section id="view-checklist" class="card" hidden>
+      <h2>Daily checklist</h2>
+      <ul id="checklistFull" class="list"></ul>
+      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+    </section>
 
-<!-- Advice page (changes by selected addiction) -->
-<section id="view-advice" class="card" hidden>
-  <h2 id="adviceTitle">Advice</h2>
-  <div id="adviceBody"></div>
-  <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
-</section>
-<!-- Community (global chat) -->
-<section id="view-community" class="card" hidden>
-  <h2>Community chat</h2>
-  <div id="globalChat" class="chat-box"></div>
-  <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
-    <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
-    <button class="btn">Send</button>
-  </form>
-  <div class="actions">
-    <button class="btn" data-nav="friends">Friends & private chat</button>
-    <button class="btn subtle" data-nav="home">Back</button>
-  </div>
-</section>
+    <!-- Progress page -->
+    <section id="view-progress" class="card" hidden>
+      <h2>Progress</h2>
+      <p><strong>Current streak:</strong> <span id="streakProgress">0</span> days</p>
+      <canvas id="streakChartBig" width="600" height="240" aria-label="Progress chart"></canvas>
+      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+    </section>
 
-<!-- Friends / Private -->
-<section id="view-friends" class="card" hidden>
-  <h2>Friends</h2>
-  <p>Your code: <code id="myUid">—</code></p>
-  <form id="addFriendForm" class="grid-2">
-    <label>Add friend by code (their UID)
-      <input type="text" name="uid" placeholder="friend UID">
-    </label>
-    <button class="btn">Add</button>
-  </form>
-  <ul id="friendList" class="list"></ul>
+    <!-- Advice page -->
+    <section id="view-advice" class="card" hidden>
+      <h2 id="adviceTitle">Advice</h2>
+      <div id="adviceBody"></div>
+      <div class="actions"><button class="btn subtle" data-nav="home">Back</button></div>
+    </section>
 
-  <h3>Private chat</h3>
-  <div id="dmWrap" class="chat-box"></div>
-  <form id="dmForm" class="grid" style="grid-template-columns:1fr auto;">
-    <input type="text" name="msg" placeholder="Write a private message…" maxlength="300">
-    <button class="btn">Send</button>
-  </form>
+    <!-- Community (global chat) -->
+    <section id="view-community" class="card" hidden>
+      <h2>Community chat</h2>
+      <p style="margin-top:-6px;color:#9ca3af">Peer support only—unmoderated; not a substitute for professional care.</p>
+      <div id="globalChat" class="chat-box"></div>
+      <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
+        <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
+        <button class="btn">Send</button>
+      </form>
+      <div class="actions">
+        <button class="btn" data-nav="friends">Friends & private chat</button>
+        <button class="btn subtle" data-nav="home">Back</button>
+      </div>
+    </section>
 
-  <div class="actions"><button class="btn subtle" data-nav="community">Back</button></div>
-</section>
+    <!-- Friends / Private chat -->
+    <section id="view-friends" class="card" hidden>
+      <h2>Friends</h2>
+      <p>Your code: <code id="myUid">—</code></p>
+      <form id="addFriendForm" class="grid-2">
+        <label>Add friend by code (their UID)
+          <input type="text" name="uid" placeholder="friend UID">
+        </label>
+        <button class="btn">Add</button>
+      </form>
+      <ul id="friendList" class="list"></ul>
+
+      <h3>Private chat</h3>
+      <div id="dmWrap" class="chat-box"></div>
+      <form id="dmForm" class="grid" style="grid-template-columns:1fr auto;">
+        <input type="text" name="msg" placeholder="Write a private message…" maxlength="300">
+        <button class="btn">Send</button>
+      </form>
+
+      <div class="actions"><button class="btn subtle" data-nav="community">Back</button></div>
+    </section>
 
   </main>
 
-<nav class="tabbar" aria-label="Primary">
-  <button data-nav="home" aria-label="Home">🏠</button>
-  <button data-nav="checkin" aria-label="Check-in">📝</button>
-  <button data-nav="sos" aria-label="SOS">🆘</button>
-  <button data-nav="community" aria-label="Community">💬</button>
-  <button data-nav="settings" aria-label="Settings">⚙️</button>
-</nav>
-
+  <nav class="tabbar" aria-label="Primary">
+    <button data-nav="home" aria-label="Home">🏠</button>
+    <button data-nav="checkin" aria-label="Check-in">📝</button>
+    <button data-nav="sos" aria-label="SOS">🆘</button>
+    <button data-nav="community" aria-label="Community">💬</button>
+    <button data-nav="settings" aria-label="Settings">⚙️</button>
+  </nav>
 
   <footer class="legal">
     <small>© <span id="year"></span> ReHabit. For support only—does not replace professional treatment.</small>
