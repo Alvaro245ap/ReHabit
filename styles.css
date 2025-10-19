@@ -127,3 +127,17 @@ input[type="range"] { width: 100%; }
 .addiction-card input { display: none; }
 .addiction-card input:checked + img, .addiction-card input:checked ~ img { outline: 3px solid var(--primary); outline-offset: 4px; }
 .addiction-card span { font-weight: 600; }
+/* Light hero */
+.home-hero {
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  color: #111;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.08);
+  margin-bottom: 12px;
+}
+.home-hero h2 { margin: 0 0 6px; }
+.home-hero p { margin: 0 0 12px; color: #374151; }
+.hero-actions .btn { background: #f3f4f6; color: #111; border: 1px solid #e5e7eb; }
+.hero-actions .btn.primary { background: var(--primary); color: #000; border-color: transparent;}
