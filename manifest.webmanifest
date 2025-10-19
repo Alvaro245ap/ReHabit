@@ -1,11 +1,11 @@
 {
   "name": "ReHabit",
   "short_name": "ReHabit",
-  "description": "Private, offline-first recovery companion: check-ins, SOS, checklist, charts, and optional chat.",
+  "description": "Bright, lightweight recovery companion: check-ins, SOS, checklist, charts, programs, and optional chat.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "icons": [
     { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
