@@ -28,6 +28,9 @@ h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
 .drawer-link:hover{background:#eef2ff}
 .drawer-link.danger{border-color:#ffd5d9;background:#fff2f3;color:#991b1b}
 .backdrop{position:fixed;inset:0;background:rgba(12,18,36,.35);backdrop-filter:blur(2px);z-index:25}
+/* Drawer icons */
+.drawer-link{display:flex;align-items:center;gap:8px}
+.drawer-link svg{width:18px;height:18px;flex:0 0 18px}
 
 /* Layout */
 .container{margin:12px auto clamp(84px,8vh,96px);max-width:var(--maxw);padding:0 clamp(12px,3vw,24px);display:grid;gap:var(--gap)}
