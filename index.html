@@ -28,6 +28,7 @@
 </head>
 <body>
   <header class="app-header">
+    <!-- Hamburger -->
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
     <div class="brand">
@@ -58,42 +59,42 @@
     </div>
     <nav class="drawer-nav">
       <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
         <span>Daily Check-in</span>
       </button>
       <button class="drawer-link" data-nav="calendar" data-i18n="calendar">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg>
         <span>Calendar</span>
       </button>
       <button class="drawer-link" data-nav="guide" data-i18n="guide">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
         <span>Guide</span>
       </button>
       <button class="drawer-link" data-nav="badges" data-i18n="badges">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
         <span>Badges</span>
       </button>
       <button class="drawer-link" data-nav="research" data-i18n="research">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
         <span>Research</span>
       </button>
-      <!-- Notes (capital N) -->
       <button class="drawer-link" data-nav="notes" data-i18n="notes">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
         <span>Notes</span>
       </button>
       <button class="drawer-link" data-nav="settings" data-i18n="settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
         <span>Settings</span>
       </button>
       <button class="drawer-link danger" data-nav="sos" data-i18n="emergency">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
         <span>Emergency</span>
       </button>
     </nav>
   </aside>
   <div id="backdrop" class="backdrop" hidden></div>
 
+  <!-- Crisis pill -->
   <aside class="crisis-mini" role="note" aria-label="Crisis support">
     <a href="https://www.iasp.info/crisis-centres-helplines/" target="_blank" rel="noopener" data-i18n="danger">If in danger, get help</a>
   </aside>
@@ -166,11 +167,7 @@
 
         <div class="card soft">
           <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
-          <div class="actions pro-actions">
-            <button class="btn success" id="markTodayOk" data-i18n="markSuccess">Record success today</button>
-            <button class="btn danger" id="markTodaySlip" data-i18n="markSlip">Record slip today</button>
-          </div>
-
+          <!-- Buttons removed as requested -->
           <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
           <div class="actions">
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
@@ -193,7 +190,7 @@
       </div>
     </section>
 
-    <!-- Check-in -->
+    <!-- Daily Check-in -->
     <section id="view-checkin" class="card" hidden>
       <h2 class="fancy" data-i18n="checkin">Daily Check-in</h2>
       <div class="grid-2">
@@ -243,12 +240,8 @@
 
         <div class="card soft">
           <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <div class="actions pro-actions">
-            <button class="btn success" id="markTodayOk2" data-i18n="markSuccess">Record success today</button>
-            <button class="btn danger" id="markTodaySlip2" data-i18n="markSlip">Record slip today</button>
-          </div>
-          <h3 class="fancy" data-i18n="recent">Recent notes</h3>
-          <ul id="recentNotes" class="list"></ul>
+          <!-- Buttons removed here as requested -->
+          <!-- No "Recent notes" section here; notes are ONLY on the Notes page -->
         </div>
       </div>
     </section>
@@ -336,15 +329,12 @@
     <!-- Research -->
     <section id="view-research" class="card" hidden>
       <h2 class="fancy" data-i18n="research">Research</h2>
-
-      <!-- Choose addiction if multiple -->
       <div id="researchChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
           <select id="researchChoice"></select>
         </label>
       </div>
-
       <div id="researchBody"></div>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
@@ -383,69 +373,21 @@
       <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Settings -->
-    <section id="view-settings" class="card" hidden>
-      <h2 class="fancy" data-i18n="settings">Settings</h2>
-      <form id="settingsForm" class="grid" action="javascript:void(0)">
-        <label><span data-i18n="displayName">Display name</span>
-          <input type="text" name="displayName" maxlength="40" placeholder="Your name">
-        </label>
-
-        <fieldset class="grid settings-addictions">
-          <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
-
-          <label class="sa-item">
-            <span data-i18n="a_smoke">Smoking</span>
-            <input type="checkbox" name="addictions" value="Smoking">
-            <img src="assets/smoking.png" alt="Smoking">
-          </label>
-
-          <label class="sa-item">
-            <span data-i18n="a_alcohol">Alcohol</span>
-            <input type="checkbox" name="addictions" value="Alcohol">
-            <img src="assets/alcohol.png" alt="Alcohol">
-          </label>
-
-          <label class="sa-item">
-            <span data-i18n="a_tech">Technology</span>
-            <input type="checkbox" name="addictions" value="Technology">
-            <img src="assets/tech.png" alt="Technology">
-          </label>
-
-          <label class="sa-item">
-            <span data-i18n="a_gambling">Gambling</span>
-            <input type="checkbox" name="addictions" value="Gambling">
-            <img src="assets/gambling.png" alt="Gambling">
-          </label>
-
-          <label class="sa-item">
-            <span data-i18n="a_other">Other drugs</span>
-            <input type="checkbox" name="addictions" value="Other">
-            <img src="assets/other.png" alt="Other drugs">
-          </label>
-        </fieldset>
-
-        <div class="actions">
-          <button class="btn primary" data-i18n="save">Save</button>
-          <button class="btn subtle" type="button" data-nav="home" data-i18n="back">Back</button>
-        </div>
-      </form>
-    </section>
-
     <!-- Notes -->
     <section id="view-notes" class="card" hidden>
       <h2 class="fancy" data-i18n="notes">Notes</h2>
-      <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes do not appear here; this page is for manual notes only.</p>
+      <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
       <ul id="notesList" class="list"></ul>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
   </main>
 
+  <!-- Tabbar: ONLY 3 tabs -->
   <nav class="tabbar" aria-label="Primary">
-    <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
-    <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
-    <button data-nav="friends" class="tabbtn"><svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg><span data-i18n="friends">Friends</span></button>
+    <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
+    <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
+    <button data-nav="friends" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg><span data-i18n="friends">Friends</span></button>
   </nav>
 
   <footer class="legal">
