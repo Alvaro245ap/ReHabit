@@ -4,27 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ReHabit — Your Recovery Companion</title>
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#0f3c6e" />
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts: Inter + Posh titles -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- (Optional) Firebase for live chat/friends -->
+  <!-- Optional Firebase (kept for compatibility; MySQL backend is below) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    // Paste your real config if you want live chat/friends.
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      appId: "YOUR_APP_ID"
-    };
-    try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+    // Leave empty if you won’t use Firebase; MySQL backend works without it.
+    const firebaseConfig = { };
+    try { if (Object.keys(firebaseConfig).length) firebase.initializeApp(firebaseConfig); } catch(e) {}
   </script>
+
+  <!-- Backend API base (set to your server URL, e.g., "https://rehabit.yourdomain.com") -->
+  <script> window.API_BASE = ""; /* e.g., "https://rehabit.yourdomain.com" */ </script>
 </head>
 <body>
   <header class="app-header">
@@ -59,7 +57,6 @@
       <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
     </div>
 
-    <!-- CHANGED: icons added inside each button -->
     <nav class="drawer-nav">
       <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
         <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
@@ -73,13 +70,21 @@
         <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
         <span>Guide</span>
       </button>
-      <button class="drawer-link" data-nav="badges" data-i18n="badges">
-        <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
-        <span>Badges</span>
+      <button class="drawer-link" data-nav="program" data-i18n="materials">
+        <svg viewBox="0 0 24 24"><path d="M3 4h18v14H3zM6 20h12v2H6z" fill="currentColor"/></svg>
+        <span>Helpful materials</span>
       </button>
       <button class="drawer-link" data-nav="research" data-i18n="research">
         <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
         <span>Research</span>
+      </button>
+      <button class="drawer-link" data-nav="badges" data-i18n="badges">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
+        <span>Badges</span>
+      </button>
+      <button class="drawer-link" data-nav="notes" data-i18n="notes">
+        <svg viewBox="0 0 24 24"><path d="M5 3h14v14H9l-4 4V3z" fill="currentColor"/></svg>
+        <span>Notes</span>
       </button>
       <button class="drawer-link" data-nav="settings" data-i18n="settings">
         <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
@@ -168,11 +173,7 @@
 
         <div class="card soft">
           <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
-          <div class="actions pro-actions">
-            <button class="btn success" id="markTodayOk" data-i18n="markSuccess">Record success today</button>
-            <button class="btn danger" id="markTodaySlip" data-i18n="markSlip">Record slip today</button>
-          </div>
-
+          <!-- Removed quick mark buttons by request -->
           <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
           <div class="actions">
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
@@ -186,13 +187,13 @@
     <!-- Calendar full -->
     <section id="view-calendar" class="card" hidden>
       <h2 class="fancy" data-i18n="calendar">Calendar</h2>
-      <div class="calendar-head">
+      <div class="calendar-head calendar-head--page">
         <button class="btn subtle" id="prevMonth2">‹</button>
         <div id="monthLabel2"></div>
         <button class="btn subtle" id="nextMonth2">›</button>
       </div>
       <div id="calendarGrid2" class="calendar"></div>
-      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
+      <div class="actions calendar-actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
     <!-- Check-in -->
@@ -245,10 +246,7 @@
 
         <div class="card soft">
           <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <div class="actions pro-actions">
-            <button class="btn success" id="markTodayOk2" data-i18n="markSuccess">Record success today</button>
-            <button class="btn danger" id="markTodaySlip2" data-i18n="markSlip">Record slip today</button>
-          </div>
+          <!-- Removed quick mark buttons by request -->
           <h3 class="fancy" data-i18n="recent">Recent notes</h3>
           <ul id="recentNotes" class="list"></ul>
         </div>
@@ -310,7 +308,7 @@
       <ul id="materialsList" class="list bullets"></ul>
       <div id="contribWrap" class="contrib" hidden>
         <h3 data-i18n="contribTitle">Contribute tips (1-year badge required)</h3>
-        <form id="contribForm" class="grid"><label data-i18n="yourTip">Your tip or resource<textarea name="tip" rows="3" maxlength="500"></textarea></label><button class="btn" data-i18n="submit">Submit tip</button></form>
+        <form id="contribForm" class="grid" action="javascript:void(0)"><label data-i18n="yourTip">Your tip or resource<textarea name="tip" rows="3" maxlength="500"></textarea></label><button class="btn" data-i18n="submit">Submit tip</button></form>
         <p class="muted" data-i18n="contribNote">Contributions may appear for your addiction.</p>
       </div>
       <div class="actions"><button class="btn subtle" data-nav="guide" data-i18n="back">Back</button></div>
@@ -335,19 +333,33 @@
     <!-- Research -->
     <section id="view-research" class="card" hidden>
       <h2 class="fancy" data-i18n="research">Research</h2>
+
+      <!-- Choice for multiple addictions -->
+      <div id="researchChoiceWrap" class="guide-choice" hidden>
+        <label>
+          <span data-i18n="chooseAddiction">Choose addiction</span>
+          <select id="researchChoice"></select>
+        </label>
+      </div>
+
       <div id="researchBody"></div>
+      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
+    </section>
+
+    <!-- Notes -->
+    <section id="view-notes" class="card" hidden>
+      <h2 class="fancy" data-i18n="notes">Notes</h2>
+      <ul id="notesList" class="list"></ul>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
     <!-- Community -->
     <section id="view-community" class="card" hidden>
       <h2 class="fancy" data-i18n="chat">Community chat</h2>
-
-      <!-- CHANGED: note text -->
       <p class="muted" data-i18n="chatNote">Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.</p>
 
       <div id="globalChat" class="chat-box"></div>
-      <form id="globalForm" class="grid" style="grid-template-columns:1fr auto;">
+      <form id="globalForm" class="grid" action="javascript:void(0)" style="grid-template-columns:1fr auto;">
         <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
         <button class="btn" data-i18n="send">Send</button>
       </form>
@@ -362,8 +374,7 @@
       <h2 class="fancy" data-i18n="friends">Friends</h2>
       <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
 
-      <!-- NEW: add-by-code form just below your code -->
-      <form id="addFriendForm" class="grid" style="grid-template-columns:1fr auto; margin:8px 0;">
+      <form id="addFriendForm" class="grid" action="javascript:void(0)" style="grid-template-columns:1fr auto; margin:8px 0;">
         <input type="text" name="code" placeholder="Enter friend code (e.g., RH-COACH)" maxlength="40" />
         <button class="btn" type="submit" data-i18n="send">Send</button>
       </form>
@@ -384,13 +395,35 @@
           <input type="text" name="displayName" maxlength="40" placeholder="Your name">
         </label>
 
-        <fieldset class="grid">
+        <!-- Addictions grid with images (left->right) -->
+        <fieldset class="grid addictions-grid">
           <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
-          <label><input type="checkbox" name="addictions" value="Smoking"> <span data-i18n="a_smoke">Smoking</span></label>
-          <label><input type="checkbox" name="addictions" value="Alcohol"> <span data-i18n="a_alcohol">Alcohol</span></label>
-          <label><input type="checkbox" name="addictions" value="Technology"> <span data-i18n="a_tech">Technology</span></label>
-          <label><input type="checkbox" name="addictions" value="Gambling"> <span data-i18n="a_gambling">Gambling</span></label>
-          <label><input type="checkbox" name="addictions" value="Other"> <span data-i18n="a_other">Other drugs</span></label>
+
+          <label class="addiction-pick">
+            <input type="checkbox" name="addictions" value="Smoking">
+            <span data-i18n="a_smoke">Smoking</span>
+            <img src="assets/smoking.png" alt="Smoking">
+          </label>
+          <label class="addiction-pick">
+            <input type="checkbox" name="addictions" value="Alcohol">
+            <span data-i18n="a_alcohol">Alcohol</span>
+            <img src="assets/alcohol.png" alt="Alcohol">
+          </label>
+          <label class="addiction-pick">
+            <input type="checkbox" name="addictions" value="Technology">
+            <span data-i18n="a_tech">Technology</span>
+            <img src="assets/tech.png" alt="Technology">
+          </label>
+          <label class="addiction-pick">
+            <input type="checkbox" name="addictions" value="Gambling">
+            <span data-i18n="a_gambling">Gambling</span>
+            <img src="assets/gambling.png" alt="Gambling">
+          </label>
+          <label class="addiction-pick">
+            <input type="checkbox" name="addictions" value="Other">
+            <span data-i18n="a_other">Other drugs</span>
+            <img src="assets/tech.png" alt="Other drugs">
+          </label>
         </fieldset>
 
         <div class="actions">
@@ -402,7 +435,7 @@
 
   </main>
 
-  <!-- Tabbar: ONLY 3 tabs: Home, Community, Friends -->
+  <!-- Tabbar: Home, Community, Friends -->
   <nav class="tabbar" aria-label="Primary">
     <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
     <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
