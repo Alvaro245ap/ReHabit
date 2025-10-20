@@ -8,6 +8,7 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <!-- Fonts -->
+  <!-- NEW: posh title font -->
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
@@ -16,6 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
+    // Paste your real config if you want live chat/friends.
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -27,6 +29,7 @@
 </head>
 <body>
   <header class="app-header">
+    <!-- Hamburger -->
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
     <div class="brand">
@@ -77,7 +80,7 @@
         <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
         <span>Research</span>
       </button>
-      <!-- Notes -->
+      <!-- NEW: Notes -->
       <button class="drawer-link" data-nav="notes" data-i18n="notes">
         <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
         <span>Notes</span>
@@ -166,6 +169,13 @@
         </div>
 
         <div class="card soft">
+          <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
+          <div class="actions pro-actions">
+            <!-- (kept; these affect journal only, calendar editing is via day click and only today) -->
+            <button class="btn success" id="markTodayOk" data-i18n="markSuccess">Record success today</button>
+            <button class="btn danger" id="markTodaySlip" data-i18n="markSlip">Record slip today</button>
+          </div>
+
           <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
           <div class="actions">
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
@@ -236,10 +246,14 @@
           </form>
         </div>
 
-        <!-- Right column intentionally contains no notes or record buttons now -->
         <div class="card soft">
           <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <p class="muted">—</p>
+          <div class="actions pro-actions">
+            <button class="btn success" id="markTodayOk2" data-i18n="markSuccess">Record success today</button>
+            <button class="btn danger" id="markTodaySlip2" data-i18n="markSlip">Record slip today</button>
+          </div>
+          <h3 class="fancy" data-i18n="recent">Recent notes</h3>
+          <ul id="recentNotes" class="list"></ul>
         </div>
       </div>
     </section>
@@ -328,7 +342,7 @@
     <section id="view-research" class="card" hidden>
       <h2 class="fancy" data-i18n="research">Research</h2>
 
-      <!-- choose addiction if multiple -->
+      <!-- NEW: choose addiction if multiple -->
       <div id="researchChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
@@ -374,7 +388,71 @@
       <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Notes -->
+    <!-- Settings -->
+    <section id="view-settings" class="card" hidden>
+      <h2 class="fancy" data-i18n="settings">Settings</h2>
+      <form id="settingsForm" class="grid" action="javascript:void(0)">
+        <label><span data-i18n="displayName">Display name</span>
+          <input type="text" name="displayName" maxlength="40" placeholder="Your name">
+        </label>
+
+        <!-- NEW: addictions laid out L→R with image below -->
+        <fieldset class="grid settings-addictions">
+          <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
+
+          <label class="sa-item">
+            <span data-i18n="a_smoke">Smoking</span>
+            <input type="checkbox" name="addictions" value="Smoking">
+            <img src="assets/smoking.png" alt="Smoking">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_alcohol">Alcohol</span>
+            <input type="checkbox" name="addictions" value="Alcohol">
+            <img src="assets/alcohol.png" alt="Alcohol">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_tech">Technology</span>
+            <input type="checkbox" name="addictions" value="Technology">
+            <img src="assets/tech.png" alt="Technology">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_gambling">Gambling</span>
+            <input type="checkbox" name="addictions" value="Gambling">
+            <img src="assets/gambling.png" alt="Gambling">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_other">Other drugs</span>
+            <input type="checkbox" name="addictions" value="Other">
+            <img src="assets/other.png" alt="Other drugs">
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn primary" data-i18n="save">Save</button>
+          <button class="btn subtle" type="button" data-nav="home" data-i18n="back">Back</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- NEW (Part C): super-simple Account box -->
+    <section class="card" id="view-auth">
+      <h2 class="fancy">Account</h2>
+      <div class="grid">
+        <label>Email <input type="email" id="authEmail" placeholder="you@example.com"></label>
+        <label>Password <input type="password" id="authPass" placeholder="min 8 chars"></label>
+        <div class="actions">
+          <button class="btn" id="btnRegister">Register</button>
+          <button class="btn primary" id="btnLogin">Login</button>
+        </div>
+        <small class="muted">After you register or log in, you can send messages and they’ll be saved.</small>
+      </div>
+    </section>
+
+    <!-- NEW: Notes -->
     <section id="view-notes" class="card" hidden>
       <h2 class="fancy" data-i18n="notes">Notes</h2>
       <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
@@ -393,20 +471,6 @@
 
   <footer class="legal">
     <small>© <span id="year"></span> ReHabit. <span data-i18n="footer">For support only—does not replace professional treatment.</span></small>
- <!-- PART C: super-simple Account box (NEW) -->
-<section class="card" id="view-auth">
-  <h2 class="fancy">Account</h2>
-  <div class="grid">
-    <label>Email <input type="email" id="authEmail" placeholder="you@example.com"></label>
-    <label>Password <input type="password" id="authPass" placeholder="min 8 chars"></label>
-    <div class="actions">
-      <button class="btn" id="btnRegister">Register</button>
-      <button class="btn primary" id="btnLogin">Login</button>
-    </div>
-    <small class="muted">After you register or log in, you can send messages and they’ll be saved.</small>
-  </div>
-</section>
-
   </footer>
 
   <script src="app.js"></script>
