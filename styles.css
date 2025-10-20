@@ -1,12 +1,11 @@
 :root{
-  /* NEW pastel + teal/navy palette */
-  --bg:#f6f9ff;            /* pastel background */
+  --bg:#f6f9ff;
   --surface:#ffffff;
-  --soft:#eef7ff;          /* very light pastel */
+  --soft:#eef7ff;
   --text:#0b1324;
   --muted:#64748b;
-  --primary:#1f3a8a;       /* navy */
-  --primary-2:#0ea5a6;     /* teal */
+  --primary:#1f3a8a;      /* navy */
+  --primary-2:#0ea5a6;    /* teal */
   --success:#16a34a;
   --danger:#ef4444;
   --radius:16px;
@@ -16,7 +15,6 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--text)}
-/* NEW: posh title font */
 .fancy{font-family:"Cinzel",serif; letter-spacing:.2px}
 .app-header{display:flex;justify-content:space-between;align-items:center;padding:12px clamp(12px,3vw,24px);background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px}
@@ -34,12 +32,13 @@ h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
 .drawer.open{transform:translateX(0)}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6ebff}
 .drawer-nav{display:grid;padding:12px}
-.drawer-link{padding:12px 10px;border:1px solid #e6ebff;margin-bottom:10px;border-radius:12px;background:#f8fbff;cursor:pointer;text-align:left;font-weight:700;display:flex;align-items:center;gap:8px}
+.drawer-link{padding:12px 10px;border:1px solid #e6ebff;margin-bottom:10px;border-radius:12px;background:#f8fbff;cursor:pointer;text-align:left;font-weight:700;display:flex;align-items:center;gap:8px;color:#0f172a}
 .drawer-link:hover{background:#eef6ff}
-/* NEW: active glow for current page in the menu */
+/* Active page faint glow */
 .drawer-link.active{box-shadow:0 0 0 3px rgba(31,58,138,.15); border-color:#c7d2fe}
+/* Ensure icons are visible */
+.drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block;color:#334155}
 .drawer-link.danger{border-color:#ffd5d9;background:#fff2f3;color:#991b1b}
-.drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block}
 .backdrop{position:fixed;inset:0;background:rgba(12,18,36,.35);backdrop-filter:blur(2px);z-index:25}
 
 /* Layout */
@@ -56,7 +55,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .btn.subtle{background:#eef2f7}
 .btn.success{background:var(--success);color:#fff;border-color:transparent}
 .btn.danger{background:var(--danger);color:#fff;border-color:transparent}
-.file input{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
 .list{list-style:none;padding-left:0;margin:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #cbd5e1}
 .pro-actions .btn{min-width:220px;justify-content:center}
 
@@ -89,14 +88,13 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 
 /* Program / materials */
 .program{padding-left:18px;line-height:1.6}
-.supporting h3{margin-top:16px}
 .list.bullets li{justify-content:flex-start;gap:8px}
 .list.bullets li::before{content:"•";color:#275efe;margin-right:6px}
 .contrib{margin-top:12px}
 .muted{color:var(--muted)}
 .encouragement{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
 
-/* Badges grid with icons (locked gray) */
+/* Badges */
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .badge-card{border:1px solid #dbe1ff;border-radius:12px;padding:12px;background:#fff;display:grid;gap:8px;align-content:start}
 .badge-card.locked{filter:grayscale(0.9) brightness(0.95)}
@@ -108,7 +106,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 
 /* Calendar */
 .calendar-head{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
-.calendar-head.up{margin-top:-6px} /* NEW: slightly higher date label */
+.calendar-head.up{margin-top:-6px}
 .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .m{font-size:12px;color:#475569;text-align:center}
 .day{border:1px solid #dbe1ff;border-radius:10px;min-height:58px;background:#fff;padding:6px;display:grid;align-content:start;gap:6px}
@@ -117,7 +115,6 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .day.locked{opacity:.55;cursor:not-allowed}
 .day .d{font-weight:700;font-size:12px;color:#334155}
 .day .m{font-size:12px}
-/* NEW: Back lower on full calendar */
 #view-calendar .actions.low{margin-top:12px}
 
 /* SOS */
@@ -133,13 +130,9 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .tabpane[hidden]{display:none}
 .guide-choice{margin-bottom:10px}
 
-/* Settings addictions (left->right with image below) */
-.settings-addictions{
-  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-}
+/* Settings addictions */
+.settings-addictions{grid-template-columns: repeat(auto-fit,minmax(140px,1fr))}
 .sa-item{display:grid;justify-items:center;gap:8px;padding:10px;border:1px dashed #cfe3ff;border-radius:12px;background:#f8fbff}
 .sa-item span{font-weight:700}
 .sa-item input{margin-top:-6px}
 .sa-item img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5edff}
-
-/* Drawer icons already above */
