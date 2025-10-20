@@ -897,6 +897,32 @@ load();
 window.addEventListener("DOMContentLoaded", ()=>{
   if(!state.profile) show("onboarding"); else show("home");
   wire();
+   // PART C wiring (NEW) — simple register/login
+const $id = (x)=>document.getElementById(x);
+$id("btnRegister")?.addEventListener("click", async ()=>{
+  const email = $id("authEmail").value.trim();
+  const password = $id("authPass").value.trim();
+  if(!email || !password){ alert("Email + password required"); return; }
+  try{
+    await apiRegister({
+      email,
+      password,
+      displayName: (state.profile?.displayName || "Anonymous"),
+      lang: (state.profile?.lang || state.i18n || "en")
+    });
+    alert("Registered. You’re logged in now.");
+  }catch{ alert("Could not register"); }
+});
+$id("btnLogin")?.addEventListener("click", async ()=>{
+  const email = $id("authEmail").value.trim();
+  const password = $id("authPass").value.trim();
+  if(!email || !password){ alert("Email + password required"); return; }
+  try{
+    await apiLogin({ email, password });
+    alert("Logged in!");
+  }catch{ alert("Login failed"); }
+});
+
 });
 
 /* ---------------- Utils ---------------- */
