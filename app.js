@@ -445,7 +445,60 @@ function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML 
      POST ${API_BASE}/api/friend-requests -> body:{fromUid,toCode} -> {ok:true}|{ok:false, error:"not_found"}
 ------------------------------------------------------------------*/
 // CHANGE ONLY THIS LINE to your Render URL:
-const API_BASE = "https://rehabet-api.onrender.com"; // e.g., "https://rehabet-api.onrender.com"
+const API_BASE = "https://rehabit-api-xyz.onrender.com";
+ // e.g., "https://rehabet-api.onrender.com"
+// === Auth: improved alerts (paste once) ===
+async function handleRegisterSubmit(e){
+  e.preventDefault();
+  const f = e.target;
+  const email        = f.querySelector('[name="email"]')?.value.trim();
+  const password     = f.querySelector('[name="password"]')?.value;
+  const displayName  = f.querySelector('[name="displayName"]')?.value?.trim() || null;
+
+  try{
+    const r = await fetch(`${API_BASE}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, displayName })
+    });
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok){
+      alert(data?.error || data?.message || `Could not register (status ${r.status})`);
+      return;
+    }
+    alert("Registered! You can log in now.");
+    f.reset();
+  }catch(err){
+    alert("Network error (API unreachable). Check API_BASE and Render status.");
+  }
+}
+
+async function handleLoginSubmit(e){
+  e.preventDefault();
+  const f = e.target;
+  const email    = f.querySelector('[name="email"]')?.value.trim();
+  const password = f.querySelector('[name="password"]')?.value;
+
+  try{
+    const r = await fetch(`${API_BASE}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok){
+      alert(data?.error || data?.message || `Could not login (status ${r.status})`);
+      return;
+    }
+    // OPTIONAL: store token if your app uses it later
+    // localStorage.setItem("rehabit_token", data.token);
+    // localStorage.setItem("rehabit_user", JSON.stringify(data.user));
+    alert("Logged in!");
+    f.reset();
+  }catch(err){
+    alert("Network error (API unreachable). Check API_BASE and Render status.");
+  }
+}
 
 // --- Auth helpers (NEW for Part C) ---
 function authHeaders(){
