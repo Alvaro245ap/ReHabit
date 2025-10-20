@@ -16,7 +16,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    // Paste your real config if you want live chat/friends.
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -28,12 +27,12 @@
 </head>
 <body>
   <header class="app-header">
-    <!-- Hamburger -->
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
     <div class="brand">
       <img class="logo" alt="ReHabit logo"
-           src="assets/favicon.png">
+           src="https://lh3.googleusercontent.com/sitesv/AICyYdbmcgQFK2Z29ZvnRBGLzvgYafySguNCTxosCMSM_PGX7OGYt0LoXrL3tZZkvSHOsxfMorAK2TMOgcI7Uull0sWjV48H97Z4Zq0RgywqJwNmpry9rQyah--LGPICtxYg02Sf83XsCphrz_g29TLwoLcVyEZRKJsFq2RWkp4aAhwurDxv813Tvw0VNUw=w1280"
+           onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/sitesv/AICyYdY_Wr1HnVjspVtEZ1_M0u3rLNcWCaDPPA0SvH--yEgG7CO6VWtW-meSog-0J6QtVa9skMbP9_bIN0JZdaivhZ2ZcnVfCs6E6Q4AcmH0xU2_pkWJ5pWo5MadTraTNyJ0usYN4VYOu1xtGZGEKw--wUMC0qhcFcZGGLWQgvMnVMMJfRszcO-SLWCI09w=w1280'">
       <h1 class="fancy">ReHabit</h1>
       <div class="slogans-inline">
         <span class="chip">ReBuild</span>
@@ -78,6 +77,7 @@
         <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
         <span>Research</span>
       </button>
+      <!-- Notes -->
       <button class="drawer-link" data-nav="notes" data-i18n="notes">
         <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
         <span>Notes</span>
@@ -166,8 +166,6 @@
         </div>
 
         <div class="card soft">
-          <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
-          <!-- Buttons removed as requested -->
           <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
           <div class="actions">
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
@@ -190,7 +188,7 @@
       </div>
     </section>
 
-    <!-- Daily Check-in -->
+    <!-- Check-in -->
     <section id="view-checkin" class="card" hidden>
       <h2 class="fancy" data-i18n="checkin">Daily Check-in</h2>
       <div class="grid-2">
@@ -238,10 +236,10 @@
           </form>
         </div>
 
+        <!-- Right column intentionally contains no notes or record buttons now -->
         <div class="card soft">
           <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <!-- Buttons removed here as requested -->
-          <!-- No "Recent notes" section here; notes are ONLY on the Notes page -->
+          <p class="muted">—</p>
         </div>
       </div>
     </section>
@@ -329,12 +327,15 @@
     <!-- Research -->
     <section id="view-research" class="card" hidden>
       <h2 class="fancy" data-i18n="research">Research</h2>
+
+      <!-- choose addiction if multiple -->
       <div id="researchChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
           <select id="researchChoice"></select>
         </label>
       </div>
+
       <div id="researchBody"></div>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
