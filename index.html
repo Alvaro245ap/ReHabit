@@ -393,6 +393,20 @@
 
   <footer class="legal">
     <small>© <span id="year"></span> ReHabit. <span data-i18n="footer">For support only—does not replace professional treatment.</span></small>
+ <!-- PART C: super-simple Account box (NEW) -->
+<section class="card" id="view-auth">
+  <h2 class="fancy">Account</h2>
+  <div class="grid">
+    <label>Email <input type="email" id="authEmail" placeholder="you@example.com"></label>
+    <label>Password <input type="password" id="authPass" placeholder="min 8 chars"></label>
+    <div class="actions">
+      <button class="btn" id="btnRegister">Register</button>
+      <button class="btn primary" id="btnLogin">Login</button>
+    </div>
+    <small class="muted">After you register or log in, you can send messages and they’ll be saved.</small>
+  </div>
+</section>
+
   </footer>
 
   <script src="app.js"></script>
