@@ -420,22 +420,80 @@ function researchText(){
 function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML = researchText(); }
 
 /* ---------------- MySQL backend hooks (optional) ---------------- */
-const API_BASE = ""; // e.g., "https://your-server.example.com"
+const API_BASE = "https://YOUR-RENDER-URL"; // e.g., https://rehabet-api.onrender.com
+ // e.g., "https://your-server.example.com"
+// --- Auth helpers (NEW) ---
+function authHeaders(){
+  const t = localStorage.getItem("rehabit_jwt");
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
+async function apiRegister({ email, username, password, displayName, lang }){
+  const r = await fetch(`${API_BASE}/api/register`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ email, username, password, displayName, lang })
+  });
+  if(!r.ok) throw new Error("Register failed");
+  const data = await r.json();
+  localStorage.setItem("rehabit_jwt", data.token); // save token
+  return data.user;
+}
+
+async function apiLogin({ email, username, password }){
+  const r = await fetch(`${API_BASE}/api/login`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ email, username, password })
+  });
+  if(!r.ok) throw new Error("Login failed");
+  const data = await r.json();
+  localStorage.setItem("rehabit_jwt", data.token); // save token
+  return data.user;
+}
+
 async function apiGetMessages(){
   if(!API_BASE) return null;
   try{ const r=await fetch(`${API_BASE}/api/messages`); if(!r.ok) return null; return await r.json(); }
   catch{ return null; }
 }
+// REPLACE the existing apiPostMessage with this one
 async function apiPostMessage(payload){
   if(!API_BASE) return {ok:false};
-  try{ const r=await fetch(`${API_BASE}/api/messages`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)}); return await r.json(); }
-  catch{ return {ok:false}; }
+  try{
+    const r = await fetch(`${API_BASE}/api/messages`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", ...authHeaders() },
+      body: JSON.stringify({
+        text: payload.text,
+        room: payload.room || "global",
+        title: payload.title || currentTitle()
+      })
+    });
+    if(!r.ok) return { ok:false };
+    return await r.json(); // { ok:true }
+  }catch{
+    return { ok:false };
+  }
 }
-async function apiFriendRequest(fromUid, toCode){
+
+}
+// REPLACE the existing apiFriendRequest with this one
+async function apiFriendRequest(fromUidIgnored, toCode){
   if(!API_BASE) return {ok:false, error:"offline"};
-  try{ const r=await fetch(`${API_BASE}/api/friend-requests`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({fromUid,toCode})}); return await r.json(); }
-  catch{ return {ok:false}; }
+  try{
+    const r = await fetch(`${API_BASE}/api/friend-requests`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", ...authHeaders() },
+      body: JSON.stringify({ toCode })
+    });
+    if(!r.ok) return { ok:false };
+    return await r.json(); // { ok:true }
+  }catch{
+    return { ok:false };
+  }
 }
+
 
 /* ---------------- Local friends storage (offline demo) ---------------- */
 const LOCAL_FRIENDS_KEY = "rehabit_local_friends";
