@@ -34,7 +34,7 @@ h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
 .drawer-nav{display:grid;padding:12px}
 .drawer-link{padding:12px 10px;border:1px solid #e6ebff;margin-bottom:10px;border-radius:12px;background:#f8fbff;cursor:pointer;text-align:left;font-weight:700;display:flex;align-items:center;gap:8px}
 .drawer-link:hover{background:#eef6ff}
-/* Active glow for current page in the menu */
+/* Active faint glow for current page */
 .drawer-link.active{box-shadow:0 0 0 3px rgba(31,58,138,.15); border-color:#c7d2fe}
 .drawer-link.danger{border-color:#ffd5d9;background:#fff2f3;color:#991b1b}
 .drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block}
@@ -56,7 +56,6 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .btn.danger{background:var(--danger);color:#fff;border-color:transparent}
 .file input{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap}
 .list{list-style:none;padding-left:0;margin:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #cbd5e1}
-.pro-actions .btn{min-width:220px;justify-content:center}
 
 /* Crisis pill */
 .crisis-mini{position:sticky;top:64px;display:flex;justify-content:flex-end;max-width:var(--maxw);margin:2px auto 0;padding:0 clamp(12px,3vw,24px)}
@@ -69,16 +68,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 
 /* Hero */
 .home-hero{display:grid;gap:14px;background:linear-gradient(180deg,#ffffff,#edf7ff);border:1px solid #dbe1ff;border-radius:var(--radius);padding:18px;box-shadow:0 6px 26px rgba(20,30,70,.12);margin-bottom:12px}
-.hero-left h2{margin:0 0 6px}.hero-left p{margin:0 0 12px;color:#334155}.hero-actions .btn{background:#e6ebff;color:#111;border:1px solid #c7d2fe}.hero-actions .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
-
-/* Addiction chooser */
-.addiction-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
-.addiction-card{display:grid;gap:8px;justify-items:center;padding:12px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111;cursor:pointer;transition:transform .1s ease,box-shadow .15s ease;box-shadow:0 2px 8px rgba(2,6,23,.04)}
-.addiction-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(2,6,23,.06)}
-.addiction-card img{width:72px;height:72px;object-fit:cover;border-radius:10px}
-.addiction-card input{display:none}
-.addiction-card input:checked+img,.addiction-card input:checked~img{outline:3px solid var(--primary-2);outline-offset:4px}
-.addiction-card span{font-weight:600}
+.hero-left h2{margin:0 0 6px}.hero-left p{margin:0 0 12px;color:#334155}
 
 /* Chat */
 .chat-box{height:260px;overflow:auto;padding:10px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111}
@@ -87,14 +77,13 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 
 /* Program / materials */
 .program{padding-left:18px;line-height:1.6}
-.supporting h3{margin-top:16px}
 .list.bullets li{justify-content:flex-start;gap:8px}
 .list.bullets li::before{content:"•";color:#275efe;margin-right:6px}
 .contrib{margin-top:12px}
-.muted{color:var(--muted)}
+.muted{color:#64748b}
 .encouragement{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
 
-/* Badges grid with icons (locked gray) */
+/* Badges grid */
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .badge-card{border:1px solid #dbe1ff;border-radius:12px;padding:12px;background:#fff;display:grid;gap:8px;align-content:start}
 .badge-card.locked{filter:grayscale(0.9) brightness(0.95)}
@@ -119,4 +108,19 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 
 /* SOS */
 .sos h2{color:#991b1b}
-.sos .btn{border
+.sos .btn{border-color:#fecaca}
+.sos .card.soft{background:#fff1f2;border-color:#fecdd3}
+
+/* Guide tabs & choice */
+.guide-tabs{display:flex;gap:8px;margin-bottom:8px;justify-content:center}
+.tabpane[hidden]{display:none}
+.guide-choice{margin-bottom:10px}
+
+/* Settings addictions */
+.settings-addictions{
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+}
+.sa-item{display:grid;justify-items:center;gap:8px;padding:10px;border:1px dashed #cfe3ff;border-radius:12px;background:#f8fbff}
+.sa-item span{font-weight:700}
+.sa-item input{margin-top:-6px}
+.sa-item img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5edff}
