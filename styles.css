@@ -1,451 +1,152 @@
-<!doctype html>
-<html lang="en" data-lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ReHabit — Your Recovery Companion</title>
-  <meta name="theme-color" content="#0f3c6e" />
-  <link rel="icon" href="assets/favicon.png">
-  <link rel="manifest" href="manifest.webmanifest">
-  <!-- Fonts: Inter + Posh titles -->
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+:root{
+  /* Pastel + teal + navy palette */
+  --bg:#f2f6ff; --surface:#ffffff; --soft:#eef7ff;
+  --text:#0b1324; --muted:#64748b;
+  --primary:#0ea5a3; /* teal */
+  --primary-dark:#0f3c6e; /* navy accent */
+  --success:#16a34a; --danger:#ef4444;
+  --radius:16px; --shadow:0 14px 30px rgba(2,6,23,.10);
+  --maxw:1100px; --gap:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";
+  background:linear-gradient(180deg,#f7fbff,#f2f6ff);
+  color:var(--text)
+}
+.fancy{font-family:"Cormorant Garamond",serif; letter-spacing:.2px}
+.app-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px clamp(12px,3vw,24px);
+  background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:20
+}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;object-fit:cover;border-radius:8px}
+h1{margin:0;font-size:28px;font-weight:700}
+.slogans-inline{display:flex;gap:8px;margin-left:10px}
+.chip{background:#e6f7ff;color:#0b1324;padding:6px 10px;border-radius:999px;font-weight:700}
+.chip.primary{background:var(--primary);color:#fff}
+.header-actions{display:flex;align-items:center;gap:10px}
+#langSelect{border:1px solid #cbd5e1;border-radius:10px;padding:6px 8px;background:#fff}
 
-  <!-- Optional Firebase (kept for compatibility; MySQL backend is below) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script>
-    // Leave empty if you won’t use Firebase; MySQL backend works without it.
-    const firebaseConfig = { };
-    try { if (Object.keys(firebaseConfig).length) firebase.initializeApp(firebaseConfig); } catch(e) {}
-  </script>
+/* Hamburger + Drawer */
+.hamburger{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
+.drawer{
+  position:fixed;inset:0 auto 0 0;width:300px;background:#fff;border-right:1px solid #dbe1ff;
+  box-shadow:0 20px 60px rgba(8,15,40,.24);transform:translateX(-105%);transition:transform .2s ease;z-index:30;display:flex;flex-direction:column
+}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6ebff}
+.drawer-nav{display:grid;padding:12px}
+.drawer-link{
+  padding:12px 10px;border:1px solid #e6ebff;margin-bottom:10px;border-radius:12px;background:#f8fbff;cursor:pointer;text-align:left;font-weight:700;
+  display:flex;align-items:center;gap:8px
+}
+.drawer-link:hover{background:#eef6ff}
+.drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block}
+.drawer-link.danger{border-color:#ffd5d9;background:#fff2f3;color:#991b1b}
+/* highlight current page in menu */
+.drawer-link.active{box-shadow:0 0 0 3px rgba(14,165,163,.25); border-color:#bae6fd}
+.backdrop{position:fixed;inset:0;background:rgba(12,18,36,.35);backdrop-filter:blur(2px);z-index:25}
 
-  <!-- Backend API base (set to your server URL, e.g., "https://rehabit.yourdomain.com") -->
-  <script> window.API_BASE = ""; /* e.g., "https://rehabit.yourdomain.com" */ </script>
-</head>
-<body>
-  <header class="app-header">
-    <!-- Hamburger -->
-    <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
+/* Layout */
+.container{margin:12px auto clamp(84px,8vh,96px);max-width:var(--maxw);padding:0 clamp(12px,3vw,24px);display:grid;gap:var(--gap)}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(14px,2.4vw,22px);border:1px solid #dbe1ff}
+.card.soft{background:var(--soft)}
+.grid,.grid-2{display:grid;gap:var(--gap)}.grid-2{grid-template-columns:1fr}@media(min-width:760px){.grid-2{grid-template-columns:1fr 1fr}}
+label{display:grid;gap:6px;font-size:14px}
+input[type="text"],input[type="date"],input[type="number"],select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;color:var(--text)}
+textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--primary)}
+.btn{border:1px solid #cbd5e1;padding:10px 14px;border-radius:12px;background:#f8fafc;color:var(--text);cursor:pointer;font-weight:700;transition:transform .05s ease,filter .15s ease,background .15s ease}
+.btn:hover{filter:brightness(1.02);background:#e9f5ff;border-color:#bfe0ff}.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+.btn.subtle{background:#eef2f7}
+.btn.success{background:var(--success);color:#fff;border-color:transparent}
+.btn.danger{background:var(--danger);color:#fff;border-color:transparent}
+.file input{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap}
+.list{list-style:none;padding-left:0;margin:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #cbd5e1}
+.pro-actions .btn{min-width:220px;justify-content:center}
 
-    <div class="brand">
-      <img class="logo" alt="ReHabit logo"
-           src="https://lh3.googleusercontent.com/sitesv/AICyYdbmcgQFK2Z29ZvnRBGLzvgYafySguNCTxosCMSM_PGX7OGYt0LoXrL3tZZkvSHOsxfMorAK2TMOgcI7Uull0sWjV48H97Z4Zq0RgywqJwNmpry9rQyah--LGPICtxYg02Sf83XsCphrz_g29TLwoLcVyEZRKJsFq2RWkp4aAhwurDxv813Tvw0VNUw=w1280"
-           onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/sitesv/AICyYdY_Wr1HnVjspVtEZ1_M0u3rLNcWCaDPPA0SvH--yEgG7CO6VWtW-meSog-0J6QtVa9skMbP9_bIN0JZdaivhZ2ZcnVfCs6E6Q4AcmH0xU2_pkWJ5pWo5MadTraTNyJ0usYN4VYOu1xtGZGEKw--wUMC0qhcFcZGGLWQgvMnVMMJfRszcO-SLWCI09w=w1280'">
-      <h1 class="fancy">ReHabit</h1>
-      <div class="slogans-inline">
-        <span class="chip">ReBuild</span>
-        <span class="chip">ReWire</span>
-        <span class="chip primary">ReHabit</span>
-      </div>
-    </div>
+/* Crisis pill */
+.crisis-mini{position:sticky;top:64px;display:flex;justify-content:flex-end;max-width:var(--maxw);margin:2px auto 0;padding:0 clamp(12px,3vw,24px)}
+.crisis-mini a{background:#ffe0e5;border:1px solid #ffc8d0;color:#9f1239;text-decoration:none;padding:6px 10px;border-radius:999px;font-size:12px}
 
-    <div class="header-actions">
-      <select id="langSelect" aria-label="Language">
-        <option value="en">English</option>
-        <option value="es">Español</option>
-      </select>
-      <button id="installBtn" class="btn subtle" aria-label="Install" hidden data-i18n="install">Install</button>
-    </div>
-  </header>
+/* Tabbar */
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);background:#ffffffd9;border-top:1px solid #dbe1ff;backdrop-filter:blur(10px);z-index:15}
+.tabbtn{appearance:none;background:transparent;border:0;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:grid;place-items:center;gap:4px}
+.tabbtn:focus{outline:2px solid var(--primary);outline-offset:-2px}.ico{width:22px;height:22px;display:block}
 
-  <!-- Drawer menu -->
-  <aside id="drawer" class="drawer" aria-hidden="true">
-    <div class="drawer-head">
-      <strong class="fancy">Menu</strong>
-      <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
-    </div>
+/* Hero */
+.home-hero{display:grid;gap:14px;background:linear-gradient(180deg,#ffffff,#f1f7ff);border:1px solid #dbe1ff;border-radius:var(--radius);padding:18px;box-shadow:0 6px 26px rgba(20,30,70,.12);margin-bottom:12px}
+.hero-left h2{margin:0 0 6px}.hero-left p{margin:0 0 12px;color:#334155}.hero-actions .btn{background:#e6f7ff;color:#111;border:1px solid #c7d2fe}.hero-actions .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
 
-    <nav class="drawer-nav">
-      <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
-        <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
-        <span>Daily Check-in</span>
-      </button>
-      <button class="drawer-link" data-nav="calendar" data-i18n="calendar">
-        <svg viewBox="0 0 24 24"><path d="M6 2h2v3h8V2h2v3h3v17H3V5h3V2z" fill="currentColor"/></svg>
-        <span>Calendar</span>
-      </button>
-      <button class="drawer-link" data-nav="guide" data-i18n="guide">
-        <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h8" fill="currentColor"/></svg>
-        <span>Guide</span>
-      </button>
-      <button class="drawer-link" data-nav="program" data-i18n="materials">
-        <svg viewBox="0 0 24 24"><path d="M3 4h18v14H3zM6 20h12v2H6z" fill="currentColor"/></svg>
-        <span>Helpful materials</span>
-      </button>
-      <button class="drawer-link" data-nav="research" data-i18n="research">
-        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
-        <span>Research</span>
-      </button>
-      <button class="drawer-link" data-nav="badges" data-i18n="badges">
-        <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg>
-        <span>Badges</span>
-      </button>
-      <button class="drawer-link" data-nav="notes" data-i18n="notes">
-        <svg viewBox="0 0 24 24"><path d="M5 3h14v14H9l-4 4V3z" fill="currentColor"/></svg>
-        <span>Notes</span>
-      </button>
-      <button class="drawer-link" data-nav="settings" data-i18n="settings">
-        <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
-        <span>Settings</span>
-      </button>
-      <button class="drawer-link danger" data-nav="sos" data-i18n="emergency">
-        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
-        <span>Emergency</span>
-      </button>
-    </nav>
-  </aside>
-  <div id="backdrop" class="backdrop" hidden></div>
+/* Addiction chooser */
+.addiction-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.addiction-card{display:grid;gap:8px;justify-items:center;padding:12px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111;cursor:pointer;transition:transform .1s ease,box-shadow .15s ease;box-shadow:0 2px 8px rgba(2,6,23,.04)}
+.addiction-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(2,6,23,.06)}
+.addiction-card img{width:72px;height:72px;object-fit:cover;border-radius:10px}
+.addiction-card input{display:none}
+.addiction-card input:checked+img,.addiction-card input:checked~img{outline:3px solid var(--primary);outline-offset:4px}
+.addiction-card span{font-weight:600}
 
-  <!-- Crisis pill -->
-  <aside class="crisis-mini" role="note" aria-label="Crisis support">
-    <a href="https://www.iasp.info/crisis-centres-helplines/" target="_blank" rel="noopener" data-i18n="danger">If in danger, get help</a>
-  </aside>
+/* Chat */
+.chat-box{height:260px;overflow:auto;padding:10px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111}
+.chat-msg{margin:6px 0}.chat-msg small{color:#6b7280}
+.chat-name{color:#1d4ed8;cursor:pointer}
 
-  <main id="app" class="container">
+/* Program / materials */
+.program{padding-left:18px;line-height:1.6}
+.supporting h3{margin-top:16px}
+.list.bullets li{justify-content:flex-start;gap:8px}
+.list.bullets li::before{content:"•";color:#0f3c6e;margin-right:6px}
+.contrib{margin-top:12px}
+.muted{color:var(--muted)}
+.encouragement{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
 
-    <!-- Onboarding -->
-    <section id="view-onboarding" class="card">
-      <h2 class="fancy" data-i18n="welcome">Welcome 👋</h2>
-      <p data-i18n="selectFocus">Select your focus and a target date to start tracking progress.</p>
+/* Badges grid with icons (locked gray) */
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.badge-card{border:1px solid #dbe1ff;border-radius:12px;padding:12px;background:#fff;display:grid;gap:8px;align-content:start}
+.badge-card.locked{filter:grayscale(0.9) brightness(0.95)}
+.badge-icon{width:40px;height:40px;border-radius:10px;display:inline-grid;place-items:center;background:#e6f7ff}
+.badge-icon.success{background:#d1fae5}
+.badge-icon.social{background:#fee2e2}
+.badge-name{font-weight:800}
+.badge-desc{font-size:12px;color:#475569}
 
-      <div class="addiction-grid" style="margin-bottom:12px">
-        <label class="addiction-card">
-          <input type="checkbox" name="focus" value="Technology">
-          <img src="assets/tech.png" alt="Technology">
-          <span data-i18n="a_tech">Technology</span>
-        </label>
-        <label class="addiction-card">
-          <input type="checkbox" name="focus" value="Smoking">
-          <img src="assets/smoking.png" alt="Smoking">
-          <span data-i18n="a_smoke">Smoking</span>
-        </label>
-        <label class="addiction-card">
-          <input type="checkbox" name="focus" value="Alcohol">
-          <img src="assets/alcohol.png" alt="Alcohol">
-          <span data-i18n="a_alcohol">Alcohol</span>
-        </label>
-        <label class="addiction-card">
-          <input type="checkbox" name="focus" value="Gambling">
-          <img src="assets/gambling.png" alt="Gambling">
-          <span data-i18n="a_gambling">Gambling</span>
-        </label>
-        <label class="addiction-card">
-          <input type="checkbox" name="focus" value="Other">
-          <img src="assets/tech.png" alt="Other drugs">
-          <span data-i18n="a_other">Other drugs</span>
-        </label>
-      </div>
+/* Calendar */
+.calendar-head{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.calendar-head--page{margin-bottom:2px}
+.calendar-actions{margin-top:12px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.m{font-size:12px;color:#475569;text-align:center}
+.day{border:1px solid #dbe1ff;border-radius:10px;min-height:58px;background:#fff;padding:6px;display:grid;align-content:start;gap:6px}
+.day.s{outline:2px solid var(--success)}
+.day.f{outline:2px solid var(--danger)}
+.day.disabled{opacity:.45;pointer-events:none}
+.day .d{font-weight:700;font-size:12px;color:#334155}
+.day .m{font-size:12px}
 
-      <form id="onboardingForm" class="grid">
-        <label><span data-i18n="quitDate">Quit/target date</span><input type="date" name="quitDate" required></label>
-        <label><span data-i18n="motivation">Your main motivation (optional)</span><input type="text" name="motivation" maxlength="120" placeholder="e.g., Be healthier for my family" /></label>
-        <button class="btn primary" type="submit" data-i18n="start">Start ReHabit</button>
-      </form>
-    </section>
+/* SOS */
+.sos h2{color:#991b1b}
+.sos .btn{border-color:#fecaca}
+.sos .card.soft{background:#fff1f2;border-color:#fecdd3}
 
-    <!-- Home -->
-    <section id="view-home" class="card" hidden>
-      <div class="home-hero">
-        <div class="hero-left">
-          <h2 class="fancy" data-i18n="homeTitle">Welcome to ReHabit</h2>
-          <p data-i18n="homeLead">Your private companion to build healthier habits—one day at a time.</p>
-          <div class="hero-actions">
-            <button class="btn primary" data-nav="checkin" data-i18n="checkin">Daily Check-in</button>
-            <button class="btn" data-nav="calendar" data-i18n="calendar">Calendar</button>
-            <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
-          </div>
-        </div>
-      </div>
+.radios{display:flex;gap:16px;align-items:center;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
+.pro-form small{color:#475569}
 
-      <div class="grid-2">
-        <div class="card soft">
-          <h3 class="fancy" data-i18n="monthCard">Calendar (this month)</h3>
-          <div class="calendar-head">
-            <button class="btn subtle" id="prevMonth" aria-label="Previous month">‹</button>
-            <div id="monthLabel"></div>
-            <button class="btn subtle" id="nextMonth" aria-label="Next month">›</button>
-          </div>
-          <div id="calendarGrid" class="calendar"></div>
-          <p class="muted" data-i18n="calendarHelp">Click a day to toggle: blank → Success → Slip.</p>
-        </div>
+/* Guide tabs & choice */
+.guide-tabs{display:flex;gap:8px;margin-bottom:8px;justify-content:center}
+.tabpane[hidden]{display:none}
+.guide-choice{margin-bottom:10px}
 
-        <div class="card soft">
-          <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
-          <!-- Removed quick mark buttons by request -->
-          <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
-          <div class="actions">
-            <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
-            <button class="btn" data-nav="badges" data-i18n="badges">Badges</button>
-            <button class="btn" data-nav="research" data-i18n="research">Research</button>
-          </div>
-        </div>
-      </div>
-    </section>
+/* Addictions grid in settings */
+.addictions-grid{
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+}
+.addiction-pick{display:grid;justify-items:center;gap:6px;border:1px dashed #cbd5e1;padding:10px;border-radius:12px;background:#fff}
+.addiction-pick img{width:72px;height:72px;object-fit:cover;border-radius:10px}
 
-    <!-- Calendar full -->
-    <section id="view-calendar" class="card" hidden>
-      <h2 class="fancy" data-i18n="calendar">Calendar</h2>
-      <div class="calendar-head calendar-head--page">
-        <button class="btn subtle" id="prevMonth2">‹</button>
-        <div id="monthLabel2"></div>
-        <button class="btn subtle" id="nextMonth2">›</button>
-      </div>
-      <div id="calendarGrid2" class="calendar"></div>
-      <div class="actions calendar-actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Check-in -->
-    <section id="view-checkin" class="card" hidden>
-      <h2 class="fancy" data-i18n="checkin">Daily Check-in</h2>
-      <div class="grid-2">
-        <div class="card soft">
-          <p id="encouragement" class="encouragement big"></p>
-
-          <form id="checkinForm" class="grid pro-form">
-            <div class="grid-2">
-              <label><span data-i18n="mood">Mood (0–10)</span>
-                <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
-                <small><span data-i18n="value">Value:</span> <span id="moodVal">5</span></small>
-              </label>
-              <label><span data-i18n="urge">Urge (0–10)</span>
-                <input type="range" name="urge" min="0" max="10" value="3" oninput="urgeVal.textContent=this.value">
-                <small><span data-i18n="value">Value:</span> <span id="urgeVal">3</span></small>
-              </label>
-            </div>
-
-            <div class="grid-2">
-              <label><span data-i18n="sleep">Hours of sleep</span><input type="number" name="sleep" min="0" max="24" value="7"></label>
-              <label><span data-i18n="cravingWindow">Craving window</span>
-                <select name="window">
-                  <option value="morning" data-i18n="morning">Morning</option>
-                  <option value="afternoon" data-i18n="afternoon">Afternoon</option>
-                  <option value="evening" data-i18n="evening">Evening</option>
-                  <option value="night" data-i18n="night">Night</option>
-                </select>
-              </label>
-            </div>
-
-            <label><span data-i18n="actionTook">Helpful action you took</span><input type="text" name="action" maxlength="120" placeholder="Walk, water, texted a friend..."></label>
-            <label><span data-i18n="note">Note (optional)</span><textarea name="note" rows="3" placeholder=""></textarea></label>
-
-            <fieldset class="radios">
-              <legend class="fancy" data-i18n="exposure">Exposure level today</legend>
-              <label><input type="radio" name="exposure" value="low" checked> <span data-i18n="low">Low</span></label>
-              <label><input type="radio" name="exposure" value="medium"> <span data-i18n="medium">Medium</span></label>
-              <label><input type="radio" name="exposure" value="high"> <span data-i18n="high">High</span></label>
-            </fieldset>
-
-            <div class="actions">
-              <button class="btn primary" type="submit" data-i18n="save">Save check-in</button>
-              <button class="btn subtle" data-nav="home" type="button" data-i18n="back">Back</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="card soft">
-          <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
-          <!-- Removed quick mark buttons by request -->
-          <h3 class="fancy" data-i18n="recent">Recent notes</h3>
-          <ul id="recentNotes" class="list"></ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- SOS (Emergency) -->
-    <section id="view-sos" class="card sos" hidden>
-      <h2 class="fancy">🚨 <span data-i18n="sos">Craving SOS</span></h2>
-      <ol class="sos-steps">
-        <li data-i18n="s1"><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
-        <li data-i18n="s2"><strong>Urge surfing.</strong> Notice the urge rising and falling.</li>
-        <li data-i18n="s3"><strong>Do one alternative action.</strong> Walk, shower, text a friend, drink water.</li>
-      </ol>
-      <div class="grid-2">
-        <div class="card soft">
-          <h3 data-i18n="timer">Breathing Timer (1:00)</h3>
-          <div id="timer" aria-live="polite">01:00</div>
-          <div class="actions"><button class="btn" id="startTimer" data-i18n="startBtn">Start</button><button class="btn subtle" id="resetTimer" data-i18n="reset">Reset</button></div>
-        </div>
-        <div class="card soft">
-          <h3 data-i18n="quickNotes">Quick Notes</h3>
-          <textarea id="sosNote" rows="3" placeholder=""></textarea>
-          <div class="actions"><button class="btn" id="saveSos" data-i18n="save">Save</button></div>
-        </div>
-      </div>
-      <div class="resources"><h3 data-i18n="helpful">Helpful actions</h3><div class="chips" id="copingChips"></div></div>
-      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Guide -->
-    <section id="view-guide" class="card" hidden>
-      <h2 class="fancy" id="guideTitle">Guide</h2>
-      <div id="guideChoiceWrap" class="guide-choice" hidden>
-        <label>
-          <span data-i18n="chooseAddiction">Choose addiction</span>
-          <select id="guideChoice"></select>
-        </label>
-      </div>
-
-      <div class="guide-tabs">
-        <button class="btn tab" data-tab="tips" data-i18n="tips">Tips</button>
-        <button class="btn tab" data-tab="steps" data-i18n="steps">10 Steps</button>
-        <button class="btn tab" data-tab="deep" data-i18n="deep">Deep Guide</button>
-      </div>
-      <div id="tab-tips" class="tabpane"></div>
-      <ol id="tab-steps" class="tabpane program" hidden></ol>
-      <div id="tab-deep" class="tabpane" hidden></div>
-
-      <div class="actions">
-        <button class="btn" data-nav="program" data-i18n="materials">Helpful materials</button>
-        <button class="btn subtle" data-nav="home" data-i18n="back">Back</button>
-      </div>
-    </section>
-
-    <!-- Materials -->
-    <section id="view-program" class="card" hidden>
-      <h2 class="fancy" id="programTitle">Helpful materials</h2>
-      <ul id="materialsList" class="list bullets"></ul>
-      <div id="contribWrap" class="contrib" hidden>
-        <h3 data-i18n="contribTitle">Contribute tips (1-year badge required)</h3>
-        <form id="contribForm" class="grid" action="javascript:void(0)"><label data-i18n="yourTip">Your tip or resource<textarea name="tip" rows="3" maxlength="500"></textarea></label><button class="btn" data-i18n="submit">Submit tip</button></form>
-        <p class="muted" data-i18n="contribNote">Contributions may appear for your addiction.</p>
-      </div>
-      <div class="actions"><button class="btn subtle" data-nav="guide" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Badges -->
-    <section id="view-badges" class="card" hidden>
-      <h2 class="fancy" data-i18n="badges">Badges & Titles</h2>
-
-      <h3 class="fancy" data-i18n="sobriety">Sobriety badges</h3>
-      <div id="sobrietyGrid" class="badge-grid"></div>
-
-      <h3 class="fancy" data-i18n="social">Social badges</h3>
-      <div id="socialGrid" class="badge-grid"></div>
-
-      <h3 class="fancy" data-i18n="currentTitle">Your current chat title</h3>
-      <p id="currentTitle" class="muted">—</p>
-
-      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Research -->
-    <section id="view-research" class="card" hidden>
-      <h2 class="fancy" data-i18n="research">Research</h2>
-
-      <!-- Choice for multiple addictions -->
-      <div id="researchChoiceWrap" class="guide-choice" hidden>
-        <label>
-          <span data-i18n="chooseAddiction">Choose addiction</span>
-          <select id="researchChoice"></select>
-        </label>
-      </div>
-
-      <div id="researchBody"></div>
-      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Notes -->
-    <section id="view-notes" class="card" hidden>
-      <h2 class="fancy" data-i18n="notes">Notes</h2>
-      <ul id="notesList" class="list"></ul>
-      <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Community -->
-    <section id="view-community" class="card" hidden>
-      <h2 class="fancy" data-i18n="chat">Community chat</h2>
-      <p class="muted" data-i18n="chatNote">Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.</p>
-
-      <div id="globalChat" class="chat-box"></div>
-      <form id="globalForm" class="grid" action="javascript:void(0)" style="grid-template-columns:1fr auto;">
-        <input type="text" name="msg" placeholder="Write a message…" maxlength="300">
-        <button class="btn" data-i18n="send">Send</button>
-      </form>
-      <div class="actions">
-        <button class="btn" data-nav="friends" data-i18n="friends">Friends</button>
-        <button class="btn subtle" data-nav="home" data-i18n="back">Back</button>
-      </div>
-    </section>
-
-    <!-- Friends -->
-    <section id="view-friends" class="card" hidden>
-      <h2 class="fancy" data-i18n="friends">Friends</h2>
-      <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
-
-      <form id="addFriendForm" class="grid" action="javascript:void(0)" style="grid-template-columns:1fr auto; margin:8px 0;">
-        <input type="text" name="code" placeholder="Enter friend code (e.g., RH-COACH)" maxlength="40" />
-        <button class="btn" type="submit" data-i18n="send">Send</button>
-      </form>
-      <p class="muted" id="friendCodeHint">Try codes: RH-COACH, RH-CALM, RH-PEER.</p>
-
-      <h3 class="fancy" data-i18n="requests">Requests</h3>
-      <ul id="requestsList" class="list"></ul>
-      <h3 class="fancy" data-i18n="friendsList">Friends</h3>
-      <ul id="friendList" class="list"></ul>
-      <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
-    </section>
-
-    <!-- Settings -->
-    <section id="view-settings" class="card" hidden>
-      <h2 class="fancy" data-i18n="settings">Settings</h2>
-      <form id="settingsForm" class="grid">
-        <label><span data-i18n="displayName">Display name</span>
-          <input type="text" name="displayName" maxlength="40" placeholder="Your name">
-        </label>
-
-        <!-- Addictions grid with images (left->right) -->
-        <fieldset class="grid addictions-grid">
-          <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
-
-          <label class="addiction-pick">
-            <input type="checkbox" name="addictions" value="Smoking">
-            <span data-i18n="a_smoke">Smoking</span>
-            <img src="assets/smoking.png" alt="Smoking">
-          </label>
-          <label class="addiction-pick">
-            <input type="checkbox" name="addictions" value="Alcohol">
-            <span data-i18n="a_alcohol">Alcohol</span>
-            <img src="assets/alcohol.png" alt="Alcohol">
-          </label>
-          <label class="addiction-pick">
-            <input type="checkbox" name="addictions" value="Technology">
-            <span data-i18n="a_tech">Technology</span>
-            <img src="assets/tech.png" alt="Technology">
-          </label>
-          <label class="addiction-pick">
-            <input type="checkbox" name="addictions" value="Gambling">
-            <span data-i18n="a_gambling">Gambling</span>
-            <img src="assets/gambling.png" alt="Gambling">
-          </label>
-          <label class="addiction-pick">
-            <input type="checkbox" name="addictions" value="Other">
-            <span data-i18n="a_other">Other drugs</span>
-            <img src="assets/tech.png" alt="Other drugs">
-          </label>
-        </fieldset>
-
-        <div class="actions">
-          <button class="btn primary" data-i18n="save">Save</button>
-          <button class="btn subtle" type="button" data-nav="home" data-i18n="back">Back</button>
-        </div>
-      </form>
-    </section>
-
-  </main>
-
-  <!-- Tabbar: Home, Community, Friends -->
-  <nav class="tabbar" aria-label="Primary">
-    <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
-    <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
-    <button data-nav="friends" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg><span data-i18n="friends">Friends</span></button>
-  </nav>
-
-  <footer class="legal">
-    <small>© <span id="year"></span> ReHabit. <span data-i18n="footer">For support only—does not replace professional treatment.</span></small>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
-</html>
+/* Drawer icons (ensure they render) */
+.drawer-link svg{width:18px;height:18px;flex:0 0 18px;display:inline-block}
