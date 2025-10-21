@@ -8,8 +8,8 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <!-- Fonts -->
-  <!-- NEW: posh title font -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Title font changed to Francois One (requested) + existing Inter + Cinzel kept -->
+  <link href="https://fonts.googleapis.com/css2?family=Francois+One&family=Cinzel:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 
   <!-- (Optional) Firebase for live chat/friends -->
@@ -26,6 +26,36 @@
     };
     try { firebase.initializeApp(firebaseConfig); } catch(e) {}
   </script>
+
+  <!-- Minimal overrides ONLY for what you asked (width, icons already exist, titles color/font, app-wide bluish bg, slogan style) -->
+  <style>
+    :root{
+      --olive:#556B2F; /* olive green for titles */
+      --app-bg:#eaf3ff; /* bluish color applied to all pages */
+    }
+    body{ background: var(--app-bg); }
+    .container .card, .card.soft, .card.sos{ background: #fff; }
+    .fancy, h1.fancy, h2.fancy, h3.fancy{ 
+      color: var(--olive) !important; 
+      font-family: "Francois One", system-ui, -apple-system, "Inter", Arial, sans-serif !important;
+      letter-spacing:.2px;
+    }
+    /* narrower hamburger drawer */
+    .drawer{ width: 280px; max-width: 80vw; }
+    .drawer .drawer-link{ display:flex; align-items:center; gap:.6rem; }
+    .drawer .drawer-link svg{ width:20px; height:20px; opacity:.9; }
+
+    /* unify the slogan into one chip (keep ReHabit chip color) */
+    .slogans-inline{
+      display:flex; gap:.5rem; align-items:center;
+    }
+    .slogans-inline .chip.primary{
+      padding:.25rem .6rem; border-radius:.75rem; font-weight:600;
+      /* the "ReHabit" chip color is kept via existing .chip.primary styles */
+    }
+    /* small label under month for streak */
+    .streak-label{ font-weight:600; margin-top:.25rem; }
+  </style>
 </head>
 <body>
   <header class="app-header">
@@ -38,9 +68,8 @@
            onerror="this.onerror=null;this.src='https://lh3.googleusercontent.com/sitesv/AICyYdY_Wr1HnVjspVtEZ1_M0u3rLNcWCaDPPA0SvH--yEgG7CO6VWtW-meSog-0J6QtVa9skMbP9_bIN0JZdaivhZ2ZcnVfCs6E6Q4AcmH0xU2_pkWJ5pWo5MadTraTNyJ0usYN4VYOu1xtGZGEKw--wUMC0qhcFcZGGLWQgvMnVMMJfRszcO-SLWCI09w=w1280'">
       <h1 class="fancy">ReHabit</h1>
       <div class="slogans-inline">
-        <span class="chip">ReBuild</span>
-        <span class="chip">ReWire</span>
-        <span class="chip primary">ReHabit</span>
+        <!-- joined into ONE chip, keeping the color of the ReHabit chip -->
+        <span class="chip primary">ReBuild • ReWire • ReHabit</span>
       </div>
     </div>
 
@@ -60,6 +89,12 @@
       <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
     </div>
     <nav class="drawer-nav">
+      <!-- ADDED: Home in hamburger menu -->
+      <button class="drawer-link" data-nav="home">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg>
+        <span data-i18n="home">Home</span>
+      </button>
+
       <button class="drawer-link" data-nav="checkin" data-i18n="checkin">
         <svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" fill="currentColor"/></svg>
         <span>Daily Check-in</span>
@@ -80,7 +115,7 @@
         <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="currentColor"/></svg>
         <span>Research</span>
       </button>
-      <!-- NEW: Notes -->
+      <!-- Notes -->
       <button class="drawer-link" data-nav="notes" data-i18n="notes">
         <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
         <span>Notes</span>
@@ -163,19 +198,14 @@
           <h3 class="fancy" data-i18n="monthCard">Calendar (this month)</h3>
           <div class="calendar-head">
             <div id="monthLabel"></div>
+            <!-- ADDED: streak label -->
+            <div id="streakLabel" class="streak-label"></div>
           </div>
           <div id="calendarGrid" class="calendar"></div>
           <p class="muted" data-i18n="calendarHelp">Click a day to toggle: blank → Success → Slip.</p>
         </div>
 
         <div class="card soft">
-          <h3 class="fancy" data-i18n="shortcuts">Today’s shortcuts</h3>
-          <div class="actions pro-actions">
-            <!-- (kept; these affect journal only, calendar editing is via day click and only today) -->
-            <button class="btn success" id="markTodayOk" data-i18n="markSuccess">Record success today</button>
-            <button class="btn danger" id="markTodaySlip" data-i18n="markSlip">Record slip today</button>
-          </div>
-
           <h3 class="fancy" data-i18n="quickOpen">Quick open</h3>
           <div class="actions">
             <button class="btn" data-nav="guide" data-i18n="guide">Guide</button>
@@ -191,6 +221,8 @@
       <h2 class="fancy" data-i18n="calendar">Calendar</h2>
       <div class="calendar-head up">
         <div id="monthLabel2"></div>
+        <!-- ADDED: streak on full calendar -->
+        <div id="streakLabel2" class="streak-label"></div>
       </div>
       <div id="calendarGrid2" class="calendar"></div>
       <div class="actions low">
@@ -249,6 +281,8 @@
         <div class="card soft">
           <h3 class="fancy" data-i18n="todayShortcuts">Today’s shortcuts</h3>
           <div class="actions pro-actions">
+            <!-- NOTE: You asked to delete the "Record success/slip" buttons on the HOME page only.
+                 These remain here on the Check-in page. -->
             <button class="btn success" id="markTodayOk2" data-i18n="markSuccess">Record success today</button>
             <button class="btn danger" id="markTodaySlip2" data-i18n="markSlip">Record slip today</button>
           </div>
@@ -342,7 +376,7 @@
     <section id="view-research" class="card" hidden>
       <h2 class="fancy" data-i18n="research">Research</h2>
 
-      <!-- NEW: choose addiction if multiple -->
+      <!-- choose addiction if multiple -->
       <div id="researchChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
@@ -396,7 +430,7 @@
           <input type="text" name="displayName" maxlength="40" placeholder="Your name">
         </label>
 
-        <!-- NEW: addictions laid out L→R with image below -->
+        <!-- Addictions -->
         <fieldset class="grid settings-addictions">
           <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
 
@@ -438,24 +472,7 @@
       </form>
     </section>
 
-    <!-- NEW (Part C): super-simple Account box -->
-
-
-      <!-- Put this somewhere visible (e.g., inside your Settings view or a small Auth card) -->
-<div id="authBox">
-  <input id="authEmail" type="email" placeholder="Email" />
-  <input id="authPass"  type="password" placeholder="Password" />
-  <input id="authDisplayName" type="text" placeholder="Display name (optional)" />
-  <div style="margin-top:.5rem; display:flex; gap:.5rem;">
-    <button id="btnRegister" type="button">Register</button>
-    <button id="btnLogin"    type="button">Login</button>
-  </div>
-</div>
-        <small class="muted">After you register or log in, you can send messages and they’ll be saved.</small>
-      </div>
-    </section>
-
-    <!-- NEW: Notes -->
+    <!-- Notes -->
     <section id="view-notes" class="card" hidden>
       <h2 class="fancy" data-i18n="notes">Notes</h2>
       <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
