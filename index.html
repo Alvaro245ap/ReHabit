@@ -441,13 +441,16 @@
     <!-- NEW (Part C): super-simple Account box -->
     <section class="card" id="view-auth">
       <h2 class="fancy">Account</h2>
-      <div class="grid">
-        <label>Email <input type="email" id="authEmail" placeholder="you@example.com"></label>
-        <label>Password <input type="password" id="authPass" placeholder="min 8 chars"></label>
-        <div class="actions">
-          <button class="btn" id="btnRegister">Register</button>
-          <button class="btn primary" id="btnLogin">Login</button>
-        </div>
+      <!-- Put this somewhere visible (e.g., inside your Settings view or a small Auth card) -->
+<div id="authBox">
+  <input id="authEmail" type="email" placeholder="Email" />
+  <input id="authPass"  type="password" placeholder="Password" />
+  <input id="authDisplayName" type="text" placeholder="Display name (optional)" />
+  <div style="margin-top:.5rem; display:flex; gap:.5rem;">
+    <button id="btnRegister" type="button">Register</button>
+    <button id="btnLogin"    type="button">Login</button>
+  </div>
+</div>
         <small class="muted">After you register or log in, you can send messages and they’ll be saved.</small>
       </div>
     </section>
