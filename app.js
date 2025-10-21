@@ -1,21 +1,11 @@
-/* ReHabit – CHANGES IN THIS VERSION (only what you asked):
-   - Helpful materials fully localized (EN/ES lists)
-   - MySQL-ready REST hooks (optional): API_BASE for chat load/save
-   - Prevent form redirects (action + preventDefault)
-   - Calendar: toggle by clicking days only; only TODAY is editable; past/future locked
-   - Add 6-month badge; each sobriety badge has a title shown in description; title also shown left of your name in chat
-   - Friend code: “Friend not found” (localized)
-   - SOS helpful actions localized to ES
-   - New Notes page to show Daily/SOS notes
-   - Research tab supports addiction choice when multiple
-   - Drawer shows active item with glow
-   - Title font already changed via CSS/HTML
-   - Calendar page: date higher, back lower (CSS)
-   - Settings addictions laid out left→right with image below (HTML+CSS)
-   - Menu icons: added for Notes
-   - Palette updated to pastel/teal/navy (CSS)
+/* ReHabit (No-Login Edition)
+   - Removed all auth/login/register code and backend calls
+   - Works fully offline with localStorage
+   - Community chat is local (seeded), messages append instantly
+   - Friends use local demo storage
+   - Keeps your features: calendar, check-in, guide, materials (with contributions), research, badges, notes, drawer/nav, i18n
 */
-console.log("[boot] app.js loaded OK");
+console.log("[boot] app.js (no-login) loaded");
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -50,9 +40,7 @@ function save(){
 
 /* ---------------- i18n ---------------- */
 const D = {
-  en:{
-    install:"Install",
-    welcome:"Welcome 👋", selectFocus:"Select your focus and a target date to start tracking progress.",
+  en:{ install:"Install", welcome:"Welcome 👋", selectFocus:"Select your focus and a target date to start tracking progress.",
     quitDate:"Quit/target date", motivation:"Your main motivation (optional)", start:"Start ReHabit",
     danger:"If in danger, get help", homeTitle:"Welcome to ReHabit", homeLead:"Your private companion to build healthier habits—one day at a time.",
     monthCard:"Calendar (this month)", shortcuts:"Today’s shortcuts", quickOpen:"Quick open", recent:"Recent notes",
@@ -76,9 +64,7 @@ const D = {
     notes:"Notes", notesInfo:"Your Daily and SOS notes appear here (newest first).",
     notFound:"Friend not found."
   },
-  es:{
-    install:"Instalar",
-    welcome:"Bienvenido/a 👋", selectFocus:"Elige tu(s) enfoque(s) y una fecha objetivo para comenzar a registrar tu progreso.",
+  es:{ install:"Instalar", welcome:"Bienvenido/a 👋", selectFocus:"Elige tu(s) enfoque(s) y una fecha objetivo para comenzar a registrar tu progreso.",
     quitDate:"Fecha objetivo", motivation:"Tu principal motivación (opcional)", start:"Comenzar con ReHabit",
     danger:"Si estás en peligro, busca ayuda", homeTitle:"Bienvenido a ReHabit", homeLead:"Tu compañero privado para crear hábitos más saludables—día a día.",
     monthCard:"Calendario (este mes)", shortcuts:"Atajos de hoy", quickOpen:"Accesos rápidos", recent:"Notas recientes",
@@ -106,12 +92,9 @@ const D = {
 function t(k){ const L=document.documentElement.getAttribute("data-lang")||"en"; return (D[L] && D[L][k]) || D.en[k] || k; }
 function applyI18N(){ $$("[data-i18n]").forEach(el => el.textContent = t(el.getAttribute("data-i18n"))); }
 
-/* ---------------- Friend code + Bot codes ---------------- */
+/* ---------------- Friend code + Bot codes (local demo) ---------------- */
 const CODE_KEY = "rehabit_mycode";
 function getMyCode(){
-  if (window.firebase && firebase.apps?.length && firebase.auth()?.currentUser?.uid) {
-    return "RH-" + firebase.auth().currentUser.uid.slice(0,6).toUpperCase();
-  }
   let c = localStorage.getItem(CODE_KEY);
   if (!c) { c = "RH-" + crypto.randomUUID().slice(0,6).toUpperCase(); localStorage.setItem(CODE_KEY, c); }
   return c;
@@ -174,39 +157,25 @@ function deepGuideFor(name){
   return isES ? blocks.es : blocks.en;
 }
 
-/* --------- Helpful materials: now localized EN/ES --------- */
+/* --------- Helpful materials (localized) + contributions --------- */
 const MATERIALS = {
-  Technology:{
-    en:["Book: Digital Minimalism","App: Focus / site blockers","Article: Urge surfing basics"],
-    es:["Libro: Minimalismo Digital","App: Enfoque / bloqueadores","Artículo: Fundamentos del surf del impulso"]
-  },
-  Smoking:{
-    en:["Guide: Nicotine patches","App: Smoke-free counter","Article: Delay, breathe, water"],
-    es:["Guía: Parches de nicotina","App: Contador libre de humo","Artículo: Demora, respira, agua"]
-  },
-  Alcohol:{
-    en:["Community: AF groups","NA drinks list","Article: HALT check"],
-    es:["Comunidad: Grupos AF","Lista de bebidas sin alcohol","Artículo: Revisión HALT"]
-  },
-  Gambling:{
-    en:["Self-exclusion portals","Bank blocks","Article: Replacement dopamine"],
-    es:["Portales de autoexclusión","Bloqueos bancarios","Artículo: Dopamina de reemplazo"]
-  },
-  Other:{
-    en:["SAMHSA treatment locator","Grounding techniques","Article: Coping skills"],
-    es:["Buscador de tratamiento SAMHSA","Técnicas de enraizamiento","Artículo: Habilidades de afrontamiento"]
-  }
+  Technology:{ en:["Book: Digital Minimalism","App: Focus / site blockers","Article: Urge surfing basics"],
+               es:["Libro: Minimalismo Digital","App: Enfoque / bloqueadores","Artículo: Fundamentos del surf del impulso"]},
+  Smoking:{   en:["Guide: Nicotine patches","App: Smoke-free counter","Article: Delay, breathe, water"],
+               es:["Guía: Parches de nicotina","App: Contador libre de humo","Artículo: Demora, respira, agua"]},
+  Alcohol:{   en:["Community: AF groups","NA drinks list","Article: HALT check"],
+               es:["Comunidad: Grupos AF","Lista de bebidas sin alcohol","Artículo: Revisión HALT"]},
+  Gambling:{  en:["Self-exclusion portals","Bank blocks","Article: Replacement dopamine"],
+               es:["Portales de autoexclusión","Bloqueos bancarios","Artículo: Dopamina de reemplazo"]},
+  Other:{     en:["SAMHSA treatment locator","Grounding techniques","Article: Coping skills"],
+               es:["Buscador de tratamiento SAMHSA","Técnicas de enraizamiento","Artículo: Habilidades de afrontamiento"]}
 };
-
-/* Store user-contributed materials to localStorage + in-memory list (prevents ReferenceError) */
 function addMaterial(addiction, text){
   const L=document.documentElement.getAttribute("data-lang")||"en";
-  // persist
   const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
   saved[addiction] = saved[addiction] || { en:[], es:[] };
   saved[addiction][L].push(text);
   localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(saved));
-  // reflect in current session
   if (!MATERIALS[addiction]) MATERIALS[addiction] = { en:[], es:[] };
   MATERIALS[addiction][L].push(text);
 }
@@ -307,7 +276,7 @@ function renderCalendarFull(){
   }
 }
 
-/* ---------------- Guide (tailored + language) ---------------- */
+/* ---------------- Guide ---------------- */
 function translateAddiction(a){
   const key = a==="Technology"?"a_tech":a==="Smoking"?"a_smoke":a==="Alcohol"?"a_alcohol":a==="Gambling"?"a_gambling":"a_other";
   return t(key);
@@ -340,10 +309,7 @@ function renderGuideCore(){
   $("#tab-steps").innerHTML = (STEPS[a][L]||[]).map(s=>`<li>${s}</li>`).join("");
   $("#tab-deep").innerHTML = deepGuideFor(a);
 }
-function renderGuide(){
-  renderGuideChoice();
-  renderGuideCore();
-}
+function renderGuide(){ renderGuideChoice(); renderGuideCore(); }
 function wireGuideTabs(){
   $$(".guide-tabs .tab").forEach(btn=>{
     btn.onclick=()=>{
@@ -359,7 +325,6 @@ function renderMaterials(){
   $("#programTitle").textContent = `${translateAddiction(a)} — ${t("materials")}`;
   const L=document.documentElement.getAttribute("data-lang")||"en";
   const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
-  // merge saved contributions with defaults
   const items = [
     ...(((MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [])),
     ...((saved[a]?.[L]) || [])
@@ -368,7 +333,7 @@ function renderMaterials(){
   $("#contribWrap").hidden = okDaysSinceStart()<365;
 }
 
-/* ---------------- Check-in ---------------- */
+/* ---------------- Check-in & Notes ---------------- */
 const ENCOURAGEMENTS = {
   en:[ "One step at a time. Today counts.","You’re building a stronger brain—keep going.","Small actions, huge momentum.","You’re not alone. Progress over perfection." ],
   es:[ "Paso a paso. Hoy cuenta.","Estás fortaleciendo tu cerebro—sigue.","Pequeñas acciones, gran impulso.","No estás solo/a. Progreso sobre perfección." ]
@@ -381,8 +346,6 @@ function renderCheckin(){
   if(!rec.length){ list.innerHTML=`<li><span>—</span></li>`; return; }
   rec.forEach(j=>{ const li=document.createElement("li"); li.innerHTML=`<span>${new Date(j.ts).toLocaleString()} — ${escapeHTML(j.text)}</span>`; list.appendChild(li); });
 }
-
-/* ---------------- NOTES page ---------------- */
 function renderNotes(){
   const ul=$("#notesList"); ul.innerHTML="";
   const rec=[...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).sort((a,b)=>b.ts-a.ts);
@@ -412,132 +375,18 @@ function researchCurrentAddiction(){
 const RESEARCH = { 
   Technology:{ en:[ "Define a clear screen-time rule (≤2h/day; no phone in bedroom).","Turn off nonessential notifications; batch the rest.","Move the charger outside the bedroom; analog alarm.","Uninstall 2 worst apps; remove social feeds from home screen.","Focus/blockers during work and after 21:00.","Three replacements for scrolling (walk, call, read).","One-tab rule; reduce switching costs.","Urge surfing 2–3 min; observe rise and fall.","Delay 5 minutes; then choose deliberately.","Plan screen-sabbath blocks nightly.","Out-of-reach phone while working; 25/5 timer.","Calendar reminders for breaks and wind-down.","Track Success/Slip; weekly review.","Share goal + screenshot with an ally.","Swap dopamine: micro-workouts, sunlight, journaling.","Protect sleep; no screens in bed.","Add friction in high-risk contexts.","If you slip: trigger → lesson → one action.","Celebrate specific wins.","Consider CBT/DBT coaching if needed." ],
               es:[ "Define una regla clara (≤2 h/día; sin teléfono en el dormitorio).","Apaga notificaciones no esenciales; agrupa el resto.","Cargador fuera del dormitorio; despertador analógico.","Desinstala 2 apps problemáticas; quita feeds de inicio.","Enfoque/bloqueadores en trabajo y después de las 21 h.","Tres reemplazos al desplazamiento (caminar, llamar, leer).","Regla de una pestaña; menos cambios de tarea.","Surf del impulso 2–3 min; observa subida y bajada.","Demora 5 minutos; decide con intención.","Bloques nocturnos sin pantallas.","Teléfono fuera de alcance al trabajar; temporizador 25/5.","Recordatorios para pausas y rutina nocturna.","Registra Logro/Recaída; revisión semanal.","Comparte objetivo + captura con un aliado.","Sustituye dopamina: micro-ejercicio, luz, escritura.","Protege el sueño; sin pantallas en la cama.","Añade fricción en contextos de riesgo.","Si recaes: disparador → lección → una acción.","Celebra logros concretos.","Considera TCC/DBT si lo necesitas." ]},
-  Smoking:{ en:[ ], es:[ ]},
-  Alcohol:{ en:[ ], es:[ ]},
-  Gambling:{ en:[ ], es:[ ]},
-  Other:{ en:[ ], es:[ ]}
+  Smoking:{ en:[], es:[] }, Alcohol:{ en:[], es:[] }, Gambling:{ en:[], es:[] }, Other:{ en:[], es:[] }
 };
 function researchText(){
   const a = researchCurrentAddiction();
   const L = document.documentElement.getAttribute("data-lang") || "en";
-  const lines = (RESEARCH[a] && RESEARCH[a][L]) ? RESEARCH[a][L] : RESEARCH.Technology.en;
+  const lines = (RESEARCH[a] && RESEARCH[a][L] && RESEARCH[a][L].length) ? RESEARCH[a][L] : RESEARCH.Technology.en;
   const list = lines.map(x=>`<li>${x}</li>`).join("");
   return `<h3 class="fancy">${t("researchTitle")} — ${translateAddiction(a)}</h3><ol class="program">${list}</ol><p class="muted">${t("footer")}</p>`;
 }
 function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML = researchText(); }
 
-/* ---------------- MySQL backend hooks (optional) ---------------- */
-const API_BASE = "https://rehabit-api.onrender.com";
-
-async function handleRegisterSubmit(e){
-  e.preventDefault();
-  const f = e.target;
-  const email        = f.querySelector('[name="email"]')?.value.trim();
-  const password     = f.querySelector('[name="password"]')?.value;
-  const displayName  = f.querySelector('[name="displayName"]')?.value?.trim() || null;
-
-  try{
-    const r = await fetch(`${API_BASE}/api/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, displayName })
-    });
-    const data = await r.json().catch(()=> ({}));
-    if(!r.ok){
-      alert(data?.error || data?.message || `Could not register (status ${r.status})`);
-      return;
-    }
-    alert("Registered! You can log in now.");
-    f.reset();
-  }catch(err){
-    alert("Network error (API unreachable). Check API_BASE and Render status.");
-  }
-}
-async function handleLoginSubmit(e){
-  e.preventDefault();
-  const f = e.target;
-  const email    = f.querySelector('[name="email"]')?.value.trim();
-  const password = f.querySelector('[name="password"]')?.value;
-
-  try{
-    const r = await fetch(`${API_BASE}/api/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await r.json().catch(()=> ({}));
-    if(!r.ok){
-      alert(data?.error || data?.message || `Could not login (status ${r.status})`);
-      return;
-    }
-    alert("Logged in!");
-    f.reset();
-  }catch(err){
-    alert("Network error (API unreachable). Check API_BASE and Render status.");
-  }
-}
-
-// --- Auth helpers for chat ---
-function authHeaders(){
-  const t = localStorage.getItem("rehabit_jwt");
-  return t ? { Authorization: `Bearer ${t}` } : {};
-}
-async function apiRegister({ email, username, password, displayName, lang }){
-  const r = await fetch(`${API_BASE}/api/register`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ email, username, password, displayName, lang })
-  });
-  if(!r.ok) throw new Error("Register failed");
-  const data = await r.json();
-  localStorage.setItem("rehabit_jwt", data.token);
-  return data.user;
-}
-async function apiLogin({ email, username, password }){
-  const r = await fetch(`${API_BASE}/api/login`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ email, username, password })
-  });
-  if(!r.ok) throw new Error("Login failed");
-  const data = await r.json();
-  localStorage.setItem("rehabit_jwt", data.token);
-  return data.user;
-}
-
-async function apiGetMessages(){
-  if(!API_BASE) return null;
-  try{ const r=await fetch(`${API_BASE}/api/messages`); if(!r.ok) return null; return await r.json(); }
-  catch{ return null; }
-}
-async function apiPostMessage(payload){
-  if(!API_BASE) return {ok:false};
-  try{
-    const r = await fetch(`${API_BASE}/api/messages`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json", ...authHeaders() },
-      body: JSON.stringify({
-        text: payload.text,
-        room: payload.room || "global",
-        title: payload.title || currentTitle()
-      })
-    });
-    if(!r.ok) return { ok:false };
-    return await r.json();
-  } catch {
-    return { ok:false };
-  }
-}
-async function apiFriendRequest(fromUid, toCode){
-  if(!API_BASE) return {ok:false, error:"offline"};
-  try{
-    const r=await fetch(`${API_BASE}/api/friend-requests`, {method:"POST", headers:{"Content-Type":"application/json", ...authHeaders()}, body:JSON.stringify({fromUid,toCode})});
-    return await r.json();
-  }
-  catch{ return {ok:false}; }
-}
-
-/* ---------------- Local friends storage (offline demo) ---------------- */
+/* ---------------- Friends (local demo) ---------------- */
 const LOCAL_FRIENDS_KEY = "rehabit_local_friends";
 const LOCAL_REQUESTS_KEY = "rehabit_local_requests";
 function getLocalFriends(){ return JSON.parse(localStorage.getItem(LOCAL_FRIENDS_KEY) || "[]"); }
@@ -545,7 +394,7 @@ function setLocalFriends(arr){ localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stri
 function addLocalFriend(uid, label){
   const f=getLocalFriends(); if(!f.find(x=>x.uid===uid)) f.push({uid,label}); setLocalFriends(f);
 }
-function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]"); }
+function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]" ); }
 function addLocalRequest(uid, label){
   const r=getLocalRequests(); if(!r.find(x=>x.uid===uid)) r.push({uid,label});
   localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
@@ -554,184 +403,12 @@ function removeLocalRequest(uid){
   const r=getLocalRequests().filter(x=>x.uid!==uid);
   localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
 }
-
-/* ---------------- Chat & Friends ---------------- */
-let auth=null, db=null, me=null, unsub=null;
-async function initFirebase(){
-  if(!(window.firebase&&firebase.apps?.length)) return;
-  auth=firebase.auth(); db=firebase.firestore();
-  await auth.signInAnonymously(); me=auth.currentUser;
-  await db.collection("users").doc(me.uid).set({createdAt:Date.now()},{merge:true});
-}
-function seedChat(box){
-  const now=new Date();
-  const ex=[
-    {uid:"bot_coach", who:"CoachBot", title:"Coach", text:"Tip: Try a 5-minute delay and breathe out longer than you breathe in."},
-    {uid:"bot_calm",  who:"CalmBot",  title:"Calm",  text:"Reminder: urges rise and fall. Start a 60-second breathing timer."},
-    {uid:"bot_peer",  who:"PeerBot",  title:"Peer",  text:"You’re not alone—log Success/Slip on your calendar, review weekly."},
-    {uid:"maya111",   who:"Maya (2 wks)", title:"1-Week Strong", text:"Grayscale at night cuts my scrolling."},
-    {uid:"alex222",   who:"Alex (1 mo)",  title:"1-Month Steady", text:"Marking Success each night keeps me honest."},
-    {uid:"bot_coach", who:"CoachBot", title:"Coach", text:"Small actions, big momentum. What’s one helpful thing you can do now?"},
-    {uid:"bot_calm",  who:"CalmBot",  title:"Calm",  text:"Breathing idea: 4 seconds in, 6 seconds out — for 1 minute."}
-  ];
-  ex.forEach((m,i)=>{
-    const div=document.createElement("div");
-    div.className="chat-msg";
-    div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}">[${escapeHTML(m.title)}] ${escapeHTML(m.who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(now-((5-i)*60000)).toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-  });
-  box.scrollTop=box.scrollHeight;
-}
-function nameWithTitle(name, isSelf=false, titleOverride=""){
-  const title = titleOverride || (isSelf ? currentTitle() : "");
-  return title ? `[${title}] ${name}` : name;
-}
-
-function attachCommunityHandlersOffline(box){
-  $("#globalForm").onsubmit=(e)=>{ 
-    e.preventDefault();
-    const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
-    state.social.chatted=true; save(); renderBadges();
-    const rawName = (state.profile?.displayName || "").trim();
-    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
-    const div=document.createElement("div"); div.className="chat-msg";
-    div.innerHTML=`<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div); box.scrollTop=box.scrollHeight; e.target.reset();
-    apiPostMessage({text:msg,room:"global",title:currentTitle()});
-  };
-  $("#globalChat").onclick=(e)=>{
-    const n=e.target.closest(".chat-name"); if(!n) return;
-    const uid=n.getAttribute("data-uid"); if(!uid) return;
-    state.social.friended=true; save(); renderBadges();
-    addLocalRequest(uid, n.textContent.replace(/^\[[^\]]+\]\s*/,"").trim());
-    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-    renderFriendsLocal();
-  };
-  renderFriendsLocal();
-}
-
-function attachCommunityHandlersAPI(box){
-  const form = $("#globalForm");
-  if(!form) return;
-
-  form.onsubmit = async (e)=>{
-    e.preventDefault();
-    const msg = (new FormData(form).get("msg") || "").toString().trim();
-    if(!msg) return;
-
-    state.social.chatted = true; save(); renderBadges();
-
-    const rawName   = (state.profile?.displayName || "").trim();
-    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
-
-    const div = document.createElement("div");
-    div.className = "chat-msg";
-    div.innerHTML = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-
-    try{
-      const r = await apiPostMessage({ text: msg, room: "global", title: currentTitle() });
-      if(!r || !r.ok){
-        alert(state.i18n==="es" ? "No se pudo enviar el mensaje." : "Could not send message.");
-      }
-    }catch{
-      alert(state.i18n==="es" ? "Error de red." : "Network error.");
-    }
-
-    form.reset();
-  };
-
-  $("#globalChat").onclick = (e)=>{
-    const n = e.target.closest(".chat-name");
-    if(!n) return;
-    state.social.friended = true; save(); renderBadges();
-    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-  };
-}
-
-function wireCommunity(){
-  const box = $("#globalChat");
-  if (!box) return;
-  box.innerHTML = "";
-
-  if (API_BASE){
-    (async ()=>{
-      const msgs = await apiGetMessages();   // may be [] on first run
-      if (Array.isArray(msgs)) {
-        msgs.forEach(m=>{
-          const div = document.createElement("div");
-          const who  = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
-          const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
-          div.className = "chat-msg";
-          div.innerHTML = `<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
-          box.appendChild(div);
-        });
-        box.scrollTop = box.scrollHeight;
-      } else {
-        // fallback to offline seed if API failed
-        seedChat(box);
-      }
-      attachCommunityHandlersAPI(box);
-    })();
-    return;
-  }
-
-  // No API_BASE → offline seed or Firebase
-  if (!(window.firebase && firebase.apps?.length)){
-    seedChat(box);
-    $("#myUid").textContent = getMyCode();
-    attachCommunityHandlersOffline(box);
-  } else {
-    wireCommunityFirebase(box);
-  }
-}
-
-function wireCommunityFirebase(box){
-  initFirebase().then(()=>{
-    $("#myUid").textContent= getMyCode();
-    unsub = db.collection("rooms").doc("global").collection("messages").orderBy("ts","asc").limit(200)
-      .onSnapshot(snap=>{
-        box.innerHTML=""; if(snap.empty) seedChat(box);
-        snap.forEach(doc=>{
-          const m=doc.data();
-          const rawName = (m.uid===me.uid) ? (state.profile?.displayName||"Anonymous") : (m.name || m.uid.slice(0,6));
-          const who = (m.uid===me.uid) ? nameWithTitle(rawName, true) : nameWithTitle(rawName, false, m.title||"");
-          const div=document.createElement("div"); div.className="chat-msg";
-          div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(m.ts).toLocaleTimeString()}</small>`;
-          box.appendChild(div);
-        }); box.scrollTop=box.scrollHeight;
-      });
-
-    $("#globalForm").onsubmit=async (e)=>{
-      e.preventDefault();
-      const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
-      const rawName = (state.profile?.displayName || "").trim();
-      const nameToStore = rawName ? rawName : "Anonymous";
-      const payload = {uid:me.uid,text:msg,ts:Date.now(),name:nameToStore,title:currentTitle()};
-      await db.collection("rooms").doc("global").collection("messages").add(payload);
-      state.social.chatted=true; save(); renderBadges(); e.target.reset();
-      apiPostMessage({text:msg,room:"global",title:payload.title});
-    };
-
-    $("#globalChat").onclick=async (e)=>{ const n=e.target.closest(".chat-name"); if(!n) return;
-      const uid=n.getAttribute("data-uid"); if(!uid||uid===me.uid) return;
-      await db.collection("users").doc(uid).set({requests: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
-      state.social.friended=true; save(); renderBadges();
-      alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-    };
-
-    loadFriends();
-  });
-}
-
-/* ---------------- Friends pages ---------------- */
 function renderFriendsLocal(){
   $("#myUid").textContent = getMyCode();
 
   const form = $("#addFriendForm");
   if(form){
-    form.onsubmit = async (e)=>{
+    form.onsubmit = (e)=>{
       e.preventDefault();
       const code = (new FormData(form).get("code") || "").trim().toUpperCase();
       if(!code) return;
@@ -742,8 +419,6 @@ function renderFriendsLocal(){
         form.reset();
         return;
       }
-      const api = await apiFriendRequest(getMyCode(), code);
-      if(api && api.ok){ alert((state.i18n==="es")?"Solicitud enviada.":"Request sent."); form.reset(); return; }
       alert(t("notFound"));
     };
   }
@@ -785,54 +460,87 @@ function renderFriendsLocal(){
     setLocalFriends(next); renderFriendsLocal();
   };
 }
-async function loadFriends(){
-  if(!db||!me) return;
-  const meDoc=await db.collection("users").doc(me.uid).get(); const d=meDoc.data()||{};
-  const req=d.requests||[]; const fr=d.friends||[];
-  const reqList=$("#requestsList"); reqList.innerHTML=req.length?"":`<li><span>No requests</span></li>`;
-  req.forEach(uid=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<span>${uid}</span><div class="actions"><button class="btn" data-acc="${uid}">Accept</button><button class="btn subtle" data-rej="${uid}">Decline</button></div>`;
-    reqList.appendChild(li);
+
+/* ---------------- Community chat (local only) ---------------- */
+function seedChat(box){
+  const now=new Date();
+  const ex=[
+    {uid:"bot_coach", who:"CoachBot", title:"Coach", text:"Tip: Try a 5-minute delay and breathe out longer than you breathe in."},
+    {uid:"bot_calm",  who:"CalmBot",  title:"Calm",  text:"Reminder: urges rise and fall. Start a 60-second breathing timer."},
+    {uid:"bot_peer",  who:"PeerBot",  title:"Peer",  text:"You’re not alone—log Success/Slip on your calendar, review weekly."},
+    {uid:"maya111",   who:"Maya (2 wks)", title:"1-Week Strong", text:"Grayscale at night cuts my scrolling."},
+    {uid:"alex222",   who:"Alex (1 mo)",  title:"1-Month Steady", text:"Marking Success each night keeps me honest."}
+  ];
+  ex.forEach((m,i)=>{
+    const div=document.createElement("div");
+    div.className="chat-msg";
+    div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}">[${escapeHTML(m.title)}] ${escapeHTML(m.who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(now-((5-i)*60000)).toLocaleTimeString()}</small>`;
+    box.appendChild(div);
   });
-  reqList.onclick=async e=>{
-    const uid=e.target.getAttribute("data-acc")||e.target.getAttribute("data-rej"); if(!uid) return;
-    const accept=!!e.target.getAttribute("data-acc");
-    await db.collection("users").doc(me.uid).set({requests: firebase.firestore.FieldValue.arrayRemove(uid)},{merge:true});
-    if(accept){
-      await db.collection("users").doc(me.uid).set({friends: firebase.firestore.FieldValue.arrayUnion(uid)},{merge:true});
-      await db.collection("users").doc(uid).set({friends: firebase.firestore.FieldValue.arrayUnion(me.uid)},{merge:true});
-    }
-    loadFriends();
-  };
-  const frList=$("#friendList"); frList.innerHTML=fr.length?"":`<li><span>No friends yet</span></li>`;
-  fr.forEach(uid=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<span>${uid}</span><button class="btn subtle" data-rem="${uid}">Remove</button>`;
-    frList.appendChild(li);
-  });
-  frList.onclick=async e=>{
-    const uid=e.target.getAttribute("data-rem"); if(!uid) return;
-    await db.collection("users").doc(me.uid).set({friends: firebase.firestore.FieldValue.arrayRemove(uid)},{merge:true});
-    await db.collection("users").doc(uid).set({friends: firebase.firestore.FieldValue.arrayRemove(me.uid)},{merge:true});
-    loadFriends();
+  box.scrollTop=box.scrollHeight;
+}
+function nameWithTitle(name, isSelf=false, titleOverride=""){
+  const title = titleOverride || (isSelf ? currentTitle() : "");
+  return title ? `[${title}] ${name}` : name;
+}
+function wireCommunity(){
+  const box = $("#globalChat");
+  if (!box) return;
+  box.innerHTML = "";
+  seedChat(box);
+
+  // send messages (append locally)
+  $("#globalForm").onsubmit=(e)=>{
+    e.preventDefault();
+    const msg=(new FormData(e.target).get("msg")||"").toString().trim();
+    if(!msg) return;
+    state.social.chatted=true; save(); renderBadges();
+
+    const rawName = (state.profile?.displayName || "").trim();
+    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
+    const div=document.createElement("div");
+    div.className="chat-msg";
+    div.innerHTML = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    e.target.reset();
   };
 
-  const codeForm = $("#addFriendForm");
-  if(codeForm){
-    codeForm.onsubmit = async (e)=>{
-      e.preventDefault();
-      const code = (new FormData(codeForm).get("code") || "").trim().toUpperCase();
-      if(!code) return;
-      if(BOT_CODES[code]){
-        await db.collection("users").doc(BOT_CODES[code].uid).set({requests: firebase.firestore.FieldValue.arrayUnion(me.uid)}, {merge:true});
-        alert((state.i18n==="es")?"Solicitud enviada.":"Request sent."); codeForm.reset(); return;
-      }
-      const api = await apiFriendRequest(getMyCode(), code);
-      if(api && api.ok){ alert((state.i18n==="es")?"Solicitud enviada.":"Request sent."); codeForm.reset(); return; }
-      alert(t("notFound"));
-    };
-  }
+  // click a name → demo friend request
+  $("#globalChat").onclick=(e)=>{
+    const n=e.target.closest(".chat-name"); if(!n) return;
+    const uid=n.getAttribute("data-uid"); if(!uid) return;
+    state.social.friended=true; save(); renderBadges();
+    addLocalRequest(uid, n.textContent.replace(/^\[[^\]]+\]\s*/,"").trim());
+    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+    renderFriendsLocal();
+  };
+}
+
+/* ---------------- Badges page ---------------- */
+function renderBadges(){
+  updateSobrietyBadges();
+  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const sob = $("#sobrietyGrid"); sob.innerHTML="";
+  SOBRIETY.forEach(b=>{
+    const lock = !earned.has(`S:${b.days}`);
+    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
+    const icon=document.createElement("div"); icon.className="badge-icon success"; icon.innerHTML="🏅";
+    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.labelES:b.labelEN);
+    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?b.descES:b.descEN);
+    card.append(icon,name,desc); sob.appendChild(card);
+  });
+  const soc=$("#socialGrid"); soc.innerHTML="";
+  SOCIAL_BADGES.forEach(b=>{
+    const lock = (b.key==="chat" && !state.social.chatted) || (b.key==="friend" && !state.social.friended);
+    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
+    const icon=document.createElement("div"); icon.className="badge-icon social"; icon.innerHTML = (b.key==="chat"?"💬":"🤝");
+    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.nameES:b.nameEN);
+    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?b.descES:b.descEN);
+    card.append(icon,name,desc); soc.appendChild(card);
+  });
+  $("#currentTitle").textContent = currentTitle();
 }
 
 /* ---------------- Navigation, Drawer & Wiring ---------------- */
@@ -857,34 +565,29 @@ function show(v){
   if(v==="research"){ renderResearch(); }
   if(v==="community"){ wireCommunity(); }
   if(v==="notes"){ renderNotes(); }
-
-  if(v==="friends"){
-    if (window.firebase && firebase.apps?.length) {
-      $("#myUid").textContent = getMyCode();
-      loadFriends();
-    } else {
-      renderFriendsLocal();
-    }
-  }
-
+  if(v==="friends"){ renderFriendsLocal(); }
   if(v==="settings"){ renderSettings(); }
+
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* === FIXED wire(): prevents form/nav submits, binds auth, SOS, drawer, i18n === */
 function wire(){
-  console.log("[wire] start");
+  console.log("[wire] no-login start");
 
-  // NAV — every element with data-nav should NOT submit a surrounding form
+  // Hide/remove any auth UI leftover in HTML
+  const authBox = $("#authBox");
+  if (authBox) authBox.remove();
+
+  // nav
   document.querySelectorAll("[data-nav]").forEach((b)=>{
-    b.addEventListener("click", (e)=>{
+    b.addEventListener("click",(e)=>{
       e.preventDefault();
-      const target = b.getAttribute("data-nav");
+      const target=b.getAttribute("data-nav");
       if(target){ closeDrawer(); show(target); }
     });
   });
 
-  // Onboarding
+  // onboarding
   $("#onboardingForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const chosen = $$('input[name="focus"]:checked').map(i=>i.value).filter(v=>ADDICTIONS.includes(v));
@@ -901,11 +604,11 @@ function wire(){
     save(); applyI18N(); show("home");
   });
 
-  // Language switch
-  const langSel = $("#langSelect");
+  // language
+  const langSel=$("#langSelect");
   if(langSel){
     langSel.value = state.i18n;
-    langSel.onchange = (e)=>{
+    langSel.onchange=(e)=>{
       const lang=e.target.value;
       document.documentElement.setAttribute("data-lang", lang);
       state.profile = {...(state.profile||{}), lang};
@@ -914,7 +617,7 @@ function wire(){
     };
   }
 
-  // Check-in form
+  // check-in
   $("#checkinForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const fd=new FormData(e.target);
@@ -930,13 +633,13 @@ function wire(){
     save(); alert((state.i18n==="es")?"Guardado.":"Saved."); renderCheckin(); renderNotes();
   });
 
-  // Quick mark buttons (journal-only helpers)
+  // quick mark
   $("#markTodayOk")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] success`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodaySlip")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] slip`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodayOk2")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] success`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodaySlip2")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] slip`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
 
-  // Materials contrib (requires addMaterial to exist)
+  // materials contrib
   $("#contribForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const tip=(new FormData(e.target).get("tip")||"").trim(); if(!tip) return;
@@ -945,46 +648,17 @@ function wire(){
     renderMaterials();
   });
 
-  // SOS + drawer
+  // SOS & drawer
   wireSOS();
   $("#menuBtn")?.addEventListener("click", openDrawer);
   $("#closeDrawer")?.addEventListener("click", closeDrawer);
   $("#backdrop")?.addEventListener("click", closeDrawer);
 
-  // Footer year + i18n
+  // footer & i18n
   $("#year").textContent = new Date().getFullYear();
   applyI18N();
 
-  // Register/Login buttons (simple mode — not form submit)
-  const $id = (x)=>document.getElementById(x);
-  $id("btnRegister")?.addEventListener("click", async ()=>{
-    const email = $id("authEmail")?.value?.trim();
-    const password = $id("authPass")?.value?.trim();
-    const displayName = $id("authDisplayName")?.value?.trim() || (state.profile?.displayName || "Anonymous");
-    const lang = (state.profile?.lang || state.i18n || "en");
-    if(!email || !password){ alert("Email + password required"); return; }
-    try{
-      await apiRegister({ email, password, displayName, lang });
-      alert("Registered. You’re logged in now.");
-    }catch(err){
-      console.error("register error", err);
-      alert("Could not register");
-    }
-  });
-  $id("btnLogin")?.addEventListener("click", async ()=>{
-    const email = $id("authEmail")?.value?.trim();
-    const password = $id("authPass")?.value?.trim();
-    if(!email || !password){ alert("Email + password required"); return; }
-    try{
-      await apiLogin({ email, password });
-      alert("Logged in!");
-    }catch(err){
-      console.error("login error", err);
-      alert("Login failed");
-    }
-  });
-
-  console.log("[wire] done");
+  console.log("[wire] no-login done");
 }
 
 function openDrawer(){ $("#drawer").classList.add("open"); $("#backdrop").hidden=false; }
@@ -1031,10 +705,10 @@ function renderSettings(){
 /* ---------------- Boot ---------------- */
 load();
 window.addEventListener("DOMContentLoaded", ()=>{
-  console.log("[boot] DOM ready");
+  console.log("[boot] DOM ready (no-login)");
   if(!state.profile) show("onboarding"); else show("home");
   wire();
 });
 
 /* ---------------- Utils ---------------- */
-function escapeHTML(s){return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
