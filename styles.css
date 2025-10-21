@@ -15,7 +15,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--text)}
-.fancy{font-family:"Cinzel",serif; letter-spacing:.2px}
+.fancy{font-family:"Francois One","Cinzel",serif; letter-spacing:.2px} /* <- title font per your earlier request */
 .app-header{display:flex;justify-content:space-between;align-items:center;padding:12px clamp(12px,3vw,24px);background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;object-fit:cover;border-radius:8px}
@@ -66,10 +66,6 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .tabbtn{appearance:none;background:transparent;border:0;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:grid;place-items:center;gap:4px}
 .tabbtn:focus{outline:2px solid var(--primary);outline-offset:-2px}.ico{width:22px;height:22px;display:block}
 
-/* Hero */
-.home-hero{display:grid;gap:14px;background:linear-gradient(180deg,#ffffff,#edf7ff);border:1px solid #dbe1ff;border-radius:var(--radius);padding:18px;box-shadow:0 6px 26px rgba(20,30,70,.12);margin-bottom:12px}
-.hero-left h2{margin:0 0 6px}.hero-left p{margin:0 0 12px;color:#334155}
-
 /* Chat */
 .chat-box{height:260px;overflow:auto;padding:10px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111}
 .chat-msg{margin:6px 0}.chat-msg small{color:#6b7280}
@@ -94,7 +90,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .badge-desc{font-size:12px;color:#475569}
 
 /* Calendar */
-.calendar-head{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.calendar-head{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;flex-direction:column} /* stacked: month/year then streak below */
 .calendar-head.up{margin-top:-6px}
 .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .m{font-size:12px;color:#475569;text-align:center}
