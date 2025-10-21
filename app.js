@@ -15,8 +15,7 @@
    - Menu icons: added for Notes
    - Palette updated to pastel/teal/navy (CSS)
 */
-console.log("app.js loaded");
-
+console.log("[boot] app.js loaded OK");
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -74,7 +73,6 @@ const D = {
     settings:"Settings", displayName:"Display name", chooseAddictions:"Choose addictions",
     chooseAddiction:"Choose addiction", emergency:"Emergency",
     chatNote:"Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.",
-    // NEW:
     notes:"Notes", notesInfo:"Your Daily and SOS notes appear here (newest first).",
     notFound:"Friend not found."
   },
@@ -101,7 +99,6 @@ const D = {
     settings:"Ajustes", displayName:"Nombre visible", chooseAddictions:"Elige adicciones",
     chooseAddiction:"Elige adicción", emergency:"Emergencia",
     chatNote:"Chat comunitario: apoyo entre pares no moderado. Pulsa un nombre (incluidos bots) para enviar solicitud de amistad.",
-    // NEW:
     notes:"Notas", notesInfo:"Aquí aparecen tus notas Diarias y de SOS (las más recientes primero).",
     notFound:"Amigo no encontrado."
   }
@@ -128,7 +125,7 @@ const BOT_CODES = {
 /* ---------------- Content (per addiction, EN/ES) ---------------- */
 const ADDICTIONS = ["Technology","Smoking","Alcohol","Gambling","Other"]; // Other = Other drugs
 
-const TIPS = { /* same as previous message (unchanged) */ 
+const TIPS = { 
   Technology:{ en:[ "Define screen-time caps and ‘no-phone zones’ (bedroom/meals).","Disable nonessential notifications; batch the rest twice daily.","Uninstall 2 high-temptation apps; remove social feeds from home screen.","Use app/site blockers during work and after 21:00.","Replace scrolling with a 10-min walk or 10 pages of reading.","One-tab rule: complete before switching; reduce context switching.","Phone docks outside bedroom; use analog alarm.","Carry a pocket notebook for ideas so phone stays away.","Plan offline hobbies: music, drawing, cooking.","Track Success/Slip daily; weekly review with one ally." ],
               es:[ "Define límites de pantalla y ‘zonas sin teléfono’ (dormitorio/comidas).","Desactiva notificaciones no esenciales; agrupa el resto dos veces al día.","Desinstala 2 apps tentadoras; quita feeds de la pantalla principal.","Bloquea apps/sitios en trabajo y después de las 21:00.","Sustituye el desplazamiento por 10 min de caminata o 10 páginas de lectura.","Regla de una pestaña: termina antes de cambiar; menos cambio de contexto.","Cargador fuera del dormitorio; usa despertador analógico.","Lleva una libreta para ideas y así evitar el teléfono.","Planifica hobbies offline: música, dibujo, cocina.","Registra Logro/Recaída diaria; revisión semanal con un aliado." ]},
   Smoking:{ en:[ "Set quit date in 7–14 days; tell one supporter.","Prepare NRT (patch + gum/lozenge) per instructions.","Trigger map (coffee, car, stress) → planned substitutes.","Clean environment: wash fabrics; remove lighters/ashtrays.","5-minute delay with long exhale when urges hit.","Mouth/hands plan: gum, straws, toothpicks, stress ball.","Adjust caffeine; it may feel stronger after quitting.","Refusal script ready: “No thanks, I’m quitting.”","10–15 min brisk walk daily to blunt withdrawal.","Use counters and reward milestones meaningfully." ],
@@ -141,7 +138,7 @@ const TIPS = { /* same as previous message (unchanged) */
           es:[ "Consulta primero a un profesional por seguridad/abstinencia.","Elige abstinencia o reducción médica supervisada.","Retira parafernalia/señales; limpia el entorno.","Estructura diaria: comidas, movimiento, ventana de sueño constante.","Kit de afrontamiento: agua, respiración, enraizamiento, aliado para escribir.","Demora 5 min + surf del impulso; los antojos suben y bajan.","Identifica disparadores; planes ‘Si X entonces Y’.","Construye responsabilidad: chequeos semanales.","Automonitorea con el calendario (Logro/Recaída).","Busca apoyo profesional/pares; ajusta el plan semanalmente." ]}
 };
 
-const STEPS = { /* same as previous message (unchanged), omitted for brevity */ 
+const STEPS = { 
   Technology:{ en:[ "Define a goal: limit hours/day and no-phone zones.","Audit your apps; uninstall two highest-risk apps.","Set system focus modes and bedtime schedules.","Create a replacement list (3 quick activities).","One-tab work method with 25/5 timer.","Dock phone outside bedroom; morning routine without phone.","Log urges (time/cue/intensity/action).","Weekly review: screen-time, mood, sleep.","Relapse reset: remove triggers, one lesson, one action.","Celebrate streaks with healthy rewards." ],
               es:[ "Define un objetivo: horas/día y zonas sin teléfono.","Audita tus apps; desinstala las dos de mayor riesgo.","Configura modos de concentración y horario de sueño.","Crea una lista de reemplazos (3 actividades rápidas).","Método una pestaña con temporizador 25/5.","Teléfono fuera del dormitorio; rutina matinal sin pantalla.","Registra impulsos (hora/señal/intensidad/acción).","Revisión semanal: tiempo de pantalla, ánimo, sueño.","Reinicio tras recaída: retira disparadores, una lección, una acción.","Celebra rachas con recompensas saludables." ]},
   Smoking:{ en:[ "Pick a quit date within 7–14 days.","Get NRT ready (patch + gum/lozenge).","Map triggers and pair substitutes.","Clean living spaces and clothes.","Use delay + long exhale for urges.","Daily 10–15 min brisk walk.","Refusal script practice.","Hydration + fruit/veggie snacks.","Avoid alcohol early on.","Weekly review and reward." ],
@@ -154,7 +151,7 @@ const STEPS = { /* same as previous message (unchanged), omitted for brevity */
           es:[ "Evalúa seguridad con un profesional.","Elige abstinencia o reducción.","Retira señales y parafernalia.","Estructura diaria (comida/mov/sueño).","Kit de afrontamiento listo.","Demora + surf del impulso.","Identifica disparadores y planes.","Chequeos de responsabilidad.","Registra resultados en calendario.","Ajusta semanalmente con apoyo." ]}
 };
 
-function deepGuideFor(name){ /* unchanged from previous answer */ 
+function deepGuideFor(name){ 
   const L=document.documentElement.getAttribute("data-lang")||"en";
   const isES = L==="es";
   const lower = isES
@@ -201,8 +198,20 @@ const MATERIALS = {
   }
 };
 
+/* Store user-contributed materials to localStorage + in-memory list (prevents ReferenceError) */
+function addMaterial(addiction, text){
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  // persist
+  const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
+  saved[addiction] = saved[addiction] || { en:[], es:[] };
+  saved[addiction][L].push(text);
+  localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(saved));
+  // reflect in current session
+  if (!MATERIALS[addiction]) MATERIALS[addiction] = { en:[], es:[] };
+  MATERIALS[addiction][L].push(text);
+}
+
 /* ---------------- Badges & Titles ---------------- */
-/* NEW: Added 6 months (180 days). Each badge has a title; description shows title. */
 const SOBRIETY = [
   {days:7,   labelEN:"1 week",    labelES:"1 semana", title:"1-Week Strong",   descEN:"Mark 7 Success days. Title: 1-Week Strong",      descES:"Marca 7 días de Logro. Título: 1-Week Strong"},
   {days:30,  labelEN:"1 month",   labelES:"1 mes",    title:"1-Month Steady",  descEN:"Mark 30 Success days. Title: 1-Month Steady",    descES:"Marca 30 días de Logro. Título: 1-Month Steady"},
@@ -270,7 +279,6 @@ function renderCalendar(gridId="calendarGrid", labelId="monthLabel"){
     grid.appendChild(cell);
   }
 }
-// Full-page calendar uses its own ids
 function renderCalendarFull(){
   const gridId="calendarGrid2", labelId="monthLabel2";
   const grid = document.getElementById(gridId), label = document.getElementById(labelId);
@@ -304,7 +312,7 @@ function translateAddiction(a){
   const key = a==="Technology"?"a_tech":a==="Smoking"?"a_smoke":a==="Alcohol"?"a_alcohol":a==="Gambling"?"a_gambling":"a_other";
   return t(key);
 }
-let guideChoice = null; // last selection if multiple
+let guideChoice = null;
 function currentGuideAddiction(){
   const adds = state.profile?.addictions || [];
   if(adds.length<=1) return adds[0] || state.profile?.primary || "Technology";
@@ -350,7 +358,12 @@ function renderMaterials(){
   const a=currentGuideAddiction();
   $("#programTitle").textContent = `${translateAddiction(a)} — ${t("materials")}`;
   const L=document.documentElement.getAttribute("data-lang")||"en";
-  const items = (MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [];
+  const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
+  // merge saved contributions with defaults
+  const items = [
+    ...(((MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [])),
+    ...((saved[a]?.[L]) || [])
+  ];
   $("#materialsList").innerHTML = items.map(m=>`<li>${m}</li>`).join("");
   $("#contribWrap").hidden = okDaysSinceStart()<365;
 }
@@ -377,33 +390,7 @@ function renderNotes(){
   rec.forEach(j=>{ const li=document.createElement("li"); li.innerHTML=`<span>${new Date(j.ts).toLocaleString()} — ${escapeHTML(j.text)}</span>`; ul.appendChild(li); });
 }
 
-/* ---------------- Badges page ---------------- */
-function renderBadges(){
-  updateSobrietyBadges();
-  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
-  const L=document.documentElement.getAttribute("data-lang")||"en";
-  const sob = $("#sobrietyGrid"); sob.innerHTML="";
-  SOBRIETY.forEach(b=>{
-    const lock = !earned.has(`S:${b.days}`);
-    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
-    const icon=document.createElement("div"); icon.className="badge-icon success"; icon.innerHTML="🏅";
-    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.labelES:b.labelEN);
-    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?b.descES:b.descEN);
-    card.append(icon,name,desc); sob.appendChild(card);
-  });
-  const soc=$("#socialGrid"); soc.innerHTML="";
-  SOCIAL_BADGES.forEach(b=>{
-    const lock = (b.key==="chat" && !state.social.chatted) || (b.key==="friend" && !state.social.friended);
-    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
-    const icon=document.createElement("div"); icon.className="badge-icon social"; icon.innerHTML = (b.key==="chat"?"💬":"🤝");
-    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.nameES:b.nameEN);
-    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?b.descES:b.descEN);
-    card.append(icon,name,desc); soc.appendChild(card);
-  });
-  $("#currentTitle").textContent = currentTitle();
-}
-
-/* ---------------- Research (choose addiction if multiple) ---------------- */
+/* ---------------- Research ---------------- */
 function renderResearchChoice(){
   const adds = state.profile?.addictions || [];
   const wrap = $("#researchChoiceWrap");
@@ -422,13 +409,13 @@ function researchCurrentAddiction(){
   const adds = state.profile?.addictions||[];
   return state.researchChoice || adds[0] || state.profile?.primary || "Technology";
 }
-const RESEARCH = { /* same as previous answer (unchanged), omitted to save space */ 
+const RESEARCH = { 
   Technology:{ en:[ "Define a clear screen-time rule (≤2h/day; no phone in bedroom).","Turn off nonessential notifications; batch the rest.","Move the charger outside the bedroom; analog alarm.","Uninstall 2 worst apps; remove social feeds from home screen.","Focus/blockers during work and after 21:00.","Three replacements for scrolling (walk, call, read).","One-tab rule; reduce switching costs.","Urge surfing 2–3 min; observe rise and fall.","Delay 5 minutes; then choose deliberately.","Plan screen-sabbath blocks nightly.","Out-of-reach phone while working; 25/5 timer.","Calendar reminders for breaks and wind-down.","Track Success/Slip; weekly review.","Share goal + screenshot with an ally.","Swap dopamine: micro-workouts, sunlight, journaling.","Protect sleep; no screens in bed.","Add friction in high-risk contexts.","If you slip: trigger → lesson → one action.","Celebrate specific wins.","Consider CBT/DBT coaching if needed." ],
               es:[ "Define una regla clara (≤2 h/día; sin teléfono en el dormitorio).","Apaga notificaciones no esenciales; agrupa el resto.","Cargador fuera del dormitorio; despertador analógico.","Desinstala 2 apps problemáticas; quita feeds de inicio.","Enfoque/bloqueadores en trabajo y después de las 21 h.","Tres reemplazos al desplazamiento (caminar, llamar, leer).","Regla de una pestaña; menos cambios de tarea.","Surf del impulso 2–3 min; observa subida y bajada.","Demora 5 minutos; decide con intención.","Bloques nocturnos sin pantallas.","Teléfono fuera de alcance al trabajar; temporizador 25/5.","Recordatorios para pausas y rutina nocturna.","Registra Logro/Recaída; revisión semanal.","Comparte objetivo + captura con un aliado.","Sustituye dopamina: micro-ejercicio, luz, escritura.","Protege el sueño; sin pantallas en la cama.","Añade fricción en contextos de riesgo.","Si recaes: disparador → lección → una acción.","Celebra logros concretos.","Considera TCC/DBT si lo necesitas." ]},
-  Smoking:{ en:[ /* ... 20 lines ... */ ], es:[ /* ... 20 lines ES ... */ ]},
-  Alcohol:{ en:[ /* ... 20 lines ... */ ], es:[ /* ... 20 lines ES ... */ ]},
-  Gambling:{ en:[ /* ... 20 lines ... */ ], es:[ /* ... 20 lines ES ... */ ]},
-  Other:{ en:[ /* ... 20 lines ... */ ], es:[ /* ... 20 lines ES ... */ ]}
+  Smoking:{ en:[ ], es:[ ]},
+  Alcohol:{ en:[ ], es:[ ]},
+  Gambling:{ en:[ ], es:[ ]},
+  Other:{ en:[ ], es:[ ]}
 };
 function researchText(){
   const a = researchCurrentAddiction();
@@ -439,17 +426,9 @@ function researchText(){
 }
 function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML = researchText(); }
 
-/* ---------------- MySQL backend hooks (optional) ----------------
-   Set API_BASE to your server origin (e.g., https://rehabit.yourdomain.com).
-   Backend endpoints expected:
-     GET  ${API_BASE}/api/messages        -> returns [{uid, name, text, ts, title}]
-     POST ${API_BASE}/api/messages        -> body:{uid,name,text,ts,title} -> {ok:true}
-     POST ${API_BASE}/api/friend-requests -> body:{fromUid,toCode} -> {ok:true}|{ok:false, error:"not_found"}
-------------------------------------------------------------------*/
-// CHANGE ONLY THIS LINE to your Render URL:
+/* ---------------- MySQL backend hooks (optional) ---------------- */
 const API_BASE = "https://rehabit-api.onrender.com";
- // e.g., "https://rehabet-api.onrender.com"
-// === Auth: improved alerts (paste once) ===
+
 async function handleRegisterSubmit(e){
   e.preventDefault();
   const f = e.target;
@@ -474,7 +453,6 @@ async function handleRegisterSubmit(e){
     alert("Network error (API unreachable). Check API_BASE and Render status.");
   }
 }
-
 async function handleLoginSubmit(e){
   e.preventDefault();
   const f = e.target;
@@ -492,9 +470,6 @@ async function handleLoginSubmit(e){
       alert(data?.error || data?.message || `Could not login (status ${r.status})`);
       return;
     }
-    // OPTIONAL: store token if your app uses it later
-    // localStorage.setItem("rehabit_token", data.token);
-    // localStorage.setItem("rehabit_user", JSON.stringify(data.user));
     alert("Logged in!");
     f.reset();
   }catch(err){
@@ -502,7 +477,7 @@ async function handleLoginSubmit(e){
   }
 }
 
-// --- Auth helpers (NEW for Part C) ---
+// --- Auth helpers for chat ---
 function authHeaders(){
   const t = localStorage.getItem("rehabit_jwt");
   return t ? { Authorization: `Bearer ${t}` } : {};
@@ -535,7 +510,6 @@ async function apiGetMessages(){
   try{ const r=await fetch(`${API_BASE}/api/messages`); if(!r.ok) return null; return await r.json(); }
   catch{ return null; }
 }
-// REPLACED for Part C: include JWT header and new payload shape
 async function apiPostMessage(payload){
   if(!API_BASE) return {ok:false};
   try{
@@ -549,12 +523,11 @@ async function apiPostMessage(payload){
       })
     });
     if(!r.ok) return { ok:false };
-    return await r.json(); // { ok:true }
+    return await r.json();
   } catch {
     return { ok:false };
   }
 }
-// REPLACED for Part C: include JWT header
 async function apiFriendRequest(fromUid, toCode){
   if(!API_BASE) return {ok:false, error:"offline"};
   try{
@@ -613,85 +586,28 @@ function nameWithTitle(name, isSelf=false, titleOverride=""){
   const title = titleOverride || (isSelf ? currentTitle() : "");
   return title ? `[${title}] ${name}` : name;
 }
-function wireCommunity(){
-  const box = $("#globalChat");
-  if (!box) return;
-  box.innerHTML = "";
 
-  // If you have an API base, use it for loading + sending
-  if (API_BASE){
-    (async ()=>{
-      const msgs = await apiGetMessages();   // may be [] on first run
-      if (Array.isArray(msgs)) {
-        msgs.forEach(m=>{
-          const div = document.createElement("div");
-          const who  = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
-          const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
-          div.className = "chat-msg";
-          div.innerHTML = `<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
-          box.appendChild(div);
-        });
-        box.scrollTop = box.scrollHeight;
-      }
-      // Wire chat form for API mode
-      attachCommunityHandlersAPI(box);
-    })();
-    return;
-  }
-
-  // No API_BASE → offline seed or Firebase
-  if (!(window.firebase && firebase.apps?.length)){
-    seedChat(box);
-    $("#myUid").textContent = getMyCode();
-    attachCommunityHandlersOffline(box);
-  } else {
-    wireCommunityFirebase(box);
-  }
-}
-
-function attachCommunityHandlersAPI(box){
-  const form = $("#globalForm");
-  if (!form) return;
-
-  form.onsubmit = async (e)=>{
+function attachCommunityHandlersOffline(box){
+  $("#globalForm").onsubmit=(e)=>{ 
     e.preventDefault();
-    const msg = (new FormData(form).get("msg") || "").toString().trim();
-    if (!msg) return;
-
-    // mark social badge
-    state.social.chatted = true;
-    save();
-    renderBadges();
-
-    // show immediately
-    const rawName   = (state.profile?.displayName || "").trim();
+    const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
+    state.social.chatted=true; save(); renderBadges();
+    const rawName = (state.profile?.displayName || "").trim();
     const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
-    const div       = document.createElement("div");
-    div.className   = "chat-msg";
-    div.innerHTML   = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-
-    // send to backend
-    try{
-      const r = await apiPostMessage({ text: msg, room: "global", title: currentTitle() });
-      if(!r || !r.ok) alert((state.i18n==="es") ? "No se pudo enviar el mensaje." : "Could not send message.");
-    }catch{
-      alert((state.i18n==="es") ? "Error de red." : "Network error.");
-    }
-
-    form.reset();
+    const div=document.createElement("div"); div.className="chat-msg";
+    div.innerHTML=`<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div); box.scrollTop=box.scrollHeight; e.target.reset();
+    apiPostMessage({text:msg,room:"global",title:currentTitle()});
   };
-
-  // optional: click a name → friend request UX
-  $("#globalChat").onclick = (e)=>{
-    const n = e.target.closest(".chat-name");
-    if(!n) return;
-    state.social.friended = true;
-    save();
-    renderBadges();
+  $("#globalChat").onclick=(e)=>{
+    const n=e.target.closest(".chat-name"); if(!n) return;
+    const uid=n.getAttribute("data-uid"); if(!uid) return;
+    state.social.friended=true; save(); renderBadges();
+    addLocalRequest(uid, n.textContent.replace(/^\[[^\]]+\]\s*/,"").trim());
     alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+    renderFriendsLocal();
   };
+  renderFriendsLocal();
 }
 
 function attachCommunityHandlersAPI(box){
@@ -700,8 +616,7 @@ function attachCommunityHandlersAPI(box){
 
   form.onsubmit = async (e)=>{
     e.preventDefault();
-    const fd  = new FormData(form);
-    const msg = (fd.get("msg") || "").toString().trim();
+    const msg = (new FormData(form).get("msg") || "").toString().trim();
     if(!msg) return;
 
     state.social.chatted = true; save(); renderBadges();
@@ -735,71 +650,43 @@ function attachCommunityHandlersAPI(box){
   };
 }
 
-   // NEW: wire the chat form when using the REST API (Render)
-function attachCommunityHandlersAPI(box){
-  const form = $("#globalForm");
-  if(!form) return;
+function wireCommunity(){
+  const box = $("#globalChat");
+  if (!box) return;
+  box.innerHTML = "";
 
-  form.onsubmit = async (e)=>{
-    e.preventDefault();
-    const fd  = new FormData(form);
-    const msg = (fd.get("msg") || "").toString().trim();
-    if(!msg) return;
-
-    // mark social badge
-    state.social.chatted = true;
-    save();
-    renderBadges();
-
-    // show it immediately in the UI
-    const rawName   = (state.profile?.displayName || "").trim();
-    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
-    const div       = document.createElement("div");
-    div.className   = "chat-msg";
-    div.innerHTML   = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-
-    // send to your backend
-    const payload = {
-      text: msg,
-      room: "global",
-      title: currentTitle()
-    };
-
-    try{
-      const r = await apiPostMessage(payload);
-      if(!r || !r.ok){
-        alert((state.i18n==="es") ? "No se pudo enviar el mensaje." : "Could not send message.");
+  if (API_BASE){
+    (async ()=>{
+      const msgs = await apiGetMessages();   // may be [] on first run
+      if (Array.isArray(msgs)) {
+        msgs.forEach(m=>{
+          const div = document.createElement("div");
+          const who  = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
+          const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
+          div.className = "chat-msg";
+          div.innerHTML = `<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+      } else {
+        // fallback to offline seed if API failed
+        seedChat(box);
       }
-    }catch{
-      alert((state.i18n==="es") ? "Error de red." : "Network error.");
-    }
+      attachCommunityHandlersAPI(box);
+    })();
+    return;
+  }
 
-    form.reset();
-  };
-
-  // (Optional) clicking a name sends a friend request UX
-  $("#globalChat").onclick = (e)=>{
-    const n = e.target.closest(".chat-name");
-    if(!n) return;
-    state.social.friended = true;
-    save();
-    renderBadges();
-    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-  };
+  // No API_BASE → offline seed or Firebase
+  if (!(window.firebase && firebase.apps?.length)){
+    seedChat(box);
+    $("#myUid").textContent = getMyCode();
+    attachCommunityHandlersOffline(box);
+  } else {
+    wireCommunityFirebase(box);
+  }
 }
 
-  $("#globalChat").onclick=(e)=>{
-    const n=e.target.closest(".chat-name"); if(!n) return;
-    const uid=n.getAttribute("data-uid"); if(!uid) return;
-    state.social.friended=true; save(); renderBadges();
-    addLocalRequest(uid, n.textContent.replace(/^\[[^\]]+\]\s*/,"").trim());
-    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-    renderFriendsLocal();
-  };
-  renderFriendsLocal();
-}
 function wireCommunityFirebase(box){
   initFirebase().then(()=>{
     $("#myUid").textContent= getMyCode();
@@ -824,7 +711,7 @@ function wireCommunityFirebase(box){
       const payload = {uid:me.uid,text:msg,ts:Date.now(),name:nameToStore,title:currentTitle()};
       await db.collection("rooms").doc("global").collection("messages").add(payload);
       state.social.chatted=true; save(); renderBadges(); e.target.reset();
-      apiPostMessage({uid:me.uid,name:nameToStore,text:msg,ts:payload.ts,title:payload.title}); // also mirror to API if set
+      apiPostMessage({text:msg,room:"global",title:payload.title});
     };
 
     $("#globalChat").onclick=async (e)=>{ const n=e.target.closest(".chat-name"); if(!n) return;
@@ -855,14 +742,12 @@ function renderFriendsLocal(){
         form.reset();
         return;
       }
-      // Try API if provided
       const api = await apiFriendRequest(getMyCode(), code);
       if(api && api.ok){ alert((state.i18n==="es")?"Solicitud enviada.":"Request sent."); form.reset(); return; }
       alert(t("notFound"));
     };
   }
 
-  // Requests
   const reqs = getLocalRequests();
   const reqList=$("#requestsList"); reqList.innerHTML=reqs.length?"":`<li><span>No requests (offline demo)</span></li>`;
   reqs.forEach(r=>{
@@ -887,7 +772,6 @@ function renderFriendsLocal(){
     }
   };
 
-  // Friends
   const fr=getLocalFriends();
   const frList=$("#friendList"); frList.innerHTML=fr.length?"":`<li><span>No friends yet</span></li>`;
   fr.forEach(x=>{
@@ -934,7 +818,6 @@ async function loadFriends(){
     loadFriends();
   };
 
-  // add-by-code in Firebase (bots supported) + API mirror
   const codeForm = $("#addFriendForm");
   if(codeForm){
     codeForm.onsubmit = async (e)=>{
@@ -987,17 +870,21 @@ function show(v){
   if(v==="settings"){ renderSettings(); }
   window.scrollTo({top:0,behavior:"smooth"});
 }
+
+/* === FIXED wire(): prevents form/nav submits, binds auth, SOS, drawer, i18n === */
 function wire(){
-  // bottom nav + any [data-nav]
-  $$(".tabbar [data-nav], [data-nav]").forEach(b=>{
-    b.addEventListener("click",()=>{
-      const target=b.getAttribute("data-nav");
+  console.log("[wire] start");
+
+  // NAV — every element with data-nav should NOT submit a surrounding form
+  document.querySelectorAll("[data-nav]").forEach((b)=>{
+    b.addEventListener("click", (e)=>{
+      e.preventDefault();
+      const target = b.getAttribute("data-nav");
       if(target){ closeDrawer(); show(target); }
     });
-
   });
 
-  // onboarding
+  // Onboarding
   $("#onboardingForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const chosen = $$('input[name="focus"]:checked').map(i=>i.value).filter(v=>ADDICTIONS.includes(v));
@@ -1014,17 +901,20 @@ function wire(){
     save(); applyI18N(); show("home");
   });
 
-  // language switch
-  $("#langSelect").value = state.i18n;
-  $("#langSelect").onchange = (e)=>{
-    const lang=e.target.value;
-    document.documentElement.setAttribute("data-lang", lang);
-    state.profile = {...(state.profile||{}), lang};
-    save(); applyI18N();
-    renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes();
-  };
+  // Language switch
+  const langSel = $("#langSelect");
+  if(langSel){
+    langSel.value = state.i18n;
+    langSel.onchange = (e)=>{
+      const lang=e.target.value;
+      document.documentElement.setAttribute("data-lang", lang);
+      state.profile = {...(state.profile||{}), lang};
+      save(); applyI18N();
+      renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes();
+    };
+  }
 
-  // check-in form
+  // Check-in form
   $("#checkinForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const fd=new FormData(e.target);
@@ -1040,13 +930,13 @@ function wire(){
     save(); alert((state.i18n==="es")?"Guardado.":"Saved."); renderCheckin(); renderNotes();
   });
 
-  // quick mark buttons (journal-only helpers; calendar editing is via clicking today)
+  // Quick mark buttons (journal-only helpers)
   $("#markTodayOk")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] success`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodaySlip")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] slip`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodayOk2")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] success`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
   $("#markTodaySlip2")?.addEventListener("click", ()=>{ state.journal.push({id:crypto.randomUUID(), text:`[CHK] slip`, ts:Date.now()}); save(); renderCheckin(); renderNotes(); });
 
-  // materials contrib
+  // Materials contrib (requires addMaterial to exist)
   $("#contribForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const tip=(new FormData(e.target).get("tip")||"").trim(); if(!tip) return;
@@ -1055,33 +945,29 @@ function wire(){
     renderMaterials();
   });
 
-  // SOS
+  // SOS + drawer
   wireSOS();
+  $("#menuBtn")?.addEventListener("click", openDrawer);
+  $("#closeDrawer")?.addEventListener("click", closeDrawer);
+  $("#backdrop")?.addEventListener("click", closeDrawer);
 
-  // drawer
-  $("#menuBtn").onclick=openDrawer;
-  $("#closeDrawer").onclick=closeDrawer;
-  $("#backdrop").onclick=closeDrawer;
-
-  // footer year + i18n
+  // Footer year + i18n
   $("#year").textContent = new Date().getFullYear();
   applyI18N();
 
-  // PART C wiring (NEW) — simple register/login
+  // Register/Login buttons (simple mode — not form submit)
   const $id = (x)=>document.getElementById(x);
   $id("btnRegister")?.addEventListener("click", async ()=>{
     const email = $id("authEmail")?.value?.trim();
     const password = $id("authPass")?.value?.trim();
+    const displayName = $id("authDisplayName")?.value?.trim() || (state.profile?.displayName || "Anonymous");
+    const lang = (state.profile?.lang || state.i18n || "en");
     if(!email || !password){ alert("Email + password required"); return; }
     try{
-      await apiRegister({
-        email,
-        password,
-        displayName: (state.profile?.displayName || "Anonymous"),
-        lang: (state.profile?.lang || state.i18n || "en")
-      });
+      await apiRegister({ email, password, displayName, lang });
       alert("Registered. You’re logged in now.");
-    }catch{
+    }catch(err){
+      console.error("register error", err);
       alert("Could not register");
     }
   });
@@ -1092,11 +978,15 @@ function wire(){
     try{
       await apiLogin({ email, password });
       alert("Logged in!");
-    }catch{
+    }catch(err){
+      console.error("login error", err);
       alert("Login failed");
     }
   });
+
+  console.log("[wire] done");
 }
+
 function openDrawer(){ $("#drawer").classList.add("open"); $("#backdrop").hidden=false; }
 function closeDrawer(){ $("#drawer").classList.remove("open"); $("#backdrop").hidden=true; }
 
@@ -1141,12 +1031,9 @@ function renderSettings(){
 /* ---------------- Boot ---------------- */
 load();
 window.addEventListener("DOMContentLoaded", ()=>{
+  console.log("[boot] DOM ready");
   if(!state.profile) show("onboarding"); else show("home");
-  wire(); function wire(){
-  console.log('wire() running');
-  // ...existing code...
-}
-
+  wire();
 });
 
 /* ---------------- Utils ---------------- */
