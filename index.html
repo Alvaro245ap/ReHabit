@@ -13,70 +13,77 @@
 
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Minimal, targeted style overrides ONLY per your request -->
+  <!-- Minimal overrides per your requests -->
   <style>
     :root{
-      --title-pill:#799286;     /* title box color */
-      --app-blue:#eaf3ff;       /* bluish app background */
-      --card-bg:#F2F1EC;        /* off-white boxes */
+      --title-pill:#799286;     /* green pill background */
+      --app-blue:#eaf3ff;       /* bluish page background */
+      --card-bg:#F2F1EC;        /* box background (all pages) */
     }
 
     html, body { background: var(--app-blue); }
-    .app-header, .drawer, .container, .tabbar, .legal, #backdrop { background: var(--app-blue); }
+    .container, .legal, .tabbar, #backdrop { background: var(--app-blue); }
 
-    /* All cards become off-white as requested */
-    .card, .card.soft, .card.sos { background: var(--card-bg); }
+    /* Remove ALL logos */
+    .brand .logo{ display:none !important; }
 
-    /* Header: keep small brand, center bigger single slogan, no big top title */
-    .app-header { display:flex; align-items:center; justify-content:space-between; padding:.6rem 1rem; }
-    .brand { display:flex; align-items:center; gap:.5rem; flex:1; }
-    .brand .logo { height:40px; width:auto; }
-    .slogans-inline { flex:1; display:flex; justify-content:center; }
+    /* Header */
+    .app-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.6rem 1rem; background:var(--app-blue);
+    }
+    .brand{ display:flex; align-items:center; gap:.5rem; flex:1; }
+    .slogans-inline{ flex:1; display:flex; justify-content:center; }
     .slogans-inline .chip.primary{
       padding:.45rem .9rem; border-radius:1rem; font-weight:700;
-      font-size:1.2rem; text-align:center;
+      font-size:1.35rem; text-align:center;
+      background:#799286; color:#fff;    /* keep ReHabit color look */
+      font-family:"Francois One", system-ui, -apple-system, "Inter", Arial, sans-serif;
+      letter-spacing:.2px;
     }
 
-    /* Title pill (we keep the pill, but remove page logos everywhere) */
-    .page-title { display:flex; align-items:center; justify-content:center; margin:.2rem 0 1rem 0; }
-    .title-pill{
-      display:inline-block; padding:.28rem .7rem; border-radius:.6rem;
-      background:var(--title-pill); color:#fff;
-      font-family: "Francois One", system-ui, -apple-system, "Inter", Arial, sans-serif;
-      letter-spacing:.2px; font-size:1.15rem; text-align:center;
-    }
-
-    /* Drawer: less wide */
+    /* Drawer (hamburger menu): narrower and working */
     .drawer{ width:240px; max-width:75vw; }
     .drawer .drawer-link{ display:flex; align-items:center; gap:.6rem; }
     .drawer .drawer-link svg{ width:20px; height:20px; opacity:.9; }
+    .drawer.open{ transform: translateX(0); } /* ensure open works */
 
-    /* Center all section titles (we use .page-title wrapper) */
+    /* All content boxes */
+    .card, .card.soft, .card.sos { background: var(--card-bg); }
+
+    /* Title pills */
+    .page-title{ display:flex; align-items:center; justify-content:center; margin:.4rem 0 1rem 0; }
+    .title-pill{
+      display:inline-block; padding:.35rem .8rem; border-radius:.6rem;
+      background:var(--title-pill); color:#fff;
+      font-family:"Francois One", system-ui, -apple-system, "Inter", Arial, sans-serif;
+      letter-spacing:.2px; font-size:1.1rem; text-align:center;
+    }
+
+    /* Center all h2 (page section titles that remain) */
     h2.fancy{ text-align:center; }
 
-    /* Calendar header: streak centered ABOVE month/year */
+    /* Home layout — center both cards */
+    #view-home .grid-2{
+      display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;
+    }
+    #view-home .grid-2 > .card.soft{ max-width:700px; width:100%; }
+
+    /* Put “Calendar (this month)” and “10 Steps” in green pill boxes */
+    .block-title{ display:flex; justify-content:center; margin:.25rem 0 1rem; }
+
+    /* Center the calendar section title and streak above month */
     .calendar-head{ display:flex; flex-direction:column; align-items:center; gap:.25rem; }
     .streak-label{ font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:.4rem; }
 
-    /* Home layout: center the two cards */
-    #view-home .grid-2{
-      display:flex;
-      justify-content:center;
-      gap:1rem;
-      flex-wrap:wrap;
-    }
-    #view-home .grid-2 > .card.soft{
-      max-width:640px;
-      width:100%;
-    }
-
-    /* Ten steps on Home — centered choice row */
+    /* Home Ten Steps choice centered */
     #homeStepsChoiceWrap{ margin-bottom:.5rem; display:flex; justify-content:center; }
 
-    /* Remove the per-page title logos (we removed <img class="title-logo"> elements) */
+    /* Hide any leftover title logos anywhere */
+    .title-logo{ display:none !important; }
   </style>
 
-  <!-- (Optional) Firebase includes as in your copy -->
+  <!-- Firebase libs kept (not required for local demo) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -90,8 +97,7 @@
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
     <div class="brand">
-      <img class="logo" alt="ReHabit logo" src="assets/favicon.png">
-      <!-- Single centered slogan pill -->
+      <!-- NO blue/black R logos anywhere -->
       <div class="slogans-inline">
         <span class="chip primary">ReBuild • ReWire • ReHabit</span>
       </div>
@@ -106,7 +112,7 @@
     </div>
   </header>
 
-  <!-- Drawer (narrow) — includes Home -->
+  <!-- Drawer (hamburger) — narrower and includes Badges; Home added -->
   <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <strong class="fancy">Menu</strong>
@@ -141,6 +147,10 @@
       <button class="drawer-link" data-nav="notes" data-i18n="notes">
         <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v5h5" fill="currentColor"/></svg>
         <span>Notes</span>
+      </button>
+      <button class="drawer-link" data-nav="friends" data-i18n="friends">
+        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg>
+        <span>Friends</span>
       </button>
       <button class="drawer-link" data-nav="settings" data-i18n="settings">
         <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm8.94 3a8.1 8.1 0 0 1 0 2l2.06 1.6-2 3.46-2.45-1a8.2 8.2 0 0 1-1.74 1l-.37 2.6H7.56l-.37-2.6a8.2 8.2 0 0 1-1.74-1l-2.45 1-2-3.46L3.06 13a8.1 8.1 0 0 1 0-2L1 9.4l2-3.46 2.45 1a8.2 8.2 0 0 1 1.74-1L7.56 3h4.88l.37 2.6a8.2 8.2 0 0 1 1.74 1l2.45-1 2 3.46L20.94 11z" fill="currentColor"/></svg>
@@ -201,13 +211,12 @@
       </form>
     </section>
 
-    <!-- Home (NO title at top as requested) -->
+    <!-- Home (NO title pill on top; you asked to delete it from Home) -->
     <section id="view-home" class="card" hidden>
       <div class="grid-2">
         <div class="card soft">
-          <h3 class="fancy" data-i18n="monthCard">Calendar (this month)</h3>
+          <div class="block-title"><span class="title-pill" data-i18n="monthCard">Calendar (this month)</span></div>
           <div class="calendar-head">
-            <!-- streak ABOVE month/year, centered -->
             <div id="streakLabel" class="streak-label"></div>
             <div id="monthLabel"></div>
           </div>
@@ -216,7 +225,7 @@
         </div>
 
         <div class="card soft">
-          <h3 class="fancy" data-i18n="steps">10 Steps</h3>
+          <div class="block-title"><span class="title-pill" data-i18n="steps">10 Steps</span></div>
           <div id="homeStepsChoiceWrap" hidden>
             <label>
               <span data-i18n="chooseAddiction">Choose addiction</span>
@@ -228,10 +237,10 @@
       </div>
     </section>
 
-    <!-- Calendar full -->
+    <!-- Calendar -->
     <section id="view-calendar" class="card" hidden>
       <div class="page-title"><span class="title-pill" data-i18n="calendar">Calendar</span></div>
-      <div class="calendar-head up">
+      <div class="calendar-head">
         <div id="streakLabel2" class="streak-label"></div>
         <div id="monthLabel2"></div>
       </div>
@@ -365,7 +374,7 @@
       <div class="actions"><button class="btn subtle" data-nav="guide" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Badges (renamed title to “Sobriety”) -->
+    <!-- Badges (only in hamburger menu; bottom-tab removed) -->
     <section id="view-badges" class="card" hidden>
       <div class="page-title"><span class="title-pill">Sobriety</span></div>
 
@@ -430,7 +439,7 @@
       <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Settings (as before) -->
+    <!-- Settings -->
     <section id="view-settings" class="card" hidden>
       <div class="page-title"><span class="title-pill" data-i18n="settings">Settings</span></div>
       <form id="settingsForm" class="grid" action="javascript:void(0)">
@@ -447,7 +456,7 @@
             <img src="assets/smoking.png" alt="Smoking">
           </label>
 
-          <label class="sa-item">
+        <label class="sa-item">
             <span data-i18n="a_alcohol">Alcohol</span>
             <input type="checkbox" name="addictions" value="Alcohol">
             <img src="assets/alcohol.png" alt="Alcohol">
@@ -489,7 +498,7 @@
 
   </main>
 
-  <!-- Bottom tabbar: removed the Badges button as requested -->
+  <!-- Bottom tabbar: NO Badges (only in hamburger menu now) -->
   <nav class="tabbar" aria-label="Primary">
     <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
     <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
