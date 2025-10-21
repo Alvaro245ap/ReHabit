@@ -694,18 +694,47 @@ function attachCommunityHandlersAPI(box){
   };
 }
 
-function attachCommunityHandlersOffline(box){
-  $("#globalForm").onsubmit=(e)=>{ e.preventDefault();
-    const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
-    state.social.chatted=true; save(); renderBadges();
-    const rawName = (state.profile?.displayName || "").trim();
+function attachCommunityHandlersAPI(box){
+  const form = $("#globalForm");
+  if(!form) return;
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd  = new FormData(form);
+    const msg = (fd.get("msg") || "").toString().trim();
+    if(!msg) return;
+
+    state.social.chatted = true; save(); renderBadges();
+
+    const rawName   = (state.profile?.displayName || "").trim();
     const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
-    const div=document.createElement("div"); div.className="chat-msg";
-    div.innerHTML=`<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div); box.scrollTop=box.scrollHeight; e.target.reset();
-    // Optional: send to API if later configured
-    apiPostMessage({uid:"local",name:(rawName||"Anonymous"),text:msg,ts:Date.now(),title:currentTitle()});
+
+    const div = document.createElement("div");
+    div.className = "chat-msg";
+    div.innerHTML = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+    try{
+      const r = await apiPostMessage({ text: msg, room: "global", title: currentTitle() });
+      if(!r || !r.ok){
+        alert(state.i18n==="es" ? "No se pudo enviar el mensaje." : "Could not send message.");
+      }
+    }catch{
+      alert(state.i18n==="es" ? "Error de red." : "Network error.");
+    }
+
+    form.reset();
   };
+
+  $("#globalChat").onclick = (e)=>{
+    const n = e.target.closest(".chat-name");
+    if(!n) return;
+    state.social.friended = true; save(); renderBadges();
+    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+  };
+}
+
    // NEW: wire the chat form when using the REST API (Render)
 function attachCommunityHandlersAPI(box){
   const form = $("#globalForm");
