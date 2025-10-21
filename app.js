@@ -666,7 +666,6 @@ function wireCommunity(){
     } else {
       wireCommunityFirebase(box);
     }
-  }
 function attachCommunityHandlersOffline(box){
   $("#globalForm").onsubmit=(e)=>{ e.preventDefault();
     const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
