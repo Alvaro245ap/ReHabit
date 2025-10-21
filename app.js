@@ -939,8 +939,6 @@ function wire(){
       const target=b.getAttribute("data-nav");
       if(target){ closeDrawer(); show(target); }
     });
-     document.getElementById("auth-register-form")?.addEventListener("submit", handleRegisterSubmit);
-document.getElementById("auth-login-form")?.addEventListener("submit", handleLoginSubmit);
 
   });
 
