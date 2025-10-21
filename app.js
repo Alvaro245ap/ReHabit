@@ -16,6 +16,7 @@
    - Palette updated to pastel/teal/navy (CSS)
 */
 console.log("app.js loaded");
+window.appLoaded = true;
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
