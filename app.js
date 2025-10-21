@@ -612,32 +612,51 @@ function nameWithTitle(name, isSelf=false, titleOverride=""){
   return title ? `[${title}] ${name}` : name;
 }
 function wireCommunity(){
-  const box=$("#globalChat"); box.innerHTML="";
-  // Try to load from MySQL API first (if configured)
-  (async ()=>{
-    const msgs = await apiGetMessages();
-    if(msgs && Array.isArray(msgs) && msgs.length){
-      msgs.forEach(m=>{
-        const div=document.createElement("div");
-        const who = nameWithTitle(m.display_name || "Anonymous", false, m.title || "");
-        div.className="chat-msg";
-        // note: API returns created_at; your old seed used ts. We keep display consistent.
-        const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
-        div.innerHTML=`<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
-        box.appendChild(div);
-      });
-      box.scrollTop=box.scrollHeight;
-    } else {
-      // Fallback: Firebase or offline seed
-      if(!(window.firebase&&firebase.apps?.length)){
-        seedChat(box);
-        $("#myUid").textContent = getMyCode();
-        attachCommunityHandlersOffline(box);
+  const box = $("#globalChat");
+  box.innerHTML = "";
+
+  // If you have an API base, use it for both loading and sending
+  if (API_BASE){
+    (async ()=>{
+      const msgs = await apiGetMessages();   // may be [] on first run
+      if (Array.isArray(msgs)) {
+        msgs.forEach(m=>{
+          const div = document.createElement("div");
+          const who = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
+          const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
+          div.className = "chat-msg";
+          div.innerHTML = `<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
       } else {
-        wireCommunityFirebase(box);
+        // API failed → fall back to offline/Firebase
+        if(!(window.firebase && firebase.apps?.length)){
+          seedChat(box);
+          $("#myUid").textContent = getMyCode();
+          attachCommunityHandlersOffline(box);
+          return;
+        } else {
+          wireCommunityFirebase(box);
+          return;
+        }
       }
-    }
-  })();
+      // ✅ KEY LINE: wire the form for API mode
+      attachCommunityHandlersAPI(box);
+    })();
+    return;
+  }
+
+  // No API_BASE → old behavior (offline or Firebase)
+  if(!(window.firebase && firebase.apps?.length)){
+    seedChat(box);
+    $("#myUid").textContent = getMyCode();
+    attachCommunityHandlersOffline(box);
+  } else {
+    wireCommunityFirebase(box);
+  }
+}
+
   if(!API_BASE){
     // When no API_BASE provided, wire immediately to offline or Firebase as before
     if(!(window.firebase&&firebase.apps?.length)){
@@ -661,6 +680,61 @@ function attachCommunityHandlersOffline(box){
     // Optional: send to API if later configured
     apiPostMessage({uid:"local",name:(rawName||"Anonymous"),text:msg,ts:Date.now(),title:currentTitle()});
   };
+   // NEW: wire the chat form when using the REST API (Render)
+function attachCommunityHandlersAPI(box){
+  const form = $("#globalForm");
+  if(!form) return;
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd  = new FormData(form);
+    const msg = (fd.get("msg") || "").toString().trim();
+    if(!msg) return;
+
+    // mark social badge
+    state.social.chatted = true;
+    save();
+    renderBadges();
+
+    // show it immediately in the UI
+    const rawName   = (state.profile?.displayName || "").trim();
+    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
+    const div       = document.createElement("div");
+    div.className   = "chat-msg";
+    div.innerHTML   = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+    // send to your backend
+    const payload = {
+      text: msg,
+      room: "global",
+      title: currentTitle()
+    };
+
+    try{
+      const r = await apiPostMessage(payload);
+      if(!r || !r.ok){
+        alert((state.i18n==="es") ? "No se pudo enviar el mensaje." : "Could not send message.");
+      }
+    }catch{
+      alert((state.i18n==="es") ? "Error de red." : "Network error.");
+    }
+
+    form.reset();
+  };
+
+  // (Optional) clicking a name sends a friend request UX
+  $("#globalChat").onclick = (e)=>{
+    const n = e.target.closest(".chat-name");
+    if(!n) return;
+    state.social.friended = true;
+    save();
+    renderBadges();
+    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+  };
+}
+
   $("#globalChat").onclick=(e)=>{
     const n=e.target.closest(".chat-name"); if(!n) return;
     const uid=n.getAttribute("data-uid"); if(!uid) return;
