@@ -445,7 +445,7 @@ function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML 
      POST ${API_BASE}/api/friend-requests -> body:{fromUid,toCode} -> {ok:true}|{ok:false, error:"not_found"}
 ------------------------------------------------------------------*/
 // CHANGE ONLY THIS LINE to your Render URL:
-const API_BASE = "https://rehabit-api-xyz.onrender.com";
+const API_BASE = "https://rehabit-api.onrender.com";
  // e.g., "https://rehabet-api.onrender.com"
 // === Auth: improved alerts (paste once) ===
 async function handleRegisterSubmit(e){
