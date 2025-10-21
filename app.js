@@ -16,7 +16,7 @@
    - Palette updated to pastel/teal/navy (CSS)
 */
 console.log("app.js loaded");
-window.appLoaded = true;
+
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -615,42 +615,32 @@ function nameWithTitle(name, isSelf=false, titleOverride=""){
 }
 function wireCommunity(){
   const box = $("#globalChat");
+  if (!box) return;
   box.innerHTML = "";
 
-  // If you have an API base, use it for both loading and sending
+  // If you have an API base, use it for loading + sending
   if (API_BASE){
     (async ()=>{
       const msgs = await apiGetMessages();   // may be [] on first run
       if (Array.isArray(msgs)) {
         msgs.forEach(m=>{
           const div = document.createElement("div");
-          const who = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
+          const who  = nameWithTitle(m.display_name || m.name || "Anonymous", false, m.title || "");
           const when = m.created_at ? new Date(m.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
           div.className = "chat-msg";
           div.innerHTML = `<strong class="chat-name" data-uid="${m.user_id||'peer'}">${escapeHTML(who)}</strong>: ${escapeHTML(m.text)} <small>${when}</small>`;
           box.appendChild(div);
         });
         box.scrollTop = box.scrollHeight;
-      } else {
-        // API failed → fall back to offline/Firebase
-        if(!(window.firebase && firebase.apps?.length)){
-          seedChat(box);
-          $("#myUid").textContent = getMyCode();
-          attachCommunityHandlersOffline(box);
-          return;
-        } else {
-          wireCommunityFirebase(box);
-          return;
-        }
       }
-      // ✅ KEY LINE: wire the form for API mode
+      // Wire chat form for API mode
       attachCommunityHandlersAPI(box);
     })();
     return;
   }
 
-  // No API_BASE → old behavior (offline or Firebase)
-  if(!(window.firebase && firebase.apps?.length)){
+  // No API_BASE → offline seed or Firebase
+  if (!(window.firebase && firebase.apps?.length)){
     seedChat(box);
     $("#myUid").textContent = getMyCode();
     attachCommunityHandlersOffline(box);
@@ -659,15 +649,51 @@ function wireCommunity(){
   }
 }
 
-  if(!API_BASE){
-    // When no API_BASE provided, wire immediately to offline or Firebase as before
-    if(!(window.firebase&&firebase.apps?.length)){
-      seedChat(box);
-      $("#myUid").textContent = getMyCode();
-      attachCommunityHandlersOffline(box);
-    } else {
-      wireCommunityFirebase(box);
+function attachCommunityHandlersAPI(box){
+  const form = $("#globalForm");
+  if (!form) return;
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const msg = (new FormData(form).get("msg") || "").toString().trim();
+    if (!msg) return;
+
+    // mark social badge
+    state.social.chatted = true;
+    save();
+    renderBadges();
+
+    // show immediately
+    const rawName   = (state.profile?.displayName || "").trim();
+    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
+    const div       = document.createElement("div");
+    div.className   = "chat-msg";
+    div.innerHTML   = `<strong class="chat-name" data-uid="you">${escapeHTML(whoYouAre)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+    // send to backend
+    try{
+      const r = await apiPostMessage({ text: msg, room: "global", title: currentTitle() });
+      if(!r || !r.ok) alert((state.i18n==="es") ? "No se pudo enviar el mensaje." : "Could not send message.");
+    }catch{
+      alert((state.i18n==="es") ? "Error de red." : "Network error.");
     }
+
+    form.reset();
+  };
+
+  // optional: click a name → friend request UX
+  $("#globalChat").onclick = (e)=>{
+    const n = e.target.closest(".chat-name");
+    if(!n) return;
+    state.social.friended = true;
+    save();
+    renderBadges();
+    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+  };
+}
+
 function attachCommunityHandlersOffline(box){
   $("#globalForm").onsubmit=(e)=>{ e.preventDefault();
     const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
