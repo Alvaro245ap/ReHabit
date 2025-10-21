@@ -15,6 +15,7 @@
    - Menu icons: added for Notes
    - Palette updated to pastel/teal/navy (CSS)
 */
+console.log("app.js loaded");
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
