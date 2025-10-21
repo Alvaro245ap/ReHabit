@@ -8,51 +8,45 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Fonts: titles = Francois One (you asked), body = Inter -->
+  <!-- Fonts: titles = Francois One, body = Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Francois+One&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- Targeted style overrides ONLY per your request -->
+  <!-- Minimal, targeted style overrides ONLY per your request -->
   <style>
     :root{
-      --olive:#556B2F;          /* (kept if ever needed elsewhere) */
-      --title-pill:#799286;     /* new title pill color */
+      --title-pill:#799286;     /* title box color */
       --app-blue:#eaf3ff;       /* bluish app background */
-      --card-bg:#F2F1EC;        /* all “white boxes” to this tone */
+      --card-bg:#F2F1EC;        /* off-white boxes */
     }
 
-    /* Global blues */
     html, body { background: var(--app-blue); }
     .app-header, .drawer, .container, .tabbar, .legal, #backdrop { background: var(--app-blue); }
 
-    /* All cards use the requested off-white */
+    /* All cards become off-white as requested */
     .card, .card.soft, .card.sos { background: var(--card-bg); }
 
-    /* Header: remove big top title, center & enlarge slogan as one pill, keep its color area */
+    /* Header: keep small brand, center bigger single slogan, no big top title */
     .app-header { display:flex; align-items:center; justify-content:space-between; padding:.6rem 1rem; }
     .brand { display:flex; align-items:center; gap:.5rem; flex:1; }
     .brand .logo { height:40px; width:auto; }
     .slogans-inline { flex:1; display:flex; justify-content:center; }
     .slogans-inline .chip.primary{
       padding:.45rem .9rem; border-radius:1rem; font-weight:700;
-      font-size:1.1rem; text-align:center;
+      font-size:1.2rem; text-align:center;
     }
 
-    /* Title pill: centered, bigger, with #799286 background */
-    .page-title {
-      display:flex; align-items:center; justify-content:center;
-      gap:.5rem; margin:.2rem 0 1rem 0;
-    }
-    .page-title .title-logo{ width:24px; height:24px; }
+    /* Title pill (we keep the pill, but remove page logos everywhere) */
+    .page-title { display:flex; align-items:center; justify-content:center; margin:.2rem 0 1rem 0; }
     .title-pill{
-      display:inline-block; padding:.25rem .6rem; border-radius:.6rem;
+      display:inline-block; padding:.28rem .7rem; border-radius:.6rem;
       background:var(--title-pill); color:#fff;
       font-family: "Francois One", system-ui, -apple-system, "Inter", Arial, sans-serif;
       letter-spacing:.2px; font-size:1.15rem; text-align:center;
     }
 
-    /* Drawer: make it less wide */
+    /* Drawer: less wide */
     .drawer{ width:240px; max-width:75vw; }
     .drawer .drawer-link{ display:flex; align-items:center; gap:.6rem; }
     .drawer .drawer-link svg{ width:20px; height:20px; opacity:.9; }
@@ -62,18 +56,27 @@
 
     /* Calendar header: streak centered ABOVE month/year */
     .calendar-head{ display:flex; flex-direction:column; align-items:center; gap:.25rem; }
-    .streak-label{
-      font-weight:700; text-align:center;
-      display:flex; align-items:center; justify-content:center; gap:.4rem;
+    .streak-label{ font-weight:700; text-align:center; display:flex; align-items:center; justify-content:center; gap:.4rem; }
+
+    /* Home layout: center the two cards */
+    #view-home .grid-2{
+      display:flex;
+      justify-content:center;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+    #view-home .grid-2 > .card.soft{
+      max-width:640px;
+      width:100%;
     }
 
-    /* Home right column: show 10 Steps instead of Quick open */
+    /* Ten steps on Home — centered choice row */
     #homeStepsChoiceWrap{ margin-bottom:.5rem; display:flex; justify-content:center; }
-    #homeStepsList{ padding-left:1.2rem; }
 
+    /* Remove the per-page title logos (we removed <img class="title-logo"> elements) */
   </style>
 
-  <!-- (Optional) Firebase (left as-is) -->
+  <!-- (Optional) Firebase includes as in your copy -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -87,9 +90,8 @@
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
     <div class="brand">
-      <img class="logo" alt="ReHabit logo"
-           src="assets/favicon.png">
-      <!-- DELETED the big top title; centered bigger slogan pill -->
+      <img class="logo" alt="ReHabit logo" src="assets/favicon.png">
+      <!-- Single centered slogan pill -->
       <div class="slogans-inline">
         <span class="chip primary">ReBuild • ReWire • ReHabit</span>
       </div>
@@ -104,14 +106,13 @@
     </div>
   </header>
 
-  <!-- Drawer (narrower) + add Home entry -->
+  <!-- Drawer (narrow) — includes Home -->
   <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <strong class="fancy">Menu</strong>
       <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
     </div>
     <nav class="drawer-nav">
-      <!-- Home label specifically “Home” -->
       <button class="drawer-link" data-nav="home">
         <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg>
         <span data-i18n="home">Home</span>
@@ -162,7 +163,7 @@
 
     <!-- Onboarding -->
     <section id="view-onboarding" class="card">
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="welcome">Welcome 👋</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="welcome">Welcome 👋</span></div>
       <p data-i18n="selectFocus">Select your focus and a target date to start tracking progress.</p>
 
       <div class="addiction-grid" style="margin-bottom:12px">
@@ -200,10 +201,8 @@
       </form>
     </section>
 
-    <!-- Home -->
+    <!-- Home (NO title at top as requested) -->
     <section id="view-home" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="home">Home</span></div>
-
       <div class="grid-2">
         <div class="card soft">
           <h3 class="fancy" data-i18n="monthCard">Calendar (this month)</h3>
@@ -217,7 +216,6 @@
         </div>
 
         <div class="card soft">
-          <!-- Ten steps (with addiction toggle if multiple) -->
           <h3 class="fancy" data-i18n="steps">10 Steps</h3>
           <div id="homeStepsChoiceWrap" hidden>
             <label>
@@ -232,7 +230,7 @@
 
     <!-- Calendar full -->
     <section id="view-calendar" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="calendar">Calendar</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="calendar">Calendar</span></div>
       <div class="calendar-head up">
         <div id="streakLabel2" class="streak-label"></div>
         <div id="monthLabel2"></div>
@@ -245,7 +243,7 @@
 
     <!-- Check-in -->
     <section id="view-checkin" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="checkin">Daily Check-in</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="checkin">Daily Check-in</span></div>
       <div class="grid-2">
         <div class="card soft">
           <p id="encouragement" class="encouragement big"></p>
@@ -305,7 +303,7 @@
 
     <!-- SOS -->
     <section id="view-sos" class="card sos" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill">🚨 <span data-i18n="sos">Craving SOS</span></span></div>
+      <div class="page-title"><span class="title-pill">🚨 <span data-i18n="sos">Craving SOS</span></span></div>
       <ol class="sos-steps">
         <li data-i18n="s1"><strong>Delay 5 minutes.</strong> Start timer and breathe slowly.</li>
         <li data-i18n="s2"><strong>Urge surfing.</strong> Notice the urge rising and falling.</li>
@@ -329,7 +327,7 @@
 
     <!-- Guide -->
     <section id="view-guide" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" id="guideTitle">Guide</span></div>
+      <div class="page-title"><span class="title-pill" id="guideTitle">Guide</span></div>
       <div id="guideChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
@@ -354,7 +352,7 @@
 
     <!-- Materials -->
     <section id="view-program" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" id="programTitle">Helpful materials</span></div>
+      <div class="page-title"><span class="title-pill" id="programTitle">Helpful materials</span></div>
       <ul id="materialsList" class="list bullets"></ul>
       <div id="contribWrap" class="contrib" hidden>
         <h3 data-i18n="contribTitle">Contribute tips (1-year badge required)</h3>
@@ -367,9 +365,9 @@
       <div class="actions"><button class="btn subtle" data-nav="guide" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Badges -->
+    <!-- Badges (renamed title to “Sobriety”) -->
     <section id="view-badges" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="badges">Badges & Titles</span></div>
+      <div class="page-title"><span class="title-pill">Sobriety</span></div>
 
       <h3 class="fancy" data-i18n="sobriety">Sobriety badges</h3>
       <div id="sobrietyGrid" class="badge-grid"></div>
@@ -385,12 +383,12 @@
 
     <!-- Research -->
     <section id="view-research" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="research">Research</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="research">Research</span></div>
 
       <div id="researchChoiceWrap" class="guide-choice" hidden>
         <label>
           <span data-i18n="chooseAddiction">Choose addiction</span>
-        <select id="researchChoice"></select>
+          <select id="researchChoice"></select>
         </label>
       </div>
 
@@ -400,7 +398,7 @@
 
     <!-- Community -->
     <section id="view-community" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="chat">Community chat</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="chat">Community chat</span></div>
       <p class="muted" data-i18n="chatNote">Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.</p>
 
       <div id="globalChat" class="chat-box"></div>
@@ -416,7 +414,7 @@
 
     <!-- Friends -->
     <section id="view-friends" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="friends">Friends</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="friends">Friends</span></div>
       <p><span data-i18n="yourCode">Your code:</span> <code id="myUid">—</code></p>
 
       <form id="addFriendForm" class="grid" style="grid-template-columns:1fr auto; margin:8px 0;" action="javascript:void(0)">
@@ -432,9 +430,58 @@
       <div class="actions"><button class="btn subtle" data-nav="community" data-i18n="back">Back</button></div>
     </section>
 
+    <!-- Settings (as before) -->
+    <section id="view-settings" class="card" hidden>
+      <div class="page-title"><span class="title-pill" data-i18n="settings">Settings</span></div>
+      <form id="settingsForm" class="grid" action="javascript:void(0)">
+        <label><span data-i18n="displayName">Display name</span>
+          <input type="text" name="displayName" maxlength="40" placeholder="Your name">
+        </label>
+
+        <fieldset class="grid settings-addictions">
+          <legend class="fancy" data-i18n="chooseAddictions">Choose addictions</legend>
+
+          <label class="sa-item">
+            <span data-i18n="a_smoke">Smoking</span>
+            <input type="checkbox" name="addictions" value="Smoking">
+            <img src="assets/smoking.png" alt="Smoking">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_alcohol">Alcohol</span>
+            <input type="checkbox" name="addictions" value="Alcohol">
+            <img src="assets/alcohol.png" alt="Alcohol">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_tech">Technology</span>
+            <input type="checkbox" name="addictions" value="Technology">
+            <img src="assets/tech.png" alt="Technology">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_gambling">Gambling</span>
+            <input type="checkbox" name="addictions" value="Gambling">
+            <img src="assets/gambling.png" alt="Gambling">
+          </label>
+
+          <label class="sa-item">
+            <span data-i18n="a_other">Other drugs</span>
+            <input type="checkbox" name="addictions" value="Other">
+            <img src="assets/other.png" alt="Other drugs">
+          </label>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn primary" data-i18n="save">Save</button>
+          <button class="btn subtle" type="button" data-nav="home" data-i18n="back">Back</button>
+        </div>
+      </form>
+    </section>
+
     <!-- Notes -->
     <section id="view-notes" class="card" hidden>
-      <div class="page-title"><img class="title-logo" src="assets/favicon.png" alt=""><span class="title-pill" data-i18n="notes">Notes</span></div>
+      <div class="page-title"><span class="title-pill" data-i18n="notes">Notes</span></div>
       <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
       <ul id="notesList" class="list"></ul>
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
@@ -442,11 +489,10 @@
 
   </main>
 
-  <!-- Tabbar: restored “Badges” tab (you said the badge tab was removed) -->
+  <!-- Bottom tabbar: removed the Badges button as requested -->
   <nav class="tabbar" aria-label="Primary">
     <button data-nav="home" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5z" fill="currentColor"/></svg><span data-i18n="home">Home</span></button>
     <button data-nav="community" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg><span data-i18n="chat">Community</span></button>
-    <button data-nav="badges" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6-5.5-3-5.5 3 1-6L3 8.9 9 8z" fill="currentColor"/></svg><span data-i18n="badges">Badges</span></button>
     <button data-nav="friends" class="tabbtn"><svg viewBox="0 0 24 24" class="ico"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z" fill="currentColor"/></svg><span data-i18n="friends">Friends</span></button>
   </nav>
 
