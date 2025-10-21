@@ -1,12 +1,11 @@
-/* ReHabit (No-Login) — This version applies ONLY your latest requests:
-   - Restore “Badges” tab (done in HTML tabbar)
-   - Add small logo to each page title; titles centered inside a #799286 pill
-   - Slogan centered & bigger; top big title removed
-   - All “white boxes” recolored to #F2F1EC (done in HTML styles)
-   - Drawer narrower
-   - Streak centered above month/year with icons
-   - Home page right side shows “10 Steps” (with addiction toggle if multiple)
-   - Ensure Home is labeled “Home”; menu already includes Home
+/* ReHabit (No-Login) — Only your latest changes applied:
+   - Settings restored (unchanged, functional)
+   - Removed bottom Badges tab; “Badges” page title now “Sobriety”
+   - Removed per-page logos
+   - Removed Home page title
+   - Home: calendar & 10 Steps centered
+   - “Choose addiction” dropdowns fixed to populate correctly
+   - Research populated for ALL addictions (toggle works)
 */
 console.log("[boot] app.js loaded");
 
@@ -70,7 +69,8 @@ const D = {
     notes:"Notes", notesInfo:"Your Daily and SOS notes appear here (newest first).",
     notFound:"Friend not found.",
     streak:"Current streak",
-    save:"Save"
+    save:"Save",
+    sobriety:"Sobriety badges"
   },
   es:{
     home:"Inicio",
@@ -99,7 +99,8 @@ const D = {
     notes:"Notas", notesInfo:"Aquí aparecen tus notas Diarias y de SOS (las más recientes primero).",
     notFound:"Amigo no encontrado.",
     streak:"Racha actual",
-    save:"Guardar"
+    save:"Guardar",
+    sobriety:"Insignias de sobriedad"
   }
 };
 function t(k){ const L=document.documentElement.getAttribute("data-lang")||"en"; return (D[L] && D[L][k]) || D.en[k] || k; }
@@ -121,12 +122,33 @@ const BOT_CODES = {
 /* ---------------- Content (tips/steps/research) ---------------- */
 const ADDICTIONS = ["Technology","Smoking","Alcohol","Gambling","Other"];
 
-/* TIPS / STEPS / MATERIALS / RESEARCH arrays are the same as in your working copy.
-   (Kept intact; omitted here for brevity of this message.) */
-const TIPS = { /* ... keep your full data exactly as before ... */ };
-const STEPS = { /* ... keep your full data exactly as before ... */ };
+const TIPS = {
+  Technology:{ en:[ "Define screen-time caps and ‘no-phone zones’.","Disable nonessential notifications.","Uninstall 2 high-temptation apps.","Use blockers during work / after 21:00.","Replace scrolling with a 10-min walk.","One-tab rule to cut switching.","Phone docks outside bedroom.","Pocket notebook for ideas.","Plan offline hobbies.","Track Success/Slip; review weekly." ],
+              es:[ "Límites de pantalla y zonas sin teléfono.","Desactiva notificaciones no esenciales.","Desinstala 2 apps tentadoras.","Bloqueos en trabajo y tras 21:00.","Cambia scroll por caminar 10 min.","Regla de una pestaña.","Teléfono fuera del dormitorio.","Libreta para ideas.","Hobbies offline.","Registra Logro/Recaída; revisión semanal." ]},
+  Smoking:{ en:[ "Set a quit date within 7–14 days.","NRT ready (patch + gum/lozenge).","Map triggers & substitutes.","Clean environment; remove cues.","Delay 5 min + long exhale.","Mouth/hands plan (gum, straws).","Adjust caffeine down.","Refusal script handy.","Brisk walk daily.","Reward milestones." ],
+            es:[ "Fecha para dejar en 7–14 días.","TSN lista (parche + chicle/pastilla).","Mapa de disparadores y sustitutos.","Limpia entorno; retira señales.","Demora 5 min + exhalación larga.","Plan boca/manos (chicle, pajitas).","Ajusta cafeína a la baja.","Guion de rechazo listo.","Caminata diaria.","Recompensa hitos." ]},
+  Alcohol:{ en:[ "Choose abstinence or caps.","Remove alcohol at home.","First-drink NA ritual.","HALT check before choices.","Evening routine set.","Delay + urge surf 2–3 min.","Avoid high-risk places early.","Accountability check-in.","If moderating, pre-commit units.","Celebrate AF weeks." ],
+            es:[ "Abstinencia o límites.","Retira alcohol de casa.","Ritual sin alcohol para el primer trago.","HALT antes de decidir.","Rutina nocturna.","Demora + surf del impulso.","Evita lugares de riesgo al inicio.","Chequeo de responsabilidad.","Si moderas, precompromete unidades.","Celebra semanas AF." ]},
+  Gambling:{ en:[ "Enable bank blocks & self-exclusion.","Install device/site blockers.","Budget firewall.","Share statements weekly.","Plan around risky windows.","Delay 10 min + surf.","Remove betting apps.","Limit cash; freeze cards.","Replace excitement safely.","Track triggers weekly." ],
+            es:[ "Bloqueos bancarios y autoexclusión.","Bloqueadores en dispositivos/sitios.","Cortafuegos de presupuesto.","Comparte extractos semanales.","Plan ante ventanas de riesgo.","Demora 10 min + surf.","Elimina apps de apuestas.","Limita efectivo; congela tarjetas.","Sustituye la excitación.","Registra disparadores." ]},
+  Other:{ en:[ "Consult a clinician first.","Abstinence or guided taper.","Remove paraphernalia/cues.","Daily structure (meals/move/sleep).","Coping kit ready.","Delay + urge surf.","Identify triggers & plans.","Accountability weekly.","Calendar self-monitoring.","Seek professional/peer support." ],
+          es:[ "Consulta con profesional primero.","Abstinencia o reducción guiada.","Retira parafernalia/señales.","Estructura diaria.","Kit de afrontamiento listo.","Demora + surf del impulso.","Identifica disparadores y planes.","Responsabilidad semanal.","Calendario de monitoreo.","Apoyo profesional/pares." ]}
+};
 
-function deepGuideFor(name){ 
+const STEPS = {
+  Technology:{ en:[ "Define a clear goal.","Audit apps; uninstall two.","Set focus/bedtime modes.","Replacement list (3 quick).","One-tab + 25/5.","Phone outside bedroom.","Log urges (time/cue).","Weekly review.","Reset after lapses.","Celebrate streaks." ],
+              es:[ "Objetivo claro.","Audita apps; quita dos.","Modos de enfoque/sueño.","Lista de reemplazos.","Una pestaña + 25/5.","Teléfono fuera del cuarto.","Registra impulsos.","Revisión semanal.","Reinicio tras recaída.","Celebra rachas." ]},
+  Smoking:{ en:[ "Pick a quit date.","NRT ready.","Triggers→substitutes.","Clean spaces.","Delay + exhale.","Daily brisk walk.","Practice refusal.","Hydration & snacks.","Avoid alcohol early.","Weekly reward." ],
+            es:[ "Elige fecha.","TSN lista.","Disparadores→sustitutos.","Limpia espacios.","Demora + exhala.","Caminata diaria.","Practica rechazo.","Hidratación & snacks.","Evita alcohol al inicio.","Recompensa semanal." ]},
+  Alcohol:{ en:[ "Decide abstinence/caps.","Clear home of alcohol.","Refusal scripts.","HALT before choices.","Evening routine.","Delay + surfing.","Avoid risky places.","Accountability.","Track units/pace.","Reward AF weeks." ],
+            es:[ "Abstinencia/límites.","Retira alcohol de casa.","Guiones de rechazo.","HALT antes de decidir.","Rutina nocturna.","Demora + surf.","Evita lugares de riesgo.","Responsabilidad.","Registra unidades/ritmo.","Recompensa semanas AF." ]},
+  Gambling:{ en:[ "Bank blocks, exclusion.","Device/site blockers.","Budget firewall.","Share statements.","Plan risky windows.","Delay + surf.","Remove apps.","Limit cash.","Low-stim nights.","Weekly review." ],
+             es:[ "Bloqueos y exclusión.","Bloqueadores.","Cortafuegos de presupuesto.","Comparte extractos.","Plan vent. de riesgo.","Demora + surf.","Elimina apps.","Limita efectivo.","Noches de baja estim.","Revisión semanal." ]},
+  Other:{ en:[ "Assess safety.","Plan abstain/taper.","Remove cues.","Daily structure.","Coping kit.","Delay + surf.","Triggers→plans.","Accountability.","Track calendar.","Adjust weekly." ],
+          es:[ "Evalúa seguridad.","Plan abstener/reducir.","Retira señales.","Estructura diaria.","Kit de afrontamiento.","Demora + surf.","Disparadores→planes.","Responsabilidad.","Calendario.","Ajuste semanal." ]}
+};
+
+function deepGuideFor(name){
   const L=document.documentElement.getAttribute("data-lang")||"en";
   const isES = L==="es";
   const lower = isES
@@ -148,8 +170,41 @@ function deepGuideFor(name){
   return isES ? blocks.es : blocks.en;
 }
 
-const MATERIALS = { /* ... keep as before ... */ };
-const RESEARCH  = { /* ... keep as before (all addictions filled) ... */ };
+const MATERIALS = {
+  Technology:{ en:["Book: Digital Minimalism","App: Focus / site blockers","Article: Urge surfing basics"],
+               es:["Libro: Minimalismo Digital","App: Bloqueadores","Artículo: Surf del impulso"] },
+  Smoking:{ en:["Guide: Nicotine patches","App: Smoke-free counter","Article: Delay, breathe, water"],
+            es:["Guía: Parches de nicotina","App: Contador libre de humo","Artículo: Demora, respira, agua"] },
+  Alcohol:{ en:["Community: AF groups","NA drinks list","Article: HALT check"],
+            es:["Comunidad: Grupos AF","Lista de bebidas sin alcohol","Artículo: HALT"] },
+  Gambling:{ en:["Self-exclusion portals","Bank blocks","Article: Replacement dopamine"],
+             es:["Portales de autoexclusión","Bloqueos bancarios","Artículo: Dopamina de reemplazo"] },
+  Other:{ en:["SAMHSA treatment locator","Grounding techniques","Article: Coping skills"],
+          es:["Buscador de tratamiento SAMHSA","Técnicas de enraizamiento","Artículo: Habilidades de afrontamiento"] }
+};
+
+const RESEARCH  = {
+  Technology:{
+    en:[ "≤2h/day screen rule; no phone in bedroom.","Turn off nonessential notifications.","Move charger outside bedroom; analog alarm.","Uninstall 2 worst apps.","Blockers during work and after 21:00.","Three replacements for scrolling.","One-tab rule; 25/5 timer.","Urge surfing 2–3 min.","Delay 5 minutes before decisions.","Night screen-sabbath blocks.","Phone out of reach while working.","Break/wind-down reminders.","Track Success/Slip; weekly review.","Share goal with ally.","Swap dopamine: movement, sunlight, journaling.","Protect sleep (no screens in bed).","Add friction in high-risk contexts.","Slip → trigger/lesson/action.","Celebrate specific wins.","Consider CBT/DBT coaching." ],
+    es:[ "≤2 h/día; sin teléfono en el dormitorio.","Apaga notificaciones no esenciales.","Cargador fuera del dormitorio.","Desinstala 2 apps problema.","Bloqueadores en trabajo y tras 21 h.","Tres reemplazos al scroll.","Regla de una pestaña; 25/5.","Surf del impulso 2–3 min.","Demora 5 minutos.","Bloques nocturnos sin pantallas.","Teléfono fuera de alcance.","Recordatorios de pausa y cierre.","Registra Logro/Recaída; revisión semanal.","Comparte objetivo con aliado.","Sustituye dopamina: movimiento, luz, escritura.","Protege el sueño.","Añade fricción en riesgo.","Recaída → disparador/lección/acción.","Celebra logros.","Considera TCC/DBT." ]
+  },
+  Smoking:{
+    en:[ "Set quit date in 7–14 days.","Use NRT correctly (patch + short-acting).","Trigger map (coffee, car) → substitutes.","Clean fabrics; remove lighters/ashtrays.","Delay 5 min + long exhale.","Mouth/hands plan (gum, straw).","Reduce caffeine early.","Refusal script: “No thanks, I’m quitting.”","Daily brisk walk 10–15 min.","Hydration + fruit/veg snacks.","Avoid alcohol early.","Accountability check-ins.","Stress skills (4-6 breathing).","Track cravings (time, cue, intensity).","Celebrate milestones.","If lapse: reset plan immediately.","Sleep window consistent.","Seek counseling if needed.","Use counters to reinforce.","Review progress weekly." ],
+    es:[ "Fecha para dejar en 7–14 días.","TSN bien usada (parche + rescate).","Mapa de disparadores → sustitutos.","Lava tejidos; retira encendedores.","Demora 5 min + exhalación larga.","Plan boca/manos.","Baja la cafeína al inicio.","Guion: “No gracias, lo estoy dejando”.","Caminata diaria 10–15 min.","Hidratación + fruta/verdura.","Evita alcohol al inicio.","Chequeos de responsabilidad.","Estrategias de estrés (4-6).","Registra antojos (hora, señal, intensidad).","Celebra hitos.","Si recaes: reinicia el plan.","Ventana de sueño constante.","Apoyo profesional si es necesario.","Usa contadores.","Revisión semanal." ]
+  },
+  Alcohol:{
+    en:[ "Decide abstinence or caps.","Remove alcohol at home.","NA first-drink ritual.","HALT before choices.","Evening routine plan.","Delay + urge surfing.","Avoid high-risk places early.","Accountability with ally.","Track units & pace if moderating.","Reward AF weeks.","Identify triggers & alternatives.","Plan weekend structure.","Keep hydration high.","Eat before events.","Leave early if cues stack.","Practice refusal lines.","Schedule morning commitments.","Monitor sleep improvements.","Reflect on benefits weekly.","Seek therapy/support groups." ],
+    es:[ "Elige abstinencia o límites.","Retira alcohol de casa.","Ritual del primer trago sin alcohol.","HALT antes de decidir.","Rutina nocturna.","Demora + surf del impulso.","Evita lugares de alto riesgo al inicio.","Responsabilidad con un aliado.","Si moderas, registra unidades/ritmo.","Recompensa semanas AF.","Identifica disparadores y alternativas.","Estructura de fin de semana.","Hidratación alta.","Come antes de eventos.","Vete antes si hay muchas claves.","Practica frases de rechazo.","Agenda compromisos matinales.","Monitorea el sueño.","Reflexiona beneficios semanalmente.","Apoyo terapéutico/grupos." ]
+  },
+  Gambling:{
+    en:[ "Enable bank gambling blocks.","Self-exclude on platforms.","Install site/app blockers.","Budget firewall for essentials.","Share statements weekly.","Plan around risky windows.","Delay 10 min + urge surf.","Remove betting apps/links.","Limit cash; freeze cards on risky days.","Replace excitement (exercise, volunteering).","Set deposit frictions.","Avoid sports triggers early.","Accountability buddy.","Track triggers & wins.","Schedule low-stimulation nights.","Financial check-ins.","If lapse: block & reset.","Mindfulness for urges.","Therapy/GA if needed.","Weekly review & reward." ],
+    es:[ "Activa bloqueos bancarios.","Autoexclusión en plataformas.","Bloqueadores de sitios/apps.","Cortafuegos de presupuesto.","Comparte extractos semanales.","Plan ante ventanas de riesgo.","Demora 10 min + surf.","Elimina apps/enlaces de apuestas.","Limita efectivo; congela tarjetas.","Sustituye la emoción (ejercicio, voluntariado).","Aumenta fricción de depósitos.","Evita disparadores deportivos al inicio.","Aliado de responsabilidad.","Registra disparadores y logros.","Noches de baja estimulación.","Revisiones financieras.","Si recaes: bloquea y reinicia.","Mindfulness para antojos.","Terapia/GA si es necesario.","Revisión y recompensa semanal." ]
+  },
+  Other:{
+    en:[ "Consult clinician about safety.","Choose abstinence or supervised taper.","Remove paraphernalia/cues.","Daily structure (meals/move/sleep).","Coping kit (water, grounding).","Delay 5 + urge surfing.","Identify triggers & If-Then plans.","Accountability weekly.","Use calendar for outcomes.","Peer/professional support.","Emergency plan numbers.","Mind-body practices.","Nutrition focus.","Sleep hygiene.","Avoid high-risk people/places.","Celebrate small wins.","If lapse: trigger→lesson→action.","Track mood & cravings.","Adjust plan weekly.","Build sober routines." ],
+    es:[ "Consulta a un profesional por seguridad.","Abstinencia o reducción supervisada.","Retira parafernalia/señales.","Estructura diaria (comida/mov/sueño).","Kit de afrontamiento (agua, enraizamiento).","Demora 5 + surf del impulso.","Planes Si-Entonces.","Responsabilidad semanal.","Usa el calendario para resultados.","Apoyo profesional/pares.","Plan de emergencia.","Prácticas mente-cuerpo.","Enfoque en nutrición.","Higiene del sueño.","Evita personas/lugares de riesgo.","Celebra logros pequeños.","Si recaes: disparador→lección→acción.","Registra ánimo y antojos.","Ajuste semanal.","Rutinas sobrias." ]
+  }
+};
 
 /* ---------------- Badges & Titles ---------------- */
 const SOBRIETY = [
@@ -211,7 +266,6 @@ function renderStreak(whereId){
   const L = document.documentElement.getAttribute("data-lang")||"en";
   const label = t("streak");
   const unit  = (L==="es" ? (s===1?"día":"días") : (s===1?"day":"days"));
-  // icons to make it more visual
   el.textContent = s>0 ? `🔥 ${label}: ${s} ${unit} 🏆` : `🔥 ${label}: 0 🏆`;
 }
 
@@ -293,6 +347,7 @@ function currentGuideAddiction(){
 function renderGuideChoice(){
   const adds = state.profile?.addictions || [];
   const wrap = $("#guideChoiceWrap");
+  if(!wrap) return;
   if(adds.length<=1){ wrap.hidden=true; return; }
   wrap.hidden=false;
   const sel=$("#guideChoice"); sel.innerHTML="";
@@ -352,6 +407,14 @@ function renderHomeSteps(){
 }
 
 /* ---------------- Materials ---------------- */
+function renderMaterials(){
+  const a = currentGuideAddiction();
+  $("#programTitle").textContent = `${translateAddiction(a)} — ${t("materials")}`;
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const items = (MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [];
+  $("#materialsList").innerHTML = items.map(m=>`<li>${m}</li>`).join("");
+  $("#contribWrap").hidden = okDaysSinceStart()<365;
+}
 function addMaterial(addiction, text){
   const L=document.documentElement.getAttribute("data-lang")||"en";
   const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
@@ -395,6 +458,7 @@ function localizeNote(txt){
 function renderResearchChoice(){
   const adds = state.profile?.addictions || [];
   const wrap = $("#researchChoiceWrap");
+  if(!wrap) return;
   if(adds.length<=1){ wrap.hidden=true; return; }
   wrap.hidden=false;
   const sel=$("#researchChoice"); sel.innerHTML="";
@@ -590,7 +654,7 @@ function show(v){
   if(v==="home"){ renderCalendar("calendarGrid","monthLabel"); renderHomeStepsChoice(); renderHomeSteps(); }
   if(v==="calendar"){ renderCalendarFull(); }
   if(v==="guide"){ renderGuide(); wireGuideTabs(); }
-  if(v==="program"){ /* materials */ renderMaterials(); }
+  if(v==="program"){ renderMaterials(); }
   if(v==="checkin"){ renderCheckin(); }
   if(v==="badges"){ renderBadges(); }
   if(v==="research"){ renderResearch(); }
