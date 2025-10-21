@@ -1085,7 +1085,11 @@ function renderSettings(){
 load();
 window.addEventListener("DOMContentLoaded", ()=>{
   if(!state.profile) show("onboarding"); else show("home");
-  wire();
+  wire(); function wire(){
+  console.log('wire() running');
+  // ...existing code...
+}
+
 });
 
 /* ---------------- Utils ---------------- */
