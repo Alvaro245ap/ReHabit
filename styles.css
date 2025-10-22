@@ -16,8 +16,6 @@
 html,body{margin:0;padding:0;height:100%}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--text)}
 .fancy{font-family:"Francois One","Cinzel",serif; letter-spacing:.2px}
-
-/* Header */
 .app-header{display:flex;justify-content:space-between;align-items:center;padding:12px clamp(12px,3vw,24px);background:#ffffffd9;border-bottom:1px solid #dbe1ff;backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:40px;height:40px;object-fit:cover;border-radius:8px}
@@ -30,7 +28,6 @@ h1{margin:0;font-size:28px;letter-spacing:.2px;font-weight:800}
 
 /* Hamburger + Drawer */
 .hamburger{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
-.hamburger-lg{padding:12px 16px;font-size:20px} /* bigger button */
 .drawer{position:fixed;inset:0 auto 0 0;width:300px;background:#fff;border-right:1px solid #dbe1ff;box-shadow:0 20px 60px rgba(8,15,40,.24);transform:translateX(-105%);transition:transform .2s ease;z-index:30;display:flex;flex-direction:column}
 .drawer.open{transform:translateX(0)}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e6ebff}
@@ -55,7 +52,7 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
 .btn.subtle{background:#eef2f7}
 .btn.success{background:var(--success);color:#fff;border-color:transparent}
-.btn.danger{background:var(--danger);color:#fff;border-color:transparent}
+.btn.danger{background:#ef4444;color:#fff;border-color:transparent}
 .file input{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap}
 .list{list-style:none;padding-left:0;margin:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #cbd5e1}
 
@@ -63,26 +60,33 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .crisis-mini{position:sticky;top:64px;display:flex;justify-content:flex-end;max-width:var(--maxw);margin:2px auto 0;padding:0 clamp(12px,3vw,24px)}
 .crisis-mini a{background:#ffe0e5;border:1px solid #ffc8d0;color:#9f1239;text-decoration:none;padding:6px 10px;border-radius:999px;font-size:12px}
 
-/* Tabbar (active highlight like drawer) */
+/* Tabbar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);background:#ffffffd9;border-top:1px solid #dbe1ff;backdrop-filter:blur(10px);z-index:15}
-.tabbtn{appearance:none;background:transparent;border:0;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:grid;place-items:center;gap:4px}
-.tabbtn.active{box-shadow:0 -2px 0 0 var(--primary) inset, 0 0 0 3px rgba(31,58,138,.15); border-top-left-radius:10px; border-top-right-radius:10px}
+.tabbtn{appearance:none;background:transparent;border:0;color:var(--text);padding:8px 4px 10px;cursor:pointer;display:grid;place-items:center;gap:4px;border-top:3px solid transparent}
 .tabbtn:focus{outline:2px solid var(--primary);outline-offset:-2px}.ico{width:22px;height:22px;display:block}
+.tabbtn.active{box-shadow:0 0 0 3px rgba(31,58,138,.15); border-top:3px solid var(--primary-2)} /* active glow */
+
+/* Hero */
+.home-hero{display:grid;gap:14px;background:linear-gradient(180deg,#ffffff,#edf7ff);border:1px solid #dbe1ff;border-radius:var(--radius);padding:18px;box-shadow:0 6px 26px rgba(20,30,70,.12);margin-bottom:12px}
+.hero-left h2{margin:0 0 6px}.hero-left p{margin:0 0 12px;color:#334155}
 
 /* Chat */
 .chat-box{height:260px;overflow:auto;padding:10px;border:1px solid #dbe1ff;border-radius:12px;background:#fff;color:#111}
 .chat-msg{margin:6px 0}.chat-msg small{color:#6b7280}
-.chat-name{color:#0b1324;cursor:pointer}
-.title-badge{padding:2px 6px;border-radius:999px;font-size:12px;margin-right:6px;border:1px solid #e2e8f0}
-.title-new{background:#f1f5f9}
-.title-week{background:#dcfce7;border-color:#bbf7d0}     /* greeny */
-.title-month{background:#e0f2fe;border-color:#bae6fd}    /* bluey */
-.title-2m{background:#fae8ff;border-color:#f5d0fe}       /* purple */
-.title-quarter{background:#fee2e2;border-color:#fecaca}  /* red/pink */
-.title-4m{background:#fef9c3;border-color:#fde68a}       /* yellow */
-.title-5m{background:#ede9fe;border-color:#ddd6fe}       /* indigo */
-.title-half{background:#cffafe;border-color:#a5f3fc}     /* cyan */
-.title-year{background:#fde68a;border-color:#fcd34d}     /* amber */
+.chat-name{color:#1d4ed8;cursor:pointer}
+.title-badge{font-weight:800;padding:2px 6px;border-radius:8px;margin-right:6px}
+.tb-w1{background:#ecfeff;border:1px solid #a5f3fc;color:#155e75}
+.tb-m1{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+.tb-m2{background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95}
+.tb-qtr{background:#fef3c7;border:1px solid #fde68a;color:#92400e}
+.tb-mom{background:#ecfccb;border:1px solid #d9f99d;color:#3f6212}
+.tb-m5{background:#fae8ff;border:1px solid #f5d0fe;color:#86198f}
+.tb-hy{background:#d1fae5;border:1px solid #bbf7d0;color:#065f46}
+.tb-y1{background:#fee2e2;border:1px solid #fecaca;color:#991b1b}
+.tb-coach{background:#e0f2fe;border:1px solid #bae6fd;color:#0c4a6e}
+.tb-calm{background:#f0fdf4;border:1px solid #dcfce7;color:#166534}
+.tb-peer{background:#f3f4f6;border:1px solid #e5e7eb;color:#374151}
+.tb-default{background:#eef2ff;border:1px solid #e0e7ff;color:#3730a3}
 
 /* Program / materials */
 .program{padding-left:18px;line-height:1.6}
@@ -91,14 +95,6 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .contrib{margin-top:12px}
 .muted{color:#64748b}
 .encouragement{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
-
-/* Pill boxes */
-.pill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.pill{background:#ffffff;border:1px solid #dbe1ff;border-radius:999px;padding:10px 12px;text-align:center;box-shadow:var(--shadow)}
-.note-pill{border-radius:16px} /* notes look like cards instead of long list */
-.note-head{text-align:center;font-weight:800;margin-bottom:4px}
-.note-when{text-align:center;font-size:12px;color:#475569;margin-bottom:6px}
-.note-body{text-align:left}
 
 /* Badges grid */
 .badge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
@@ -134,7 +130,9 @@ textarea{resize:vertical}input[type="range"]{width:100%;accent-color:var(--prima
 .guide-choice{margin-bottom:10px}
 
 /* Settings addictions */
-.settings-addictions{grid-template-columns: repeat(auto-fit,minmax(140px,1fr));}
+.settings-addictions{
+  grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+}
 .sa-item{display:grid;justify-items:center;gap:8px;padding:10px;border:1px dashed #cfe3ff;border-radius:12px;background:#f8fbff}
 .sa-item span{font-weight:700}
 .sa-item input{margin-top:-6px}
