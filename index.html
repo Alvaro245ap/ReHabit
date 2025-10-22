@@ -25,6 +25,8 @@
     .note-pill .meta .kind{font-weight:800}
     .checklist li{display:flex;gap:10px;align-items:flex-start;padding:6px 0}
     .checklist input[type="checkbox"]{margin-top:3px}
+    /* Ensure hidden backdrop never intercepts clicks */
+    .backdrop[hidden]{display:none !important;}
   </style>
 
   <!-- Firebase libs retained (unused offline) -->
@@ -146,7 +148,8 @@
       </div>
 
       <form id="onboardingForm" class="grid" action="javascript:void(0)">
-        <label><span data-i18n="quitDate">Quit/target date</span><input type="date" name="quitDate" required></label>
+        <!-- removed required so button always works -->
+        <label><span data-i18n="quitDate">Quit/target date</span><input type="date" name="quitDate"></label>
         <label><span data-i18n="motivation">Your main motivation (optional)</span><input type="text" name="motivation" maxlength="120" placeholder="e.g., Be healthier for my family" /></label>
         <button class="btn primary" type="submit" data-i18n="start">Start ReHabit</button>
       </form>
@@ -278,7 +281,7 @@
       <div class="actions"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
-    <!-- Guide (10 Steps removed; Tips + Materials combined; pill boxes) -->
+    <!-- Guide -->
     <section id="view-guide" class="card" hidden>
       <div class="page-title"><span class="title-pill" id="guideTitle">Guide</span></div>
       <div id="guideChoiceWrap" class="guide-choice" hidden>
@@ -293,7 +296,6 @@
         <button class="btn tab" data-tab="deep" data-i18n="deep">Deep Guide</button>
       </div>
 
-      <!-- Tips & Materials (combined) -->
       <div id="tab-tips" class="tabpane">
         <h3 class="fancy" style="text-align:center" data-i18n="tips">Tips</h3>
         <div id="tipsPills" class="pill-grid"></div>
@@ -301,7 +303,6 @@
         <div id="materialsPills" class="pill-grid"></div>
       </div>
 
-      <!-- Deep Guide as pill boxes -->
       <div id="tab-deep" class="tabpane" hidden>
         <h3 class="fancy" style="text-align:center" data-i18n="deep">Deep Guide</h3>
         <div id="deepPills" class="pill-grid"></div>
@@ -312,7 +313,7 @@
       </div>
     </section>
 
-    <!-- Materials page unchanged (still available from nav if needed) -->
+    <!-- Materials -->
     <section id="view-program" class="card" hidden>
       <div class="page-title"><span class="title-pill" id="programTitle">Helpful materials</span></div>
       <ul id="materialsList" class="list bullets"></ul>
@@ -441,7 +442,7 @@
       </form>
     </section>
 
-    <!-- Notes (now pill boxes per entry) -->
+    <!-- Notes -->
     <section id="view-notes" class="card" hidden>
       <div class="page-title"><span class="title-pill" data-i18n="notes">Notes</span></div>
       <p class="muted" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
