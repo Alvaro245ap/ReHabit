@@ -700,3 +700,98 @@ function sendFriendRequest(username){
     }
   }catch(e){}
 }
+
+/*** Enrich guide & research with additional steps ***/
+document.addEventListener('DOMContentLoaded', () => {
+  // Guide advice add
+  const guide = document.getElementById('guideAdvice');
+  if(guide && !guide.dataset.more2){
+    guide.dataset.more2 = '1';
+    const ul = document.createElement('ul');
+    ul.innerHTML = `
+      <li>Planifica la hora exacta para tu 10-step (consistencia > intensidad).</li>
+      <li>Usa un "compañero de responsabilidad" y reporta por chat.</li>
+      <li>Prepara el entorno (quita señales de riesgo, deja a mano lo saludable).</li>
+    `;
+    guide.appendChild(ul);
+  }
+  // Deep guide add
+  const deep = document.getElementById('guideDeep');
+  if(deep && !deep.dataset.more2){
+    deep.dataset.more2 = '1';
+    const ol = document.createElement('ol');
+    ol.innerHTML = `
+      <li>Contratos de contingencia: define recompensas pequeñas por cumplir hitos.</li>
+      <li>Entrenamiento de habilidades: respiración 4-7-8 + grounding 5-4-3-2-1.</li>
+      <li>Revisión mensual: identifica patrones en el calendario y ajusta el plan.</li>
+    `;
+    deep.appendChild(ol);
+  }
+  // Research add with "why it works"
+  const research = document.getElementById('researchContent');
+  if(research && !research.dataset.more2){
+    research.dataset.more2 = '1';
+    const steps = [
+      {t:'Exposición graduada', d:'Practica tolerar el impulso en dosis pequeñas y crecientes.', w:'Reduce la respuesta condicionada por habituación y aprendizaje inhibitorio.'},
+      {t:'Intención de implementación', d:'Reglas si–entonces (Si siento X, entonces haré Y).', w:'Vincula estímulos a respuestas automáticas, disminuyendo la fricción conductual.'},
+      {t:'Diseño del entorno', d:'Quita disparadores, añade señales saludables visibles.', w:'Cambia los costos/beneficios inmediatos y reduce decisiones impulsivas.'},
+      {t:'Auto-compasión', d:'Trata los deslices sin autocrítica dura.', w:'Disminuye evitación experiencial y mejora la adherencia a largo plazo.'},
+      {t:'Seguimiento de datos', d:'Registra streak y % de días con éxito.', w:'El feedback frecuente refuerza conductas por refuerzo positivo.'}
+    ];
+    const frag = document.createDocumentFragment();
+    steps.forEach(s=>{
+      const item = document.createElement('div');
+      item.className = 'research-step';
+      item.innerHTML = `<h4>${s.t}</h4><p>${s.d}</p><p><em>¿Por qué funciona?</em> ${s.w}</p>`;
+      frag.appendChild(item);
+    });
+    research.appendChild(frag);
+  }
+});
+
+/*** Friends basic wiring ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const sendBtn = document.getElementById('sendFriendBtn');
+  const userInput = document.getElementById('friendUsername');
+  if(sendBtn && userInput){
+    sendBtn.addEventListener('click', () => {
+      const u = (userInput.value||'').trim();
+      if(!u) return;
+      if(typeof sendFriendRequest === 'function'){ sendFriendRequest(u); }
+      renderFriendPanels && renderFriendPanels();
+    });
+  }
+  // Render panels
+  window.renderFriendPanels = function(){
+    const incomingEl = document.getElementById('incomingList');
+    const friendsEl = document.getElementById('friendsList');
+    const incoming = JSON.parse(localStorage.getItem('incomingFriendRequests')||'[]');
+    const friends = JSON.parse(localStorage.getItem('friends')||'[]');
+    if(incomingEl){
+      incomingEl.innerHTML = '';
+      incoming.forEach(u=>{
+        const li = document.createElement('div');
+        li.className='friend-row';
+        li.innerHTML = `${u} <button class="acceptBtn">Accept</button>`;
+        li.querySelector('.acceptBtn').addEventListener('click', ()=>{
+          // accept: move to friends
+          const idx = incoming.indexOf(u);
+          if(idx>-1){ incoming.splice(idx,1); localStorage.setItem('incomingFriendRequests', JSON.stringify(incoming)); }
+          if(!friends.includes(u)){ friends.push(u); localStorage.setItem('friends', JSON.stringify(friends)); }
+          renderFriendPanels();
+        });
+        incomingEl.appendChild(li);
+      });
+    }
+    if(friendsEl){
+      friendsEl.innerHTML = '';
+      friends.forEach(u=>{
+        const div = document.createElement('div');
+        div.className='friend-row';
+        div.textContent = u;
+        friendsEl.appendChild(div);
+      });
+    }
+  };
+  renderFriendPanels();
+});
