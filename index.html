@@ -12,6 +12,16 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
+    <!-- Top-right gear menu for Settings -->
+    <div id="topRightMenu" class="top-right-menu">
+        <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn">
+            <span class="gear-icon">⚙️</span>
+        </button>
+        <div id="gearPanel" class="gear-panel" hidden>
+            
+        </div>
+    </div>
+    
   <header class="app-header">
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
@@ -120,10 +130,12 @@
         <div class="pill-card">
           <div class="pill-title center" data-i18n="monthCard">Calendar (this month)</div>
           <div class="calendar-head">
-            <div id="streakWrap" class="streak center"></div>
             <div id="monthLabel"></div>
+<div id="streakWrap" class="streak center"></div>
+
           </div>
           <div id="calendarGrid" class="calendar"></div>
+          
         </div>
 
         <div class="pill-card">
@@ -142,10 +154,10 @@
     <section id="view-calendar" class="card" hidden>
       <div class="pill-title center" data-i18n="calendar">Calendar</div>
       <div class="calendar-head up">
-        <div id="streakWrap2" class="streak center"></div>
         <div id="monthLabel2"></div>
       </div>
       <div id="calendarGrid2" class="calendar"></div>
+      <div id="streakWrap2" class="streak center"></div>
       <div class="actions push-down"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
@@ -155,7 +167,7 @@
       <div class="grid-2">
         <div class="card soft">
           <p id="encouragement" class="encouragement big"></p>
-          <form id="checkinForm" class="grid pro-form organized" action="javascript:void(0)">
+          <form id="checkinForm" class="grid pro-form" action="javascript:void(0)">
             <div class="grid-2">
               <label><span data-i18n="mood">Mood (0–10)</span>
                 <input type="range" name="mood" min="0" max="10" value="5" oninput="moodVal.textContent=this.value">
@@ -315,7 +327,7 @@
     <section id="view-settings" class="card" hidden>
       <div class="pill-title center" data-i18n="settings">Settings</div>
       <form id="settingsForm" class="grid" action="javascript:void(0)">
-        <label class="center"><span data-i18n="displayName">Display Name</span>
+        <label><span data-i18n="displayName">Display name</span>
           <input type="text" name="displayName" maxlength="40" placeholder="Your name">
         </label>
         <fieldset class="grid settings-addictions">
