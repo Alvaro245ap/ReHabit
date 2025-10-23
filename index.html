@@ -12,10 +12,6 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-        <div id="topRightMenu" class="top-right-menu">
-            <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn"><span class="gear-icon">⚙️</span></button>
-        </div>
-        
   <header class="app-header">
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
@@ -29,6 +25,7 @@
         <option value="en">English</option>
         <option value="es">Español</option>
       </select>
+      <button id="gearBtnTop" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
       <button id="installBtn" class="btn subtle" hidden data-i18n="install">Install</button>
     </div>
   </header>
@@ -66,9 +63,6 @@
       </button>
       <button class="drawer-link" data-nav="community">
         <span>💬</span><span data-i18n="chat">Community</span>
-      </button>
-      <button class="drawer-link" data-nav="settings">
-        <span>⚙️</span><span data-i18n="settings">Settings</span>
       </button>
       <button class="drawer-link danger" data-nav="sos">
         <span>🚨</span><span data-i18n="emergency">Emergency</span>
@@ -123,19 +117,20 @@
       <div class="grid-2 home-pills">
         <div class="pill-card">
           <div class="pill-title center" data-i18n="monthCard">Calendar (this month)</div>
-<div id="streakWrap" class="streak-wrap"></div>
+      <div id="streakWrap" class="streak center"></div>
 
           <div class="calendar-head">
             <div id="monthLabel"></div>
           </div>
           <div id="calendarGrid" class="calendar"></div>
-          </div>
+        </div>
 
         <div class="pill-card">
           <div class="pill-title center" data-i18n="steps">10 Steps</div>
           <div id="homeStepsChoice" class="guide-choice center" hidden>
             <label><span data-i18n="chooseAddiction">Choose addiction</span>
               <select id="homeStepsSelect"></select>
+      <button id="gearBtnTop" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
             </label>
           </div>
           <ol id="homeStepsList" class="pill-list ordered"></ol>
@@ -146,11 +141,12 @@
     <!-- Calendar Full -->
     <section id="view-calendar" class="card" hidden>
       <div class="pill-title center" data-i18n="calendar">Calendar</div>
+      <div id="streakWrap2" class="streak center"></div>
+
       <div class="calendar-head up">
         <div id="monthLabel2"></div>
       </div>
       <div id="calendarGrid2" class="calendar"></div>
-      <div id="streakWrap2" class="streak center"></div>
       <div class="actions push-down"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
 
@@ -180,6 +176,7 @@
                   <option value="evening" data-i18n="evening">Evening</option>
                   <option value="night" data-i18n="night">Night</option>
                 </select>
+      <button id="gearBtnTop" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
               </label>
             </div>
             <label><span data-i18n="actionTook">Helpful action you took</span><input type="text" name="action" maxlength="120"></label>
@@ -238,6 +235,7 @@
       <div id="guideChoiceWrap" class="guide-choice center" hidden>
         <label><span data-i18n="chooseAddiction">Choose addiction</span>
           <select id="guideChoice"></select>
+      <button id="gearBtnTop" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
         </label>
       </div>
 
@@ -276,6 +274,7 @@
       <div id="researchChoiceWrap" class="guide-choice center" hidden>
         <label><span data-i18n="chooseAddiction">Choose addiction</span>
           <select id="researchChoice"></select>
+      <button id="gearBtnTop" class="icon-btn" aria-label="Settings" title="Settings">⚙️</button>
         </label>
       </div>
       <ol id="researchBody" class="pill-list ordered"></ol>
@@ -341,7 +340,7 @@
     <!-- Notes -->
     <section id="view-notes" class="card" hidden>
       <div class="pill-title center" data-i18n="notes">Notes</div>
-      <p class="muted center" data-i18n="notesInfo">Your Daily and SOS notes appear here (newest first).</p>
+      <p class="muted center">Notes Info</p>
       <ul id="notesList" class="pill-list notes-list"></ul>
       <div class="actions push-down"><button class="btn subtle" data-nav="home" data-i18n="back">Back</button></div>
     </section>
