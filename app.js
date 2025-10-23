@@ -440,7 +440,17 @@ function renderHomeSteps(){
     sel.onchange = ()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
   }
   const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  list.innerHTML = steps.map(s=>`<li class="pill-item">${escapeHTML(s)}</li>`).join("");
+  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i+1}"> ${escapeHTML(s)}</label></li>`).join("");
+  // restore today's checklist
+  const key='rehabit_steps_'+todayISO();
+  const done=JSON.parse(localStorage.getItem(key)||'[]');
+  done.forEach(n=>{ const cb=list.querySelector(`input[data-step="${n}"]`); if(cb) cb.checked=true; });
+  list.onchange=(e)=>{
+    if(e.target && e.target.matches('input[type="checkbox"][data-step]')){
+      const set=[...list.querySelectorAll('input[data-step]:checked')].map(x=>parseInt(x.getAttribute('data-step')));
+      localStorage.setItem(key, JSON.stringify(set));
+    }
+  };
 }
 
 /* Navigation */
@@ -589,98 +599,42 @@ window.addEventListener("DOMContentLoaded", ()=>{
 });
 
 
-/*** Gear button navigates directly to Settings ***/
-document.addEventListener('DOMContentLoaded', () => {
-  const gearBtn = document.getElementById('gearBtn');
-  if(gearBtn){
-    gearBtn.addEventListener('click', (e)=>{
-      e.preventDefault();
-      if(typeof navigate === 'function'){ navigate('settings'); }
-    });
-  }
-});
-
-/*** Add more steps (content only) to Guide (>=20) ***/
+/* Top-right gear opens Settings */
 document.addEventListener('DOMContentLoaded', ()=>{
-  const ul = document.getElementById('guideSteps');
-  if(ul && !ul.dataset.extra20){
-    ul.dataset.extra20 = '1';
-    const items = [
-      'Set a 2-minute starter task.',
-      'Prepare your environment the night before.',
-      'Identify your #1 trigger and plan a response.',
-      'Use a temptation bundling pair (habit + reward).',
-      'Schedule a fixed time window for the hardest task.',
-      'Write a one-line slip lesson if you lapse.',
-      'Share your goal with one accountability buddy.',
-      'Use visual cues in the places you need them.',
-      'Rate your craving 0–10 and watch it change.',
-      'Practice one minute of paced breathing during urges.',
-      'Do urge surfing for 90 seconds.',
-      'Move your body for 60 seconds to reset state.',
-      'Track your streak and % days done weekly.',
-      'Make check-ins take < 2 minutes.',
-      'Keep all tools in one “recovery kit” bag.',
-      'Create “if-then” scripts for 3 risky contexts.',
-      'Anchor new habits to an existing routine.',
-      'Review your values in one sentence daily.',
-      'Celebrate tiny wins immediately.',
-      'Use a phone downtime mode in risk hours.',
-      'Do a weekly reflection: keep / tweak / drop.'
-    ];
-    items.forEach(txt=>{
-      const li = document.createElement('li');
-      li.textContent = txt;
-      ul.appendChild(li);
-    });
-  }
+  const g=$('#gearBtnTop'); if(g){ g.addEventListener('click', (e)=>{ e.preventDefault(); navigate('settings'); }); }
 });
 
-/*** Enrich Research entries with 'why it works' notes ***/
+/* Ensure 20+ extra steps appended in Guide (content only) */
 document.addEventListener('DOMContentLoaded', ()=>{
-  const list = document.querySelectorAll('#researchContent .research-item');
-  if(list && !document.body.dataset.researchWhy){
-    document.body.dataset.researchWhy = '1';
-    list.forEach((el)=>{
-      if(el.querySelector('.why')) return;
-      const why = document.createElement('div');
-      why.className = 'why';
-      // Pick some generic mechanism-based rationale
-      why.innerHTML = '<strong>Why it works:</strong> It targets a specific mechanism (cue control, reinforcement, or exposure). Repetition under safe conditions reduces reactivity and builds automaticity.';
-      el.appendChild(why);
-    });
-  }
+  const EXTRA = [
+    "2‑minute starter","Night-before prep","Identify top trigger",
+    "Temptation bundling","Hard task timebox","One-line slip lesson",
+    "Accountability ping","Visible cues","Craving rating 0–10",
+    "Paced breathing 1 min","Urge surfing 90s","Quick movement reset",
+    "Track streak & %","Check-ins <2 min","Recovery kit bag",
+    "If–then scripts","Anchor to routine","Daily values sentence",
+    "Celebrate tiny wins","Downtime in risk hours"
+  ];
+  const a = currentGuideAddiction();
+  const L=document.documentElement.getAttribute('data-lang')||'en';
+  if(Array.isArray(TIPS[a][L])){ TIPS[a][L] = TIPS[a][L].concat(EXTRA); }
+  if(Array.isArray(DEEP[a][L])){ DEEP[a][L] = DEEP[a][L].concat(EXTRA); }
 });
 
-function sendFriendRequest(username){
-  const key='sentFriendRequests';
-  const list=JSON.parse(localStorage.getItem(key)||'[]');
-  if(!list.includes(username)) list.push(username);
-  localStorage.setItem(key, JSON.stringify(list));
-  // Mirror incoming
-  const incomingKey='incomingFriendRequests';
-  const inc=JSON.parse(localStorage.getItem(incomingKey)||'[]');
-  if(!inc.includes(username.toLowerCase())) inc.push(username.toLowerCase());
-  localStorage.setItem(incomingKey, JSON.stringify(inc));
+/* Research: add 'why it works' to each item */
+function addWhyToResearch(){
+  const L=document.documentElement.getAttribute('data-lang')||'en';
+  const body = $("#researchBody"); if(!body) return;
+  body.querySelectorAll('li.pill-item').forEach(li=>{
+    if(li.querySelector('.why')) return;
+    const why=document.createElement('div'); why.className='why muted';
+    why.innerHTML = (L==='es')
+      ? '<strong>Por qué funciona:</strong> reduce la exposición a señales, aumenta refuerzo inmediato positivo o entrena tolerancia al malestar (exposición).'
+      : '<strong>Why it works:</strong> it reduces cue exposure, increases immediate positive reinforcement, or trains distress tolerance (exposure).';
+    li.appendChild(why);
+  });
 }
-
-function acceptFriendRequest(user){
-  const incomingKey='incomingFriendRequests';
-  let inc=JSON.parse(localStorage.getItem(incomingKey)||'[]').filter(x=>x!==user.toLowerCase());
-  localStorage.setItem(incomingKey, JSON.stringify(inc));
-  const friendsKey='friends';
-  const friends=JSON.parse(localStorage.getItem(friendsKey)||'[]');
-  if(!friends.includes(user)) friends.push(user);
-  localStorage.setItem(friendsKey, JSON.stringify(friends));
-}
-
-function checklistCompleteToday(){
-  try{
-    const today = new Date().toISOString().slice(0,10);
-    const checks = JSON.parse(localStorage.getItem('todayChecklist')||'{}');
-    let count=0;
-    for(let i=1;i<=10;i++){ if(checks['step'+i]) count++; }
-    return count>=10;
-  }catch(e){ return false; }
-}
-function canMarkSuccessToday(){ return checklistCompleteToday(); }
+const ro = new MutationObserver(addWhyToResearch);
+document.addEventListener('DOMContentLoaded', ()=>{
+  const body=$("#researchBody"); if(body){ ro.observe(body,{childList:true}); addWhyToResearch(); }
+});
