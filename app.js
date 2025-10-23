@@ -555,7 +555,7 @@ function wire(){
     document.documentElement.setAttribute("data-lang", lang);
     state.profile = {...(state.profile||{}), lang};
     save(); applyI18N();
-    renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
+    renderCalendar(); renderStreak(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
   };
 
   // check-in form
@@ -588,77 +588,115 @@ window.addEventListener("DOMContentLoaded", ()=>{
   applyI18N();
 });
 
-document.addEventListener('DOMContentLoaded',()=>{const g=document.getElementById('gearBtn');if(g){g.addEventListener('click',()=>{if(typeof navigate==='function'){navigate('settings');}})}});
 
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  const advice = document.getElementById('guideAdvice');
-  if(advice && !advice.dataset.more20){
-    advice.dataset.more20='1';
-    const ul=document.createElement('ol'); ul.className='guide-steps-extended';
-    const steps=[
-      'Define a compelling “why”.','Pick one keystone habit.','Start ≤2 minutes.','Anchor to existing routine.',
-      'Prepare the night before.','Use a visible cue.','Schedule time & place.','Track daily checks.',
-      'Plan an if–then for #1 trigger.','Make the first step ultra-easy.','Immediate tiny reward.','Accountability buddy.',
-      'Name biggest obstacle & workaround.','Batch hard tasks when energy is high.','Weekly review & adjust.','Celebrate progress.',
-      'Add friction to unwanted habits.','Environment design to support habit.','One-line learning after slips.','Never miss twice.',
-      'Scale after 7 consecutive days.','Revisit values/why monthly.'
-    ];
-    steps.forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li);});
-    advice.appendChild(ul);
-  }
-  const research=document.getElementById('researchContent');
-  if(research && !research.dataset.explain20){
-    research.dataset.explain20='1';
-    const sec=document.createElement('section'); sec.innerHTML='<h4>Why these steps work</h4>';
-    const ol=document.createElement('ol');
-    const whys=[
-      'Clarifies intrinsic motivation and boosts persistence.',
-      'Reduces cognitive load and increases focus.',
-      'Lowers activation energy; repetition builds automaticity.',
-      'Leverages context-dependent cues for recall.',
-      'Reduces friction so starting is easier.',
-      'Cues capture attention and trigger behavior.',
-      'Implementation intentions increase execution rates.',
-      'Feedback loops reinforce identity and consistency.',
-      'Automates responses, reducing willpower demands.',
-      'Minimizes resistance at the initiation phase.',
-      'Immediate reinforcement strengthens the habit loop.',
-      'Social accountability improves follow-through.',
-      'Pre-commitment mitigates predictable derailers.',
-      'Energy matching raises success probability.',
-      'Reflection turns experience into learning.',
-      'Positive emotion reinforces continuation.',
-      'Friction weakens unwanted cue–behavior links.',
-      'Environment beats willpower over time.',
-      'Self-compassion prevents all-or-nothing relapse.',
-      'Rapid reset preserves momentum and streaks.',
-      'Gradual scaling sustains consistency.',
-      'Values refresh prevents drift and attrition.'
-    ];
-    whys.forEach(w=>{const li=document.createElement('li');li.textContent=w;ol.appendChild(li);});
-    sec.appendChild(ol); research.appendChild(sec);
+/*** Top-right gear menu behavior ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const gearBtn = document.getElementById('gearBtn');
+  const gearPanel = document.getElementById('gearPanel');
+  if(gearBtn && gearPanel){
+    const toggle = () => { gearPanel.hidden = !gearPanel.hidden; };
+    gearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', ()=>{ if(!gearPanel.hidden) gearPanel.hidden = true; });
+    const settingsBtn = gearPanel.querySelector('[data-route="settings"]');
+    if(settingsBtn){
+      settingsBtn.addEventListener('click', ()=>{
+        gearPanel.hidden = true;
+        if(typeof navigate === 'function'){ navigate('settings'); }
+      });
+    }
   }
 });
 
 
+/*** Streak computation & rendering ***/
+function computeStreak(){
+  try{
+    const map = JSON.parse(localStorage.getItem('calendarStatus')||"{}");
+    const today = new Date();
+    let s = 0;
+    for(let d=new Date(today); ; d.setDate(d.getDate()-1)){
+      const iso = d.toISOString().slice(0,10);
+      if(map[iso]==='success'){ s++; } else { break; }
+    }
+    return s;
+  }catch(e){ return 0; }
+}
+function renderStreak(){
+  const el = document.getElementById('streakWrap');
+  if(!el) return;
+  const s = computeStreak();
+  el.textContent = s ? `Streak: ${s} ${s===1?'day':'days'}` : 'Streak: 0 days';
+}
+try{ renderStreak(); }catch(e){}
+
+/*** Daily check-in layout enhancer ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const left = document.getElementById('dailyLeft');
+  if(left && !left.classList.contains('daily-grid')){
+    left.classList.add('daily-grid');
+    Array.from(left.children).forEach(el=>{
+      if(!el.classList.contains('actions')) el.classList.add('daily-field');
+    });
+    const note = left.querySelector('textarea');
+    if(note) (note.closest('.daily-field')||note.parentElement).classList.add('full');
+    const actions = left.querySelector('.actions, .buttons');
+    if(actions) actions.classList.add('daily-actions','full');
+  }
+});
+
+/*** Append more info for Guide (advice & deep) and Research ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const guide = document.getElementById('guideAdvice');
+  if(guide && !guide.dataset.enriched){
+    guide.dataset.enriched = '1';
+    const extra = document.createElement('section');
+    extra.innerHTML = `<h4>Consejos prácticos</h4>
+      <ul>
+        <li>Define una acción siguiente de menos de 2 minutos.</li>
+        <li>Usa recordatorios situacionales (señales) para anclar el hábito.</li>
+        <li>Tras un desliz, anota un aprendizaje de una línea.</li>
+      </ul>`;
+    guide.appendChild(extra);
+  }
+  const deep = document.getElementById('guideDeep');
+  if(deep && !deep.dataset.enriched){
+    deep.dataset.enriched = '1';
+    const extra2 = document.createElement('section');
+    extra2.innerHTML = `<h4>Guía profunda – añadidos</h4>
+      <ol>
+        <li>Valores y propósito: por qué este cambio importa ahora.</li>
+        <li>Top 3 contextos de riesgo y plan si‑entonces.</li>
+        <li>Revisión semanal con métricas simples (streak, % de cumplimiento).</li>
+      </ol>`;
+    deep.appendChild(extra2);
+  }
+  const research = document.getElementById('researchContent');
+  if(research && !research.dataset.enriched){
+    research.dataset.enriched = '1';
+    const ex = document.createElement('section');
+    ex.innerHTML = `<h4>Research highlights</h4>
+      <ul>
+        <li>La exposición graduada reduce la reactividad con práctica repetida.</li>
+        <li>Los hábitos se refuerzan con señales y recompensas inmediatas.</li>
+        <li>La autocompasión mejora la adherencia tras deslices.</li>
+      </ul>`;
+    research.appendChild(ex);
+  }
+});
+
 function sendFriendRequest(username){
   const key='sentFriendRequests';
   const list=JSON.parse(localStorage.getItem(key)||'[]');
-  if(username && !list.includes(username)) list.push(username);
+  if(!list.includes(username)) list.push(username);
   localStorage.setItem(key, JSON.stringify(list));
-  const incomingKey='incomingFriendRequests';
-  const arr=JSON.parse(localStorage.getItem(incomingKey)||'[]');
-  if(username && !arr.includes(username)) arr.push(username);
-  localStorage.setItem(incomingKey, JSON.stringify(arr));
-}
-
-function acceptFriend(username){
-  const incomingKey='incomingFriendRequests';
-  let inc=JSON.parse(localStorage.getItem(incomingKey)||'[]').filter(u=>u!==username);
-  localStorage.setItem(incomingKey, JSON.stringify(inc));
-  const friendsKey='friendsList';
-  const fr=JSON.parse(localStorage.getItem(friendsKey)||'[]');
-  if(username && !fr.includes(username)) fr.push(username);
-  localStorage.setItem(friendsKey, JSON.stringify(fr));
+  // reciprocal for bots
+  try{
+    const to = (username||'').toLowerCase();
+    if(/(bot|helper|coach|rehabitbot)/i.test(to)){
+      const incomingKey='incomingFriendRequests';
+      const arr=JSON.parse(localStorage.getItem(incomingKey)||'[]');
+      if(!arr.includes(to)) arr.push(to);
+      localStorage.setItem(incomingKey, JSON.stringify(arr));
+    }
+  }catch(e){}
 }
