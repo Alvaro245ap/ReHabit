@@ -124,18 +124,9 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubu
 .notes-list .meta{font-size:12px;color:#475569}
 
 
-/* Centered streak below the month */
-.streak-wrap{ text-align:center; margin: 6px 0 10px; font-weight:600; }
+/* Shift language slightly left to make room for gear */
+#languageSelect, .language-select, #langSelect { margin-right: 44px; }
 
-/* Top-right gear menu */
-.top-right-menu{ position:fixed; top:8px; right:10px; z-index:1000; }
-.icon-btn{ background:transparent; border:none; font-size:22px; cursor:pointer; }
-.gear-panel{ position:absolute; right:0; margin-top:8px; background:var(--card-bg, #fff); border:1px solid rgba(0,0,0,.1); border-radius:10px; padding:8px; box-shadow:0 6px 18px rgba(0,0,0,.15); }
-.gear-link{ display:block; width:160px; padding:8px 10px; border:none; background:none; text-align:left; cursor:pointer; }
-.gear-link:hover{ background:rgba(0,0,0,.05); }
 
-/* Daily Check-in organized layout */
-.daily-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px 18px; align-items:start; }
-.daily-grid .full{ grid-column:1 / -1; }
-.daily-field{ display:flex; flex-direction:column; gap:4px; }
-.daily-actions{ display:flex; gap:10px; }
+/* Make daily check-in Notes box small (same height as input) */
+#dailyLeft textarea{ height: 36px; min-height: 36px; resize: vertical; }
