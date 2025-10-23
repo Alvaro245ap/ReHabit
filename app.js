@@ -13,15 +13,13 @@ const STORAGE = {
 };
 const state = {
   profile:null, cal:{}, journal:[], social:{chatted:false,friended:false}, i18n:"en",
-  researchChoice:null, guideChoice:null,
-  check:{} // per-day 10-steps checklist, keyed by ISO date
+  researchChoice:null, guideChoice:null
 };
 
 function load(){
   state.profile = JSON.parse(localStorage.getItem(STORAGE.PROFILE)||"null");
   state.cal     = JSON.parse(localStorage.getItem(STORAGE.CAL)||"{}");
   state.journal = JSON.parse(localStorage.getItem(STORAGE.JOURNAL)||"[]");
-  state.check   = JSON.parse(localStorage.getItem("rehabit_check")||"{}");
   state.social  = JSON.parse(localStorage.getItem(STORAGE.SOCIAL)||'{"chatted":false,"friended":false}');
   state.i18n    = state.profile?.lang || "en";
   document.documentElement.setAttribute("data-lang", state.i18n);
@@ -31,7 +29,6 @@ function save(){
   localStorage.setItem(STORAGE.CAL, JSON.stringify(state.cal));
   localStorage.setItem(STORAGE.JOURNAL, JSON.stringify(state.journal));
   localStorage.setItem(STORAGE.SOCIAL, JSON.stringify(state.social));
-  localStorage.setItem("rehabit_check", JSON.stringify(state.check));
 }
 
 /* i18n */
@@ -146,23 +143,6 @@ let cursor = new Date();
 function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function firstDay(y,m){ return new Date(y,m,1).getDay(); }
 
-
-/* Checklist helpers */
-function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function getChecklist(iso=todayISO()){
-  if(!state.check[iso]) state.check[iso]=Array(10).fill(false);
-  return state.check[iso];
-}
-function setChecklistAt(idx, val, iso=todayISO()){
-  const arr=getChecklist(iso);
-  arr[idx]=!!val;
-  state.check[iso]=arr; save();
-}
-function checklistComplete(iso=todayISO()){
-  const arr=getChecklist(iso);
-  return arr.every(Boolean);
-}
-
 function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="streakWrap"){
   const grid = document.getElementById(gridId), label = document.getElementById(labelId);
   const y=cursor.getFullYear(), m=cursor.getMonth();
@@ -182,11 +162,7 @@ function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="s
     if(isToday){
       cell.addEventListener("click",()=>{
         const cur=state.cal[iso]||"";
-        let next = cur===""?"ok":(cur==="ok"?"slip":"");
-        if(next==="ok" && !checklistComplete(iso)){
-          alert((state.i18n==="es")?"Marca todas las casillas de los 10 Pasos antes de completar el día.":"Complete all 10 Steps checkboxes before marking success.");
-          return;
-        }
+        const next= cur===""?"ok":(cur==="ok"?"slip":"");
         state.cal[iso]=next; save(); renderCalendar(gridId,labelId,streakId); updateSobrietyBadges();
       });
     }
@@ -213,19 +189,6 @@ function renderStreak(id){
   const s = currentStreak();
   el.innerHTML = s ? `🔥 <strong>${s}</strong> day${s>1?"s":""} streak` : "—";
 }
-
-
-/* Extra content to enrich Guide & Research */
-const EXTRA_GUIDE_LINES = {
-  en:[
-    "Set a tiny daily promise and keep it.",
-    "Write one sentence about why you chose this goal."
-  ],
-  es:[
-    "Haz una promesa diaria pequeña y cúmplela.",
-    "Escribe una frase sobre por qué elegiste este objetivo."
-  ]
-};
 
 /* Guide helpers */
 function translateAddiction(a){
@@ -289,12 +252,11 @@ function renderResearch(){
   const a = researchCurrentAddiction();
   const L = document.documentElement.getAttribute("data-lang") || "en";
   const lines = (STEPS[a] && STEPS[a][L]) ? STEPS[a][L] : STEPS.Technology.en;
-  const add = (state.i18n==="es")?EXTRA_GUIDE_LINES.es:EXTRA_GUIDE_LINES.en; renderPillList($("#researchBody"), lines.concat(add));
+  renderPillList($("#researchBody"), lines);
 }
 
 /* Notes */
 function renderNotes(){
-  const L=document.documentElement.getAttribute("data-lang")||"en";
   const ul=$("#notesList"); ul.innerHTML="";
   const rec=[...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).sort((a,b)=>b.ts-a.ts);
   if(!rec.length){ ul.innerHTML=`<li class="pill-item center">—</li>`; return; }
@@ -478,15 +440,7 @@ function renderHomeSteps(){
     sel.onchange = ()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
   }
   const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  const iso=todayISO(); const arr=getChecklist(iso);
-  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
-  list.querySelectorAll("input[type=\"checkbox\"]").forEach(cb=>{
-    cb.addEventListener("change", (e)=>{
-      const i=Number(e.target.getAttribute("data-step"));
-      setChecklistAt(i, e.target.checked, iso);
-      renderStreak("streakWrap"); // refresh badges if needed
-    });
-  });
+  list.innerHTML = steps.map(s=>`<li class="pill-item">${escapeHTML(s)}</li>`).join("");
 }
 
 /* Navigation */
@@ -601,7 +555,7 @@ function wire(){
     document.documentElement.setAttribute("data-lang", lang);
     state.profile = {...(state.profile||{}), lang};
     save(); applyI18N();
-    renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
+    renderCalendar(); renderStreak(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
   };
 
   // check-in form
@@ -635,34 +589,114 @@ window.addEventListener("DOMContentLoaded", ()=>{
 });
 
 
-/* Override: Home 10 Steps with checkboxes & completion gating */
-function renderHomeSteps(){
-  const adds = state.profile?.addictions || [];
-  const L=document.documentElement.getAttribute("data-lang")||"en";
-  const choiceWrap = document.getElementById("homeStepsChoice");
-  const sel = document.getElementById("homeStepsSelect");
-  const list = document.getElementById("homeStepsList");
-  if(!list) return;
-  const cur = adds.length? (state.guideChoice || adds[0]) : (state.profile?.primary || "Technology");
-  if(adds.length<=1){ choiceWrap && (choiceWrap.hidden=true); }
-  else {
-    choiceWrap && (choiceWrap.hidden=false);
-    sel.innerHTML="";
-    adds.forEach(a=>{
-      const o=document.createElement("option");
-      o.value=a; o.textContent=translateAddiction(a);
-      if(a===cur) o.selected=true;
-      sel.appendChild(o);
-    });
-    sel.onchange=()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
+/*** Top-right gear menu behavior ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const gearBtn = document.getElementById('gearBtn');
+  const gearPanel = document.getElementById('gearPanel');
+  if(gearBtn && gearPanel){
+    const toggle = () => { gearPanel.hidden = !gearPanel.hidden; };
+    gearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', ()=>{ if(!gearPanel.hidden) gearPanel.hidden = true; });
+    const settingsBtn = gearPanel.querySelector('[data-route="settings"]');
+    if(settingsBtn){
+      settingsBtn.addEventListener('click', ()=>{
+        gearPanel.hidden = true;
+        if(typeof navigate === 'function'){ navigate('settings'); }
+      });
+    }
   }
-  const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  const iso=todayISO(); const arr=getChecklist(iso);
-  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
-  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
-    cb.addEventListener("change",(e)=>{
-      const i=Number(e.target.getAttribute("data-step"));
-      setChecklistAt(i, e.target.checked, iso);
+});
+
+
+/*** Streak computation & rendering ***/
+function computeStreak(){
+  try{
+    const map = JSON.parse(localStorage.getItem('calendarStatus')||"{}");
+    const today = new Date();
+    let s = 0;
+    for(let d=new Date(today); ; d.setDate(d.getDate()-1)){
+      const iso = d.toISOString().slice(0,10);
+      if(map[iso]==='success'){ s++; } else { break; }
+    }
+    return s;
+  }catch(e){ return 0; }
+}
+function renderStreak(){
+  const el = document.getElementById('streakWrap');
+  if(!el) return;
+  const s = computeStreak();
+  el.textContent = s ? `Streak: ${s} ${s===1?'day':'days'}` : 'Streak: 0 days';
+}
+try{ renderStreak(); }catch(e){}
+
+/*** Daily check-in layout enhancer ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const left = document.getElementById('dailyLeft');
+  if(left && !left.classList.contains('daily-grid')){
+    left.classList.add('daily-grid');
+    Array.from(left.children).forEach(el=>{
+      if(!el.classList.contains('actions')) el.classList.add('daily-field');
     });
-  });
+    const note = left.querySelector('textarea');
+    if(note) (note.closest('.daily-field')||note.parentElement).classList.add('full');
+    const actions = left.querySelector('.actions, .buttons');
+    if(actions) actions.classList.add('daily-actions','full');
+  }
+});
+
+/*** Append more info for Guide (advice & deep) and Research ***/
+document.addEventListener('DOMContentLoaded', () => {
+  const guide = document.getElementById('guideAdvice');
+  if(guide && !guide.dataset.enriched){
+    guide.dataset.enriched = '1';
+    const extra = document.createElement('section');
+    extra.innerHTML = `<h4>Consejos prácticos</h4>
+      <ul>
+        <li>Define una acción siguiente de menos de 2 minutos.</li>
+        <li>Usa recordatorios situacionales (señales) para anclar el hábito.</li>
+        <li>Tras un desliz, anota un aprendizaje de una línea.</li>
+      </ul>`;
+    guide.appendChild(extra);
+  }
+  const deep = document.getElementById('guideDeep');
+  if(deep && !deep.dataset.enriched){
+    deep.dataset.enriched = '1';
+    const extra2 = document.createElement('section');
+    extra2.innerHTML = `<h4>Guía profunda – añadidos</h4>
+      <ol>
+        <li>Valores y propósito: por qué este cambio importa ahora.</li>
+        <li>Top 3 contextos de riesgo y plan si‑entonces.</li>
+        <li>Revisión semanal con métricas simples (streak, % de cumplimiento).</li>
+      </ol>`;
+    deep.appendChild(extra2);
+  }
+  const research = document.getElementById('researchContent');
+  if(research && !research.dataset.enriched){
+    research.dataset.enriched = '1';
+    const ex = document.createElement('section');
+    ex.innerHTML = `<h4>Research highlights</h4>
+      <ul>
+        <li>La exposición graduada reduce la reactividad con práctica repetida.</li>
+        <li>Los hábitos se refuerzan con señales y recompensas inmediatas.</li>
+        <li>La autocompasión mejora la adherencia tras deslices.</li>
+      </ul>`;
+    research.appendChild(ex);
+  }
+});
+
+function sendFriendRequest(username){
+  const key='sentFriendRequests';
+  const list=JSON.parse(localStorage.getItem(key)||'[]');
+  if(!list.includes(username)) list.push(username);
+  localStorage.setItem(key, JSON.stringify(list));
+  // reciprocal for bots
+  try{
+    const to = (username||'').toLowerCase();
+    if(/(bot|helper|coach|rehabitbot)/i.test(to)){
+      const incomingKey='incomingFriendRequests';
+      const arr=JSON.parse(localStorage.getItem(incomingKey)||'[]');
+      if(!arr.includes(to)) arr.push(to);
+      localStorage.setItem(incomingKey, JSON.stringify(arr));
+    }
+  }catch(e){}
 }
