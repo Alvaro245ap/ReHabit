@@ -1,27 +1,39 @@
-/* ReHabit — app.js (full) */
+/* Requested changes only:
+   - Bottom tabbar highlights active page (like drawer)
+   - Bigger hamburger (handled in inline CSS)
+   - 10 Steps on Home is a checklist; success marking blocked until all checked
+   - Calendar day labels translated (Success/Slip)
+   - Remove 10 Steps tab from Guide; Tips+Materials combined; Tips/Deep as pill boxes
+   - Notes page entries rendered as pill boxes w/ centered kind + date/time
+   - Chat titles colored by title class
+*/
 console.log("app.js loaded");
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
-const pad = n => String(n).padStart(2,"0");
-function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function escapeHTML(s){return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#039;"}[m]));}
 
+/* ---------------- Storage & State ---------------- */
 const STORAGE = {
   PROFILE:"rehabit_profile", CAL:"rehabit_calendar", JOURNAL:"rehabit_journal",
-  SOCIAL:"rehabit_social", BADGES:"rehabit_badges"
+  MATERIALS:"rehabit_materials", BADGES:"rehabit_badges", SOCIAL:"rehabit_social",
+  CHECKLIST:"rehabit_checklist"
 };
 const state = {
-  profile:null, cal:{}, journal:[], social:{chatted:false,friended:false}, i18n:"en",
-  researchChoice:null, guideChoice:null
+  profile:null,
+  cal:{},
+  journal:[],
+  social:{chatted:false,friended:false},
+  i18n:"en",
+  researchChoice:null,
+  checklist:{} // { addiction: [bool,...] }
 };
-
 function load(){
   state.profile = JSON.parse(localStorage.getItem(STORAGE.PROFILE)||"null");
   state.cal     = JSON.parse(localStorage.getItem(STORAGE.CAL)||"{}");
   state.journal = JSON.parse(localStorage.getItem(STORAGE.JOURNAL)||"[]");
   state.social  = JSON.parse(localStorage.getItem(STORAGE.SOCIAL)||'{"chatted":false,"friended":false}');
   state.i18n    = state.profile?.lang || "en";
+  state.checklist = JSON.parse(localStorage.getItem(STORAGE.CHECKLIST)||"{}");
   document.documentElement.setAttribute("data-lang", state.i18n);
 }
 function save(){
@@ -29,100 +41,176 @@ function save(){
   localStorage.setItem(STORAGE.CAL, JSON.stringify(state.cal));
   localStorage.setItem(STORAGE.JOURNAL, JSON.stringify(state.journal));
   localStorage.setItem(STORAGE.SOCIAL, JSON.stringify(state.social));
+  localStorage.setItem(STORAGE.CHECKLIST, JSON.stringify(state.checklist));
 }
 
-/* i18n */
+/* ---------------- i18n ---------------- */
 const D = {
-  en:{ install:"Install", home:"Home", welcome:"Welcome 👋", selectFocus:"Select your focus and a target date to start tracking progress.",
-      quitDate:"Quit/target date", motivation:"Your main motivation (optional)", start:"Start ReHabit",
-      danger:"If in danger, get help", homeTitle:"Welcome to ReHabit", homeLead:"Your private companion to build healthier habits—one day at a time.",
-      monthCard:"Calendar (this month)", recent:"Recent notes", checkin:"Daily Check-in", calendar:"Calendar", guide:"Guide",
-      badges:"Badges", research:"Research", chat:"Community", friends:"Friends", settings:"Settings", notes:"Notes",
-      back:"Back", value:"Value:", mood:"Mood (0–10)", urge:"Urge (0–10)", sleep:"Hours of sleep", cravingWindow:"Craving window",
-      morning:"Morning", afternoon:"Afternoon", evening:"Evening", night:"Night", actionTook:"Helpful action you took",
-      note:"Note (optional)", exposure:"Exposure level today", low:"Low", medium:"Medium", high:"High",
-      sos:"Craving SOS", s1:"Delay 5 minutes. Start timer and breathe slowly.", s2:"Urge surfing. Notice the urge rising and falling.",
-      s3:"Do one alternative action. Walk, shower, text a friend, drink water.", timer:"Breathing Timer (1:00)", startBtn:"Start",
-      reset:"Reset", quickNotes:"Quick Notes", helpful:"Helpful actions", chooseAddictions:"Choose addictions",
-      chooseAddiction:"Choose addiction", emergency:"Emergency", yourCode:"Your code:", requests:"Requests", friendsList:"Friends",
-      currentTitle:"Your current chat title", footer:"For support only—does not replace professional treatment.",
-      a_tech:"Technology", a_smoke:"Smoking", a_alcohol:"Alcohol", a_gambling:"Gambling", a_other:"Other drugs",
-      steps:"10 Steps", tips:"Tips", deep:"Deep Guide",
-      success:"Success", slip:"Slip"
+  en:{
+    home:"Home",
+    install:"Install",
+    welcome:"Welcome 👋", selectFocus:"Select your focus and a target date to start tracking progress.",
+    quitDate:"Quit/target date", motivation:"Your main motivation (optional)", start:"Start ReHabit",
+    danger:"If in danger, get help", homeTitle:"Welcome to ReHabit", homeLead:"Your private companion to build healthier habits—one day at a time.",
+    monthCard:"Calendar (this month)", shortcuts:"Today’s shortcuts", quickOpen:"Quick open", recent:"Recent notes",
+    checkin:"Daily Check-in", calendar:"Calendar", guide:"Guide", badges:"Badges", research:"Research", chat:"Community", friends:"Friends", back:"Back",
+    value:"Value:", mood:"Mood (0–10)", urge:"Urge (0–10)", sleep:"Hours of sleep", cravingWindow:"Craving window", morning:"Morning", afternoon:"Afternoon", evening:"Evening", night:"Night",
+    actionTook:"Helpful action you took", note:"Note (optional)", exposure:"Exposure level today", low:"Low", medium:"Medium", high:"High",
+    todayShortcuts:"Today’s shortcuts", markSuccess:"Record success today", markSlip:"Record slip today",
+    sos:"Craving SOS", s1:"Delay 5 minutes. Start timer and breathe slowly.", s2:"Urge surfing. Notice the urge rising and falling.", s3:"Do one alternative action. Walk, shower, text a friend, drink water.",
+    timer:"Breathing Timer (1:00)", startBtn:"Start", reset:"Reset", quickNotes:"Quick Notes", helpful:"Helpful actions",
+    calendarHelp:"Click a day to toggle: blank → Success → Slip.",
+    tips:"Tips", steps:"10 Steps", deep:"Deep Guide", materials:"Helpful materials",
+    contribTitle:"Contribute tips (1-year badge required)", yourTip:"Your tip or resource", submit:"Submit tip", contribNote:"Contributions may appear for your addiction.",
+    currentTitle:"Your current chat title", send:"Send", yourCode:"Your code:", requests:"Requests", friendsList:"Friends",
+    footer:"For support only—does not replace professional treatment.",
+    a_tech:"Technology", a_smoke:"Smoking", a_alcohol:"Alcohol", a_gambling:"Gambling", a_other:"Other drugs",
+    w0:"Sun", w1:"Mon", w2:"Tue", w3:"Wed", w4:"Thu", w5:"Fri", w6:"Sat",
+    researchTitle:"Evidence-based roadmap",
+    settings:"Settings", displayName:"Display name", chooseAddictions:"Choose addictions",
+    chooseAddiction:"Choose addiction", emergency:"Emergency",
+    chatNote:"Community chat: unmoderated peer support. Click a name (including bots) to send a friend request.",
+    notes:"Notes", notesInfo:"Your Daily and SOS notes appear here (newest first).",
+    notFound:"Friend not found.",
+    streak:"Current streak",
+    save:"Save",
+    sobriety:"Sobriety badges",
+    successLabel:"Success",
+    slipLabel:"Slip",
+    checklistHint:"You can mark Success only after all steps are checked for today."
   },
-  es:{ install:"Instalar", home:"Inicio", welcome:"Bienvenido/a 👋", selectFocus:"Elige tu(s) enfoque(s) y una fecha objetivo para comenzar a registrar tu progreso.",
-      quitDate:"Fecha objetivo", motivation:"Tu principal motivación (opcional)", start:"Comenzar con ReHabit",
-      danger:"Si estás en peligro, busca ayuda", homeTitle:"Bienvenido a ReHabit", homeLead:"Tu compañero privado para crear hábitos más saludables—día a día.",
-      monthCard:"Calendario (este mes)", recent:"Notas recientes", checkin:"Revisión diaria", calendar:"Calendario", guide:"Guía",
-      badges:"Insignias", research:"Investigación", chat:"Comunidad", friends:"Amigos", settings:"Ajustes", notes:"Notas",
-      back:"Volver", value:"Valor:", mood:"Estado de ánimo (0–10)", urge:"Impulso (0–10)", sleep:"Horas de sueño", cravingWindow:"Momento de mayor impulso",
-      morning:"Mañana", afternoon:"Tarde", evening:"Atardecer", night:"Noche", actionTook:"Acción útil que hiciste",
-      note:"Nota (opcional)", exposure:"Nivel de exposición hoy", low:"Bajo", medium:"Medio", high:"Alto",
-      sos:"SOS por antojo", s1:"Retrasa 5 minutos. Inicia el temporizador y respira lento.", s2:"Surf del impulso. Observa cómo sube y baja.",
-      s3:"Haz una acción alternativa. Caminar, ducharte, escribir a un amigo, beber agua.", timer:"Temporizador de respiración (1:00)", startBtn:"Iniciar",
-      reset:"Reiniciar", quickNotes:"Notas rápidas", helpful:"Acciones útiles", chooseAddictions:"Elige adicciones",
-      chooseAddiction:"Elige adicción", emergency:"Emergencia", yourCode:"Tu código:", requests:"Solicitudes", friendsList:"Amigos",
-      currentTitle:"Tu título actual en el chat", footer:"Solo para apoyo—no reemplaza la atención profesional.",
-      a_tech:"Tecnología", a_smoke:"Fumar", a_alcohol:"Alcohol", a_gambling:"Ludopatía", a_other:"Otras drogas",
-      steps:"10 Pasos", tips:"Consejos", deep:"Guía profunda",
-      success:"Logro", slip:"Recaída"
+  es:{
+    home:"Inicio",
+    install:"Instalar",
+    welcome:"Bienvenido/a 👋", selectFocus:"Elige tu(s) enfoque(s) y una fecha objetivo para comenzar a registrar tu progreso.",
+    quitDate:"Fecha objetivo", motivation:"Tu principal motivación (opcional)", start:"Comenzar con ReHabit",
+    danger:"Si estás en peligro, busca ayuda", homeTitle:"Bienvenido a ReHabit", homeLead:"Tu compañero privado para crear hábitos más saludables—día a día.",
+    monthCard:"Calendario (este mes)", shortcuts:"Atajos de hoy", quickOpen:"Accesos rápidos", recent:"Notas recientes",
+    checkin:"Revisión diaria", calendar:"Calendario", guide:"Guía", badges:"Insignias", research:"Investigación", chat:"Comunidad", friends:"Amigos", back:"Volver",
+    value:"Valor:", mood:"Estado de ánimo (0–10)", urge:"Intensidad de impulso (0–10)", sleep:"Horas de sueño", cravingWindow:"Momento de mayor impulso", morning:"Mañana", afternoon:"Tarde", evening:"Atardecer", night:"Noche",
+    actionTook:"Acción útil que hiciste", note:"Nota (opcional)", exposure:"Nivel de exposición hoy", low:"Bajo", medium:"Medio", high:"Alto",
+    todayShortcuts:"Atajos de hoy", markSuccess:"Registrar logro de hoy", markSlip:"Registrar recaída de hoy",
+    sos:"SOS por antojo", s1:"Retrasa 5 minutos. Inicia el temporizador y respira lento.", s2:"Surf del impulso. Observa cómo sube y baja.", s3:"Haz una acción alternativa. Caminar, ducharte, escribir a un amigo, beber agua.",
+    timer:"Temporizador de respiración (1:00)", startBtn:"Iniciar", reset:"Reiniciar", quickNotes:"Notas rápidas", helpful:"Acciones útiles",
+    calendarHelp:"Haz clic en un día para alternar: vacío → Logro → Recaída.",
+    tips:"Consejos", steps:"10 Pasos", deep:"Guía profunda", materials:"Materiales útiles",
+    contribTitle:"Aporta consejos (requiere 1 año)", yourTip:"Tu consejo o recurso", submit:"Enviar tip", contribNote:"Las contribuciones pueden mostrarse para tu adicción.",
+    currentTitle:"Tu título actual en el chat", send:"Enviar", yourCode:"Tu código:", requests:"Solicitudes", friendsList:"Amigos",
+    footer:"Solo para apoyo—no reemplaza tratamiento profesional.",
+    a_tech:"Tecnología", a_smoke:"Fumar", a_alcohol:"Alcohol", a_gambling:"Ludopatía", a_other:"Otras drogas",
+    w0:"Dom", w1:"Lun", w2:"Mar", w3:"Mié", w4:"Jue", w5:"Vie", w6:"Sáb",
+    researchTitle:"Hoja de ruta basada en evidencia",
+    settings:"Ajustes", displayName:"Nombre visible", chooseAddictions:"Elige adicciones",
+    chooseAddiction:"Elige adicción", emergency:"Emergencia",
+    chatNote:"Chat comunitario: apoyo entre pares no moderado. Pulsa un nombre (incluidos bots) para enviar solicitud de amistad.",
+    notes:"Notas", notesInfo:"Aquí aparecen tus notas Diarias y de SOS (las más recientes primero).",
+    notFound:"Amigo no encontrado.",
+    streak:"Racha actual",
+    save:"Guardar",
+    sobriety:"Insignias de sobriedad",
+    successLabel:"Logro",
+    slipLabel:"Recaída",
+    checklistHint:"Solo puedes marcar Logro cuando todos los pasos estén marcados hoy."
   }
 };
 function t(k){ const L=document.documentElement.getAttribute("data-lang")||"en"; return (D[L] && D[L][k]) || D.en[k] || k; }
 function applyI18N(){ $$("[data-i18n]").forEach(el => el.textContent = t(el.getAttribute("data-i18n"))); }
 
-/* Content */
-const ADDICTIONS = ["Technology","Smoking","Alcohol","Gambling","Other"];
-const TIPS = {
-  Technology:{ en:["Screen-time caps","Disable nonessential notifications","Blockers after 21:00"], es:["Límites de pantalla","Desactiva notificaciones no esenciales","Bloqueadores después de las 21 h"]},
-  Smoking:{ en:["Set quit date","Use NRT (patch+gum)","Map triggers → substitutes"], es:["Fija fecha para dejar","Usa TSN (parche+chicle)","Mapa de disparadores → sustitutos"]},
-  Alcohol:{ en:["Abstinence or caps","Remove alcohol at home","HALT before choices"], es:["Abstinencia o límites","Retira alcohol de casa","HALT antes de decidir"]},
-  Gambling:{ en:["Bank blocks","Device/site blockers","Self-exclusion"], es:["Bloqueos bancarios","Bloqueadores de dispositivos/sitios","Autoexclusión"]},
-  Other:{ en:["Consult clinician first","Remove cues","Daily structure (meals/move/sleep)"], es:["Consulta a un profesional","Retira señales","Estructura diaria (comida/mov/sueño)"]}
-};
-const DEEP = {
-  Technology:{ en:["Target the function, not just behavior","Delay 5 + long exhale","If X then Y plans"], es:["Apunta a la función, no solo a la conducta","Demora 5 + exhalación larga","Planes Si X entonces Y"]},
-  Smoking:{ en:["Prepare NRT plan","Urge surfing 2–3 min","Accountability weekly"], es:["Prepara plan de TSN","Surf del impulso 2–3 min","Responsabilidad semanal"]},
-  Alcohol:{ en:["Refusal scripts","Evening routine","Avoid high-risk places"], es:["Guiones de rechazo","Rutina nocturna","Evita lugares de alto riesgo"]},
-  Gambling:{ en:["Budget firewall","Share statements weekly","Friction to deposits"], es:["Cortafuegos de presupuesto","Comparte extractos semanales","Fricción para depósitos"]},
-  Other:{ en:["Safety first / taper with clinician","Coping kit","Track calendar outcomes"], es:["Seguridad primero / reducción supervisada","Kit de afrontamiento","Registra resultados en calendario"]}
-};
-const STEPS = {
-  Technology:{ en:[
-    "Define a goal (hours/day, no-phone zones)","Audit apps; uninstall two risks","Focus modes & bedtime","Make 3 replacement activities",
-    "One-tab method 25/5","Phone dock outside bedroom","Log urges (time/cue/intensity)","Weekly review: screen-time/mood/sleep",
-    "Relapse reset: trigger → lesson → action","Celebrate streaks"
-  ], es:[
-    "Define objetivo (horas/día, zonas sin teléfono)","Audita apps; desinstala 2 riesgos","Modos de enfoque y hora de dormir","Crea 3 actividades de reemplazo",
-    "Método una pestaña 25/5","Teléfono fuera del dormitorio","Registra impulsos (hora/señal/intensidad)","Revisión semanal: pantalla/ánimo/sueño",
-    "Reinicio: disparador → lección → acción","Celebra rachas"
-  ]},
-  Smoking:{ en:["Pick quit date","Get NRT ready","Map triggers","Clean spaces","Delay + long exhale","Daily brisk walk","Refusal script","Hydration + snacks","Avoid alcohol early","Weekly reward"],
-            es:["Elige fecha","Prepara TSN","Mapa de disparadores","Limpia espacios","Demora + exhalación larga","Caminata diaria","Guion de rechazo","Hidratación + snacks","Evita alcohol al inicio","Recompensa semanal"]},
-  Alcohol:{ en:["Commit caps/abstinence","Clear alcohol at home","First-drink ritual NA","HALT check","Evening routine","Delay + surf","Avoid risky places","Accountability","Track units pace","Reward AF weeks"],
-            es:["Compromiso límites/abstinencia","Retira alcohol en casa","Ritual primer trago sin alcohol","Revisión HALT","Rutina nocturna","Demora + surf","Evita lugares de riesgo","Responsabilidad","Registra unidades y ritmo","Recompensa semanas AF"]},
-  Gambling:{ en:["Bank blocks","Device/site blockers","Budget firewall","Share statements","Plan risky windows","Delay + surf","Remove apps","Limit cash; freeze cards","Low-stimulation nights","Weekly review"],
-             es:["Bloqueos bancarios","Bloqueadores","Cortafuegos presupuestario","Comparte extractos","Planifica ventanas de riesgo","Demora + surf","Elimina apps","Limita efectivo; congela tarjetas","Noches de baja estimulación","Revisión semanal"]},
-  Other:{ en:["Assess safety","Abstinence or taper","Remove paraphernalia","Daily structure","Coping kit","Delay + surf","Identify triggers","Accountability","Track calendar","Adjust weekly"],
-          es:["Evalúa seguridad","Abstinencia o reducción","Retira parafernalia","Estructura diaria","Kit de afrontamiento","Demora + surf","Identifica disparadores","Responsabilidad","Registra calendario","Ajuste semanal"]}
+/* ---------------- Friend codes (offline demo) ---------------- */
+const CODE_KEY = "rehabit_mycode";
+function getMyCode(){
+  let c = localStorage.getItem(CODE_KEY);
+  if (!c) { c = "RH-" + crypto.randomUUID().slice(0,6).toUpperCase(); localStorage.setItem(CODE_KEY, c); }
+  return c;
+}
+const BOT_CODES = {
+  "RH-COACH": { uid:"bot_coach", name:"CoachBot" },
+  "RH-CALM":  { uid:"bot_calm",  name:"CalmBot"  },
+  "RH-PEER":  { uid:"bot_peer",  name:"PeerBot"  }
 };
 
-/* Badges & titles (simple) */
+/* ---------------- Content (same data as before) ---------------- */
+const ADDICTIONS = ["Technology","Smoking","Alcohol","Gambling","Other"];
+
+const TIPS = { /* unchanged from prior turn (omitted here for brevity) */ };
+const STEPS = { /* unchanged from prior turn */ };
+const MATERIALS = { /* unchanged from prior turn */ };
+const RESEARCH  = { /* unchanged from prior turn */ };
+
+/* (re-insert full objects from your previous version) */
+Object.assign(TIPS,{
+  Technology:{ en:[ "Define screen-time caps and ‘no-phone zones’.","Disable nonessential notifications.","Uninstall 2 high-temptation apps.","Use blockers during work / after 21:00.","Replace scrolling with a 10-min walk.","One-tab rule to cut switching.","Phone docks outside bedroom.","Pocket notebook for ideas.","Plan offline hobbies.","Track Success/Slip; review weekly." ],
+              es:[ "Límites de pantalla y zonas sin teléfono.","Desactiva notificaciones no esenciales.","Desinstala 2 apps tentadoras.","Bloqueos en trabajo y tras 21:00.","Cambia scroll por caminar 10 min.","Regla de una pestaña.","Teléfono fuera del dormitorio.","Libreta para ideas.","Hobbies offline.","Registra Logro/Recaída; revisión semanal." ]},
+  Smoking:{ en:[ "Set a quit date within 7–14 days.","NRT ready (patch + gum/lozenge).","Map triggers & substitutes.","Clean environment; remove cues.","Delay 5 min + long exhale.","Mouth/hands plan (gum, straws).","Adjust caffeine down.","Refusal script handy.","Brisk walk daily.","Reward milestones." ],
+            es:[ "Fecha para dejar en 7–14 días.","TSN lista (parche + chicle/pastilla).","Mapa de disparadores y sustitutos.","Limpia entorno; retira señales.","Demora 5 min + exhalación larga.","Plan boca/manos (chicle, pajitas).","Ajusta cafeína a la baja.","Guion de rechazo listo.","Caminata diaria.","Recompensa hitos." ]},
+  Alcohol:{ en:[ "Choose abstinence or caps.","Remove alcohol at home.","First-drink NA ritual.","HALT check before choices.","Evening routine set.","Delay + urge surf 2–3 min.","Avoid high-risk places early.","Accountability check-in.","If moderating, pre-commit units.","Celebrate AF weeks." ],
+            es:[ "Abstinencia o límites.","Retira alcohol de casa.","Ritual sin alcohol para el primer trago.","HALT antes de decidir.","Rutina nocturna.","Demora + surf del impulso.","Evita lugares de riesgo al inicio.","Chequeo de responsabilidad.","Si moderas, precompromete unidades.","Celebra semanas AF." ]},
+  Gambling:{ en:[ "Enable bank blocks & self-exclusion.","Install device/site blockers.","Budget firewall.","Share statements weekly.","Plan around risky windows.","Delay 10 min + surf.","Remove betting apps.","Limit cash; freeze cards.","Replace excitement safely.","Track triggers weekly." ],
+            es:[ "Bloqueos bancarios y autoexclusión.","Bloqueadores en dispositivos/sitios.","Cortafuegos de presupuesto.","Comparte extractos semanales.","Plan ante ventanas de riesgo.","Demora 10 min + surf.","Elimina apps de apuestas.","Limita efectivo; congela tarjetas.","Sustituye la emoción.","Registra disparadores." ]},
+  Other:{ en:[ "Consult a clinician first.","Abstinence or guided taper.","Remove paraphernalia/cues.","Daily structure (meals/move/sleep).","Coping kit ready.","Delay + urge surf.","Identify triggers & plans.","Accountability weekly.","Calendar self-monitoring.","Seek professional/peer support." ],
+          es:[ "Consulta con profesional primero.","Abstinencia o reducción guiada.","Retira parafernalia/señales.","Estructura diaria.","Kit de afrontamiento listo.","Demora + surf del impulso.","Identifica disparadores y planes.","Responsabilidad semanal.","Calendario de monitoreo.","Apoyo profesional/pares." ]}
+});
+Object.assign(STEPS,{
+  Technology:{ en:[ "Define a clear goal.","Audit apps; uninstall two.","Set focus/bedtime modes.","Replacement list (3 quick).","One-tab + 25/5.","Phone outside bedroom.","Log urges (time/cue).","Weekly review.","Reset after lapses.","Celebrate streaks." ],
+              es:[ "Objetivo claro.","Audita apps; quita dos.","Modos de enfoque/sueño.","Lista de reemplazos.","Una pestaña + 25/5.","Teléfono fuera del cuarto.","Registra impulsos.","Revisión semanal.","Reinicio tras recaída.","Celebra rachas." ]},
+  Smoking:{ en:[ "Pick a quit date.","NRT ready.","Triggers→substitutes.","Clean spaces.","Delay + exhale.","Daily brisk walk.","Practice refusal.","Hydration & snacks.","Avoid alcohol early.","Weekly reward." ],
+            es:[ "Elige fecha.","TSN lista.","Disparadores→sustitutos.","Limpia espacios.","Demora + exhala.","Caminata diaria.","Practica rechazo.","Hidratación & snacks.","Evita alcohol al inicio.","Recompensa semanal." ]},
+  Alcohol:{ en:[ "Decide abstinence/caps.","Clear home of alcohol.","Refusal scripts.","HALT before choices.","Evening routine.","Delay + surfing.","Avoid risky places.","Accountability.","Track units/pace.","Reward AF weeks." ],
+            es:[ "Abstinencia/límites.","Retira alcohol de casa.","Guiones de rechazo.","HALT antes de decidir.","Rutina nocturna.","Demora + surf.","Evita lugares de riesgo.","Responsabilidad.","Registra unidades/ritmo.","Recompensa semanas AF." ]},
+  Gambling:{ en:[ "Bank blocks, exclusion.","Device/site blockers.","Budget firewall.","Share statements.","Plan risky windows.","Delay + surf.","Remove apps.","Limit cash.","Low-stim nights.","Weekly review." ],
+             es:[ "Bloqueos y exclusión.","Bloqueadores.","Cortafuegos de presupuesto.","Comparte extractos.","Plan vent. de riesgo.","Demora + surf.","Elimina apps.","Limita efectivo.","Noches de baja estim.","Revisión semanal." ]},
+  Other:{ en:[ "Assess safety.","Plan abstain/taper.","Remove cues.","Daily structure.","Coping kit.","Delay + surf.","Triggers→plans.","Accountability.","Track calendar.","Adjust weekly." ],
+          es:[ "Evalúa seguridad.","Plan abstener/reducir.","Retira señales.","Estructura diaria.","Kit de afrontamiento.","Demora + surf.","Disparadores→planes.","Responsabilidad.","Calendario.","Ajuste semanal." ]}
+});
+Object.assign(MATERIALS,{
+  Technology:{ en:["Book: Digital Minimalism","App: Focus / site blockers","Article: Urge surfing basics"],
+               es:["Libro: Minimalismo Digital","App: Bloqueadores","Artículo: Surf del impulso"] },
+  Smoking:{ en:["Guide: Nicotine patches","App: Smoke-free counter","Article: Delay, breathe, water"],
+            es:["Guía: Parches de nicotina","App: Contador libre de humo","Artículo: Demora, respira, agua"] },
+  Alcohol:{ en:["Community: AF groups","NA drinks list","Article: HALT check"],
+            es:["Comunidad: Grupos AF","Lista de bebidas sin alcohol","Artículo: HALT"] },
+  Gambling:{ en:["Self-exclusion portals","Bank blocks","Article: Replacement dopamine"],
+             es:["Portales de autoexclusión","Bloqueos bancarios","Artículo: Dopamina de reemplazo"] },
+  Other:{ en:["SAMHSA treatment locator","Grounding techniques","Article: Coping skills"],
+          es:["Buscador de tratamiento SAMHSA","Técnicas de enraizamiento","Artículo: Habilidades de afrontamiento"] }
+});
+Object.assign(RESEARCH,{
+  Technology:{ en:[ "≤2h/day screen rule; no phone in bedroom.","Turn off nonessential notifications.","Move charger outside bedroom; analog alarm.","Uninstall 2 worst apps.","Blockers during work and after 21:00.","Three replacements for scrolling.","One-tab rule; 25/5 timer.","Urge surfing 2–3 min.","Delay 5 minutes before decisions.","Night screen-sabbath blocks.","Phone out of reach while working.","Break/wind-down reminders.","Track Success/Slip; weekly review.","Share goal with ally.","Swap dopamine: movement, sunlight, journaling.","Protect sleep (no screens in bed).","Add friction in high-risk contexts.","Slip → trigger/lesson/action.","Celebrate specific wins.","Consider CBT/DBT coaching." ],
+                es:[ "≤2 h/día; sin teléfono en el dormitorio.","Apaga notificaciones no esenciales.","Cargador fuera del dormitorio.","Desinstala 2 apps problema.","Bloqueadores en trabajo y tras 21 h.","Tres reemplazos al scroll.","Regla de una pestaña; 25/5.","Surf del impulso 2–3 min.","Demora 5 minutos.","Bloques nocturnos sin pantallas.","Teléfono fuera de alcance.","Recordatorios de pausa y cierre.","Registra Logro/Recaída; revisión semanal.","Comparte objetivo con aliado.","Sustituye dopamina: movimiento, luz, escritura.","Protege el sueño.","Añade fricción en riesgo.","Recaída → disparador/lección/acción.","Celebra logros.","Considera TCC/DBT." ]},
+  Smoking:{   en:[ "Set quit date in 7–14 days.","Use NRT correctly (patch + short-acting).","Trigger map (coffee, car) → substitutes.","Clean fabrics; remove lighters/ashtrays.","Delay 5 min + long exhale.","Mouth/hands plan (gum, straw).","Reduce caffeine early.","Refusal script: “No thanks, I’m quitting.”","Daily brisk walk 10–15 min.","Hydration + fruit/veg snacks.","Avoid alcohol early.","Accountability check-ins.","Stress skills (4-6 breathing).","Track cravings (time, cue, intensity).","Celebrate milestones.","If lapse: reset plan immediately.","Sleep window consistent.","Seek counseling if needed.","Use counters to reinforce.","Review progress weekly." ],
+                es:[ "Fecha para dejar en 7–14 días.","TSN bien usada (parche + rescate).","Mapa de disparadores → sustitutos.","Lava tejidos; retira encendedores.","Demora 5 min + exhalación larga.","Plan boca/manos.","Baja la cafeína al inicio.","Guion: “No gracias, lo estoy dejando”.","Caminata diaria 10–15 min.","Hidratación + fruta/verdura.","Evita alcohol al inicio.","Chequeos de responsabilidad.","Estrategias de estrés (4-6).","Registra antojos (hora, señal, intensidad).","Celebra hitos.","Si recaes: reinicia el plan.","Ventana de sueño constante.","Apoyo profesional si es necesario.","Usa contadores.","Revisión semanal." ]},
+  Alcohol:{   en:[ "Decide abstinence or caps.","Remove alcohol at home.","NA first-drink ritual.","HALT before choices.","Evening routine plan.","Delay + urge surfing.","Avoid high-risk places early.","Accountability with ally.","Track units & pace if moderating.","Reward AF weeks.","Identify triggers & alternatives.","Plan weekend structure.","Keep hydration high.","Eat before events.","Leave early if cues stack.","Practice refusal lines.","Schedule morning commitments.","Monitor sleep improvements.","Reflect on benefits weekly.","Seek therapy/support groups." ],
+                es:[ "Elige abstinencia o límites.","Retira alcohol de casa.","Ritual del primer trago sin alcohol.","HALT antes de decidir.","Rutina nocturna.","Demora + surf del impulso.","Evita lugares de alto riesgo al inicio.","Responsabilidad con un aliado.","Si moderas, registra unidades/ritmo.","Recompensa semanas AF.","Identifica disparadores y alternativas.","Estructura de fin de semana.","Hidratación alta.","Come antes de eventos.","Vete antes si hay muchas claves.","Practica frases de rechazo.","Agenda compromisos matinales.","Monitorea el sueño.","Reflexiona beneficios semanalmente.","Apoyo terapéutico/grupos." ]},
+  Gambling:{  en:[ "Enable bank gambling blocks.","Self-exclude on platforms.","Install site/app blockers.","Budget firewall for essentials.","Share statements weekly.","Plan around risky windows.","Delay 10 min + urge surf.","Remove betting apps/links.","Limit cash; freeze cards on risky days.","Replace excitement (exercise, volunteering).","Set deposit frictions.","Avoid sports triggers early.","Accountability buddy.","Track triggers & wins.","Schedule low-stimulation nights.","Financial check-ins.","If lapse: block & reset.","Mindfulness for urges.","Therapy/GA if needed.","Weekly review & reward." ],
+                es:[ "Activa bloqueos bancarios.","Autoexclusión en plataformas.","Bloqueadores de sitios/apps.","Cortafuegos de presupuesto.","Comparte extractos semanales.","Plan ante ventanas de riesgo.","Demora 10 min + surf.","Elimina apps/enlaces de apuestas.","Limita efectivo; congela tarjetas.","Sustituye la emoción (ejercicio, voluntariado).","Aumenta fricción de depósitos.","Evita disparadores deportivos al inicio.","Aliado de responsabilidad.","Registra disparadores y logros.","Noches de baja estimulación.","Revisiones financieras.","Si recaes: bloquea y reinicia.","Mindfulness para antojos.","Terapia/GA si es necesario.","Revisión y recompensa semanal." ]},
+  Other:{     en:[ "Consult clinician about safety.","Choose abstinence or supervised taper.","Remove paraphernalia/cues.","Daily structure (meals/move/sleep).","Coping kit (water, grounding).","Delay 5 + urge surfing.","Identify triggers & If-Then plans.","Accountability weekly.","Use calendar for outcomes.","Peer/professional support.","Emergency plan numbers.","Mind-body practices.","Nutrition focus.","Sleep hygiene.","Avoid high-risk people/places.","Celebrate small wins.","If lapse: trigger→lesson→action.","Track mood & cravings.","Adjust plan weekly.","Build sober routines." ],
+                es:[ "Consulta a un profesional por seguridad.","Abstinencia o reducción supervisada.","Retira parafernalia/señales.","Estructura diaria (comida/mov/sueño).","Kit de afrontamiento (agua, enraizamiento).","Demora 5 + surf del impulso.","Planes Si-Entonces.","Responsabilidad semanal.","Usa el calendario para resultados.","Apoyo profesional/pares.","Plan de emergencia.","Prácticas mente-cuerpo.","Enfoque en nutrición.","Higiene del sueño.","Evita personas/lugares de riesgo.","Celebra logros pequeños.","Si recaes: disparador→lección→acción.","Registra ánimo y antojos.","Ajuste semanal.","Rutinas sobrias." ]}
+});
+
+/* ---------------- Badges & Titles ---------------- */
 const SOBRIETY = [
-  {days:7,   labelEN:"1 week",   labelES:"1 semana",  title:"1-Week Strong"},
-  {days:30,  labelEN:"1 month",  labelES:"1 mes",     title:"1-Month Steady"},
-  {days:60,  labelEN:"2 months", labelES:"2 meses",   title:"2-Month Builder"},
-  {days:90,  labelEN:"3 months", labelES:"3 meses",   title:"Quarter Champ"},
-  {days:120, labelEN:"4 months", labelES:"4 meses",   title:"Momentum Maker"},
-  {days:150, labelEN:"5 months", labelES:"5 meses",   title:"Five-Month Focus"},
-  {days:180, labelEN:"6 months", labelES:"6 meses",   title:"Half-Year Hero"},
-  {days:365, labelEN:"1 year",   labelES:"1 año",     title:"1-Year Resilient"}
+  {days:7,   labelEN:"1 week",    labelES:"1 semana", title:"1-Week Strong"},
+  {days:30,  labelEN:"1 month",   labelES:"1 mes",    title:"1-Month Steady"},
+  {days:60,  labelEN:"2 months",  labelES:"2 meses",  title:"2-Month Builder"},
+  {days:90,  labelEN:"3 months",  labelES:"3 meses",  title:"Quarter Champ"},
+  {days:120, labelEN:"4 months",  labelES:"4 meses",  title:"Momentum Maker"},
+  {days:150, labelEN:"5 months",  labelES:"5 meses",  title:"Five-Month Focus"},
+  {days:180, labelEN:"6 months",  labelES:"6 meses",  title:"Half-Year Hero"},
+  {days:365, labelEN:"1 year",    labelES:"1 año",    title:"1-Year Resilient"}
 ];
+const SOCIAL_BADGES = [
+  {key:"chat", nameEN:"First Message", nameES:"Primer mensaje", descEN:"Send one chat message.", descES:"Envía un mensaje en el chat."},
+  {key:"friend", nameEN:"First Friend", nameES:"Primer amigo", descEN:"Add one friend.", descES:"Añade un amigo."}
+];
+
+const pad = n=>String(n).padStart(2,"0");
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function isoNDaysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
 function okDaysSinceStart(){
   const start = state.profile?.quitDate ? new Date(state.profile.quitDate) : null;
   if(!start) return 0;
-  let n=0; for(const iso in state.cal){ if(state.cal[iso]==="ok" && new Date(iso)>=start) n++; }
-  return n;
+  let n=0; for(const iso in state.cal){ if(state.cal[iso]==="ok" && new Date(iso)>=start) n++; } return n;
 }
 function updateSobrietyBadges(){
   const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
@@ -138,71 +226,148 @@ function currentTitle(){
   return "Newcomer";
 }
 
-/* Calendar */
+/* ---------------- Streak ---------------- */
+function currentStreak(){
+  let count = 0, day = 0;
+  while(true){
+    const iso = isoNDaysAgo(day);
+    const mark = state.cal[iso];
+    if(day===0){
+      if(mark!=="ok") return 0;
+      count = 1; day++;
+    }else{
+      if(mark==="ok"){ count++; day++; } else break;
+    }
+  }
+  return count;
+}
+function renderStreak(whereId){
+  const el = document.getElementById(whereId);
+  if(!el) return;
+  const s = currentStreak();
+  const L = document.documentElement.getAttribute("data-lang")||"en";
+  const label = t("streak");
+  const unit  = (L==="es" ? (s===1?"día":"días") : (s===1?"day":"days"));
+  el.textContent = s>0 ? `🔥 ${label}: ${s} ${unit} 🏆` : `🔥 ${label}: 0 🏆`;
+}
+
+/* ---------------- Checklist helpers ---------------- */
+function checklistKeyForAddiction(a){ return a || "Technology"; }
+function getChecklist(a){
+  const key = checklistKeyForAddiction(a);
+  const arr = state.checklist[key] || new Array(10).fill(false);
+  state.checklist[key] = arr;
+  return arr;
+}
+function setChecklist(a, arr){
+  state.checklist[checklistKeyForAddiction(a)] = arr;
+  save();
+}
+function checklistComplete(a){
+  return getChecklist(a).every(Boolean);
+}
+
+/* ---------------- Calendar ---------------- */
 let cursor = new Date();
 function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function firstDay(y,m){ return new Date(y,m,1).getDay(); }
+function weekdayName(i){ return t(`w${i}`); }
 
-function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="streakWrap"){
+function markLabel(code){
+  if(!code) return "";
+  if(code==="ok") return t("successLabel");
+  if(code==="slip") return t("slipLabel");
+  return "";
+}
+
+function tryToggleToday(to){
+  // Gate success by checklist completion for current Home addiction
+  if(to==="ok"){
+    const a = homeCurrentAddiction();
+    if(!checklistComplete(a)){
+      alert(t("checklistHint"));
+      return false;
+    }
+  }
+  return true;
+}
+
+function renderCalendar(gridId="calendarGrid", labelId="monthLabel"){
   const grid = document.getElementById(gridId), label = document.getElementById(labelId);
   const y=cursor.getFullYear(), m=cursor.getMonth();
   label.textContent = new Date(y,m,1).toLocaleString(undefined,{month:"long",year:"numeric"});
   grid.innerHTML="";
-  for(let i=0;i<7;i++){ const hd=document.createElement("div"); hd.className="m"; hd.textContent=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]; grid.appendChild(hd); }
+  for(let i=0;i<7;i++){ const hd=document.createElement("div"); hd.className="m"; hd.textContent=weekdayName(i); grid.appendChild(hd); }
   for(let i=0;i<firstDay(y,m);i++){ const blank=document.createElement("div"); grid.appendChild(blank); }
-  const days=daysInMonth(y,m); const today=todayISO();
-
+  const days=daysInMonth(y,m);
+  const today=todayISO();
   for(let d=1; d<=days; d++){
     const iso=`${y}-${pad(m+1)}-${pad(d)}`;
     const isToday = iso===today;
     const cell=document.createElement("div");
-    const mark = state.cal[iso]==="ok" ? t("success") : state.cal[iso]==="slip" ? t("slip") : "";
+    const mark=markLabel(state.cal[iso]);
     cell.className="day"+(state.cal[iso]==="ok"?" s":state.cal[iso]==="slip"?" f":"")+(isToday?"":" locked");
     cell.innerHTML=`<div class="d">${d}</div><div class="m">${mark}</div>`;
     if(isToday){
       cell.addEventListener("click",()=>{
         const cur=state.cal[iso]||"";
         const next= cur===""?"ok":(cur==="ok"?"slip":"");
-        state.cal[iso]=next; save(); renderCalendar(gridId,labelId,streakId); updateSobrietyBadges();
+        if(next==="ok" && !tryToggleToday("ok")) return;
+        state.cal[iso]=next; save(); renderCalendar(gridId,labelId); updateSobrietyBadges();
+        renderStreak("streakLabel"); renderStreak("streakLabel2");
       });
     }
     grid.appendChild(cell);
   }
-  renderStreak(streakId);
+  renderStreak("streakLabel");
 }
-function renderCalendarFull(){ renderCalendar("calendarGrid2","monthLabel2","streakWrap2"); }
 
-/* Streak (visual & centered) */
-function currentStreak(){
-  // count consecutive "ok" days ending today
-  let streak=0;
-  let d=new Date();
-  while(true){
-    const iso=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    if(state.cal[iso]==="ok"){ streak++; d.setDate(d.getDate()-1); } else break;
+function renderCalendarFull(){
+  const gridId="calendarGrid2", labelId="monthLabel2";
+  const grid = document.getElementById(gridId), label = document.getElementById(labelId);
+  const y=cursor.getFullYear(), m=cursor.getMonth();
+  label.textContent = new Date(y,m,1).toLocaleString(undefined,{month:"long",year:"numeric"});
+  grid.innerHTML="";
+  for(let i=0;i<7;i++){ const hd=document.createElement("div"); hd.className="m"; hd.textContent=weekdayName(i); grid.appendChild(hd); }
+  for(let i=0;i<firstDay(y,m);i++){ const blank=document.createElement("div"); grid.appendChild(blank); }
+  const days=daysInMonth(y,m);
+  const today=todayISO();
+  for(let d=1; d<=days; d++){
+    const iso=`${y}-${pad(m+1)}-${pad(d)}`;
+    const isToday = iso===today;
+    const cell=document.createElement("div");
+    const mark=markLabel(state.cal[iso]);
+    cell.className="day"+(state.cal[iso]==="ok"?" s":state.cal[iso]==="slip"?" f":"")+(isToday?"":" locked");
+    cell.innerHTML=`<div class="d">${d}</div><div class="m">${mark}</div>`;
+    if(isToday){
+      cell.addEventListener("click",()=>{
+        const cur=state.cal[iso]||"";
+        const next= cur===""?"ok":(cur==="ok"?"slip":"");
+        if(next==="ok" && !tryToggleToday("ok")) return;
+        state.cal[iso]=next; save(); renderCalendarFull(); updateSobrietyBadges();
+        renderStreak("streakLabel"); renderStreak("streakLabel2");
+      });
+    }
+    grid.appendChild(cell);
   }
-  return streak;
-}
-function renderStreak(id){
-  const el = document.getElementById(id);
-  if(!el) return;
-  const s = currentStreak();
-  el.innerHTML = s ? `🔥 <strong>${s}</strong> day${s>1?"s":""} streak` : "—";
+  renderStreak("streakLabel2");
 }
 
-/* Guide helpers */
+/* ---------------- Guide (no 10 Steps tab; pill boxes) ---------------- */
 function translateAddiction(a){
   const key = a==="Technology"?"a_tech":a==="Smoking"?"a_smoke":a==="Alcohol"?"a_alcohol":a==="Gambling"?"a_gambling":"a_other";
   return t(key);
 }
+let guideChoice = null;
 function currentGuideAddiction(){
   const adds = state.profile?.addictions || [];
   if(adds.length<=1) return adds[0] || state.profile?.primary || "Technology";
-  return state.guideChoice || adds[0];
+  return guideChoice || adds[0];
 }
 function renderGuideChoice(){
   const adds = state.profile?.addictions || [];
   const wrap = $("#guideChoiceWrap");
+  if(!wrap) return;
   if(adds.length<=1){ wrap.hidden=true; return; }
   wrap.hidden=false;
   const sel=$("#guideChoice"); sel.innerHTML="";
@@ -212,26 +377,143 @@ function renderGuideChoice(){
     if(a===currentGuideAddiction()) opt.selected=true;
     sel.appendChild(opt);
   });
-  sel.onchange=()=>{ state.guideChoice=sel.value; renderGuideCore(); };
+  sel.onchange=()=>{ guideChoice=sel.value; renderGuideCore(); };
 }
-function renderPillList(listEl, items){
-  listEl.innerHTML = (items||[]).map(x=>`<li class="pill-item">${escapeHTML(x)}</li>`).join("");
+function pillify(items){
+  return items.map(x=>`<div class="pill-box">${x}</div>`).join("");
 }
 function renderGuideCore(){
   const a = currentGuideAddiction();
   $("#guideTitle").textContent = `${translateAddiction(a)} — ${t("guide")}`;
   const L=document.documentElement.getAttribute("data-lang")||"en";
-  renderPillList($("#tab-tips"), (TIPS[a][L]||[]));
-  renderPillList($("#tab-deep"), (DEEP[a][L]||[]));
+  // Tips + Materials
+  $("#tipsPills").innerHTML = pillify((TIPS[a][L]||[]));
+  const matsBase = (MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [];
+  $("#materialsPills").innerHTML = pillify(matsBase);
+  // Deep guide as pill boxes using RESEARCH items
+  $("#deepPills").innerHTML = pillify((RESEARCH[a][L]||[]));
 }
 function renderGuide(){ renderGuideChoice(); renderGuideCore(); }
+function wireGuideTabs(){
+  $$(".guide-tabs .tab").forEach(btn=>{
+    btn.onclick=()=>{
+      const tab=btn.getAttribute("data-tab");
+      ["tips","deep"].forEach(k=>{ $(`#tab-${k}`).hidden = (k!==tab); });
+    };
+  });
+}
 
-/* Materials merged into tips already */
+/* --- HOME: Ten steps checklist + gating --- */
+let homeStepsChoice = null;
+function homeCurrentAddiction(){
+  const adds = state.profile?.addictions || [];
+  if(adds.length<=1) return adds[0] || state.profile?.primary || "Technology";
+  return homeStepsChoice || adds[0];
+}
+function renderHomeStepsChoice(){
+  const adds = state.profile?.addictions || [];
+  const wrap = $("#homeStepsChoiceWrap");
+  if(!wrap) return;
+  if(adds.length<=1){ wrap.hidden=true; return; }
+  wrap.hidden=false;
+  const sel=$("#homeStepsChoice"); sel.innerHTML="";
+  adds.forEach(a=>{
+    const opt=document.createElement("option");
+    opt.value=a; opt.textContent=translateAddiction(a);
+    if(a===homeCurrentAddiction()) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.onchange=()=>{ homeStepsChoice=sel.value; renderHomeSteps(); };
+}
+function renderHomeSteps(){
+  const a = homeCurrentAddiction();
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const steps = (STEPS[a][L]||[]);
+  const stateArr = getChecklist(a).slice(0,steps.length);
+  const ol = $("#homeStepsList"); if(!ol) return;
+  ol.innerHTML = steps.map((s,idx)=>`
+    <li>
+      <input type="checkbox" id="chk_${idx}" ${stateArr[idx]?"checked":""} />
+      <label for="chk_${idx}">${s}</label>
+    </li>`).join("");
+  ol.querySelectorAll('input[type="checkbox"]').forEach((cb,idx)=>{
+    cb.onchange = ()=>{
+      const arr = getChecklist(a);
+      arr[idx] = !!cb.checked;
+      setChecklist(a, arr);
+      updateChecklistHint();
+    };
+  });
+  updateChecklistHint();
+}
+function updateChecklistHint(){
+  const a = homeCurrentAddiction();
+  const done = checklistComplete(a);
+  const el=$("#checklistHint");
+  if(el) el.textContent = done ? "" : t("checklistHint");
+}
 
-/* Research */
+/* ---------------- Materials page (unchanged rendering) ---------------- */
+function renderMaterials(){
+  const a = currentGuideAddiction();
+  $("#programTitle").textContent = `${translateAddiction(a)} — ${t("materials")}`;
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const items = (MATERIALS[a] && MATERIALS[a][L]) ? MATERIALS[a][L] : [];
+  $("#materialsList").innerHTML = items.map(m=>`<li>${m}</li>`).join("");
+  $("#contribWrap").hidden = okDaysSinceStart()<365;
+}
+function addMaterial(addiction, text){
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const saved = JSON.parse(localStorage.getItem(STORAGE.MATERIALS) || "{}");
+  saved[addiction] = saved[addiction] || { en:[], es:[] };
+  saved[addiction][L].push(text);
+  localStorage.setItem(STORAGE.MATERIALS, JSON.stringify(saved));
+}
+
+/* ---------------- Check-in & Notes ---------------- */
+const ENCOURAGEMENTS = {
+  en:[ "One step at a time. Today counts.","You’re building a stronger brain—keep going.","Small actions, huge momentum.","You’re not alone. Progress over perfection." ],
+  es:[ "Paso a paso. Hoy cuenta.","Estás fortaleciendo tu cerebro—sigue.","Pequeñas acciones, gran impulso.","No estás solo/a. Progreso sobre perfección." ]
+};
+function randomEnc(){ const L=document.documentElement.getAttribute("data-lang")||"en"; const arr=ENCOURAGEMENTS[L]; return arr[Math.floor(Math.random()*arr.length)]; }
+function renderCheckin(){
+  $("#encouragement").textContent = randomEnc();
+  const list=$("#recentNotes"); list.innerHTML="";
+  const rec = [...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).reverse().slice(0,5);
+  if(!rec.length){ list.innerHTML=`<li><span>—</span></li>`; return; }
+  rec.forEach(j=>{ const li=document.createElement("li"); li.innerHTML=`<span>${new Date(j.ts).toLocaleString()} — ${escapeHTML(localizeNote(j.text))}</span>`; list.appendChild(li); });
+}
+function renderNotes(){
+  // pill boxes with centered kind + date/time
+  const wrap=$("#notesPills"); wrap.innerHTML="";
+  const rec=[...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).sort((a,b)=>b.ts-a.ts);
+  if(!rec.length){ wrap.innerHTML=`<div class="note-pill"><div class="meta"><div class="kind">—</div><div class="when">—</div></div><div>—</div></div>`; return; }
+  rec.forEach(j=>{
+    const isChk = j.text.startsWith("[CHK]");
+    const kind = isChk ? (document.documentElement.getAttribute("data-lang")==="es"?"Revisión diaria":"Check-in") : "SOS";
+    const text = j.text.replace(/^\[(CHK|SOS)\]\s*/,"");
+    const div=document.createElement("div"); div.className="note-pill";
+    div.innerHTML = `<div class="meta"><div class="kind">${kind}</div><div class="when">${new Date(j.ts).toLocaleString()}</div></div><div>${escapeHTML(localizeNote(text))}</div>`;
+    wrap.appendChild(div);
+  });
+}
+function localizeNote(txt){
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  if(L!=="es") return txt;
+  return txt
+    .replace(/\bsuccess\b/gi, "logro")
+    .replace(/\bslip\b/gi, "recaída")
+    .replace(/Tried:/g, "Probado:")
+    .replace(/morning/gi,"mañana").replace(/afternoon/gi,"tarde")
+    .replace(/evening/gi,"atardecer").replace(/night/gi,"noche")
+    .replace(/low/gi,"bajo").replace(/medium/gi,"medio").replace(/high/gi,"alto");
+}
+
+/* ---------------- Research ---------------- */
 function renderResearchChoice(){
   const adds = state.profile?.addictions || [];
   const wrap = $("#researchChoiceWrap");
+  if(!wrap) return;
   if(adds.length<=1){ wrap.hidden=true; return; }
   wrap.hidden=false;
   const sel=$("#researchChoice"); sel.innerHTML="";
@@ -247,117 +529,16 @@ function researchCurrentAddiction(){
   const adds = state.profile?.addictions||[];
   return state.researchChoice || adds[0] || state.profile?.primary || "Technology";
 }
-function renderResearch(){
-  renderResearchChoice();
+function researchText(){
   const a = researchCurrentAddiction();
   const L = document.documentElement.getAttribute("data-lang") || "en";
-  const lines = (STEPS[a] && STEPS[a][L]) ? STEPS[a][L] : STEPS.Technology.en;
-  renderPillList($("#researchBody"), lines);
+  const lines = (RESEARCH[a] && RESEARCH[a][L] && RESEARCH[a][L].length) ? RESEARCH[a][L] : (RESEARCH.Technology[L] || []);
+  const list = lines.map(x=>`<div class="pill-box">${x}</div>`).join("");
+  return `<h3 class="fancy">${t("researchTitle")} — ${translateAddiction(a)}</h3><div class="pill-grid">${list}</div><p class="muted">${t("footer")}</p>`;
 }
+function renderResearch(){ renderResearchChoice(); $("#researchBody").innerHTML = researchText(); }
 
-/* Notes */
-function renderNotes(){
-  const ul=$("#notesList"); ul.innerHTML="";
-  const rec=[...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).sort((a,b)=>b.ts-a.ts);
-  if(!rec.length){ ul.innerHTML=`<li class="pill-item center">—</li>`; return; }
-  rec.forEach(j=>{
-    const when = new Date(j.ts).toLocaleString();
-    const kind = j.text.startsWith("[CHK]") ? "Check-in" : "SOS";
-    const li=document.createElement("li");
-    li.className="pill-item";
-    li.innerHTML=`<div class="meta center"><strong>${kind}</strong> • ${when}</div><div>${escapeHTML(j.text)}</div>`;
-    ul.appendChild(li);
-  });
-}
-
-/* Check-in */
-const ENCOURAGEMENTS = {
-  en:["One step at a time. Today counts.","You’re building a stronger brain—keep going.","Small actions, huge momentum.","You’re not alone. Progress over perfection."],
-  es:["Paso a paso. Hoy cuenta.","Estás fortaleciendo tu cerebro—sigue.","Pequeñas acciones, gran impulso.","No estás solo/a. Progreso sobre perfección."]
-};
-function randomEnc(){ const L=document.documentElement.getAttribute("data-lang")||"en"; const arr=ENCOURAGEMENTS[L]; return arr[Math.floor(Math.random()*arr.length)]; }
-function renderCheckin(){
-  $("#encouragement").textContent = randomEnc();
-  const list=$("#recentNotes"); list.innerHTML="";
-  const rec = [...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).reverse().slice(0,5);
-  if(!rec.length){ list.innerHTML=`<li class="pill-item center">—</li>`; return; }
-  rec.forEach(j=>{ const li=document.createElement("li"); li.className="pill-item"; li.innerHTML=`<div class="meta center">${new Date(j.ts).toLocaleString()}</div><div>${escapeHTML(j.text)}</div>`; list.appendChild(li); });
-}
-
-/* Badges page */
-function renderBadges(){
-  updateSobrietyBadges();
-  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
-  const L=document.documentElement.getAttribute("data-lang")||"en";
-  const sob = $("#sobrietyGrid"); sob.innerHTML="";
-  SOBRIETY.forEach(b=>{
-    const lock = !earned.has(`S:${b.days}`);
-    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
-    const icon=document.createElement("div"); icon.className="badge-icon success"; icon.innerHTML="🏅";
-    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.labelES:b.labelEN);
-    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = b.title;
-    card.append(icon,name,desc); sob.appendChild(card);
-  });
-  const soc=$("#socialGrid"); soc.innerHTML="";
-  const socials=[{k:"chat",n:{en:"First Message",es:"Primer mensaje"}},{k:"friend",n:{en:"First Friend",es:"Primer amigo"}}];
-  socials.forEach(b=>{
-    const have = (b.k==="chat" && state.social.chatted) || (b.k==="friend" && state.social.friended);
-    const card=document.createElement("div"); card.className="badge-card"+(have?"":" locked");
-    const icon=document.createElement("div"); icon.className="badge-icon"; icon.innerHTML = (b.k==="chat"?"💬":"🤝");
-    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.n.es:b.n.en);
-    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = have ? "Unlocked" : "Locked";
-    card.append(icon,name,desc); soc.appendChild(card);
-  });
-  $("#currentTitle").textContent = currentTitle();
-}
-
-/* Chat (seed + colored titles) */
-function seedChat(box){
-  const titleColor = name=>{
-    return (name.includes("1-Week")?"#38bdf8":
-            name.includes("1-Month")?"#a78bfa":
-            name.includes("Quarter")?"#f59e0b":
-            name.includes("Momentum")?"#10b981":
-            name.includes("Half-Year")?"#ef4444":"#0ea5a6");
-  };
-  const now=Date.now();
-  const msgs=[
-    {uid:"bot_coach", who:"CoachBot", title:"Coach", text:"Tip: Try a 5-minute delay and longer exhales."},
-    {uid:"bot_calm",  who:"CalmBot",  title:"Calm",  text:"Urges rise and fall. Start a 60s breathing timer."},
-    {uid:"peer1",     who:"Maya",     title:"1-Week Strong", text:"Grayscale at night cuts my scrolling."},
-    {uid:"peer2",     who:"Alex",     title:"1-Month Steady", text:"Marking Success nightly keeps me honest."}
-  ];
-  msgs.forEach((m,i)=>{
-    const div=document.createElement("div");
-    const chip = `<span class="badge-chip" style="background:${titleColor(m.title)}">${escapeHTML(m.title)}</span>`;
-    div.className="chat-msg";
-    div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}">${chip}${escapeHTML(m.who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(now-((5-i)*60000)).toLocaleTimeString()}</small>`;
-    box.appendChild(div);
-  });
-  box.scrollTop=box.scrollHeight;
-}
-function wireCommunity(){
-  const box = $("#globalChat");
-  box.innerHTML="";
-  seedChat(box);
-  $("#globalForm").onsubmit=(e)=>{
-    e.preventDefault();
-    const msg=new FormData(e.target).get("msg")?.toString().trim(); if(!msg) return;
-    state.social.chatted=true; save(); renderBadges();
-    const rawName = (state.profile?.displayName || "You").trim();
-    const div=document.createElement("div"); div.className="chat-msg";
-    const chip = `<span class="badge-chip" style="background:#22c55e">${currentTitle()}</span>`;
-    div.innerHTML=`<strong class="chat-name" data-uid="you">${chip}${escapeHTML(rawName)}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
-    box.appendChild(div); box.scrollTop=box.scrollHeight; e.target.reset();
-  };
-  $("#globalChat").onclick=(e)=>{
-    const n=e.target.closest(".chat-name"); if(!n) return;
-    state.social.friended=true; save(); renderBadges();
-    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
-  };
-}
-
-/* Friends (local demo) */
+/* ---------------- Friends (local demo) ---------------- */
 const LOCAL_FRIENDS_KEY = "rehabit_local_friends";
 const LOCAL_REQUESTS_KEY = "rehabit_local_requests";
 function getLocalFriends(){ return JSON.parse(localStorage.getItem(LOCAL_FRIENDS_KEY) || "[]"); }
@@ -365,7 +546,7 @@ function setLocalFriends(arr){ localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stri
 function addLocalFriend(uid, label){
   const f=getLocalFriends(); if(!f.find(x=>x.uid===uid)) f.push({uid,label}); setLocalFriends(f);
 }
-function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]"); }
+function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]" ); }
 function addLocalRequest(uid, label){
   const r=getLocalRequests(); if(!r.find(x=>x.uid===uid)) r.push({uid,label});
   localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
@@ -375,21 +556,27 @@ function removeLocalRequest(uid){
   localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
 }
 function renderFriendsLocal(){
-  $("#myUid").textContent = "RH-" + (crypto.randomUUID().slice(0,6).toUpperCase());
+  $("#myUid").textContent = getMyCode();
+
   const form = $("#addFriendForm");
   if(form){
     form.onsubmit = (e)=>{
       e.preventDefault();
       const code = (new FormData(form).get("code") || "").trim().toUpperCase();
       if(!code) return;
-      addLocalRequest(code, code);
-      alert((state.i18n==="es")?"Solicitud enviada.":"Request sent.");
-      form.reset(); renderFriendsLocal();
+      if(BOT_CODES[code]){
+        addLocalRequest(BOT_CODES[code].uid, BOT_CODES[code].name);
+        alert((state.i18n==="es")?"Solicitud enviada.":"Request sent.");
+        renderFriendsLocal();
+        form.reset();
+        return;
+      }
+      alert(t("notFound"));
     };
   }
-  // Requests
+
   const reqs = getLocalRequests();
-  const reqList=$("#requestsList"); reqList.innerHTML=reqs.length?"":`<li><span>No requests</span></li>`;
+  const reqList=$("#requestsList"); reqList.innerHTML=reqs.length?"":`<li><span>No requests (offline demo)</span></li>`;
   reqs.forEach(r=>{
     const li=document.createElement("li");
     li.innerHTML=`<span>${escapeHTML(r.label||r.uid)}</span>
@@ -403,7 +590,7 @@ function renderFriendsLocal(){
     const acc=e.target.getAttribute("data-acc");
     const rej=e.target.getAttribute("data-rej");
     if(acc){
-      addLocalFriend(acc, acc);
+      addLocalFriend(acc, (reqs.find(x=>x.uid===acc)?.label)||acc);
       removeLocalRequest(acc);
       renderFriendsLocal();
     }else if(rej){
@@ -411,7 +598,7 @@ function renderFriendsLocal(){
       renderFriendsLocal();
     }
   };
-  // Friends
+
   const fr=getLocalFriends();
   const frList=$("#friendList"); frList.innerHTML=fr.length?"":`<li><span>No friends yet</span></li>`;
   fr.forEach(x=>{
@@ -426,25 +613,105 @@ function renderFriendsLocal(){
   };
 }
 
-/* Home 10 steps panel */
-function renderHomeSteps(){
-  const adds = state.profile?.addictions || [];
-  const L=document.documentElement.getAttribute("data-lang")||"en";
-  const choiceWrap = $("#homeStepsChoice");
-  const sel = $("#homeStepsSelect");
-  const list = $("#homeStepsList");
-  const cur = adds.length? (state.guideChoice || adds[0]) : (state.profile?.primary || "Technology");
-  if(adds.length<=1){ choiceWrap.hidden=true; } else {
-    choiceWrap.hidden=false; sel.innerHTML="";
-    adds.forEach(a=>{ const o=document.createElement("option"); o.value=a; o.textContent=translateAddiction(a); if(a===cur) o.selected=true; sel.appendChild(o); });
-    sel.onchange = ()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
-  }
-  const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  list.innerHTML = steps.map(s=>`<li class="pill-item">${escapeHTML(s)}</li>`).join("");
+/* ---------------- Community (seed chat + colored titles) ---------------- */
+function seedChat(box){
+  const now=new Date();
+  const ex=[
+    {uid:"bot_coach", who:"CoachBot", title:"Coach", text:"Tip: Try a 5-minute delay and breathe out longer than you breathe in."},
+    {uid:"bot_calm",  who:"CalmBot",  title:"Calm",  text:"Reminder: urges rise and fall. Start a 60-second breathing timer."},
+    {uid:"bot_peer",  who:"PeerBot",  title:"Peer",  text:"You’re not alone—log Success/Slip on your calendar, review weekly."},
+    {uid:"maya111",   who:"Maya (2 wks)", title:"1-Week Strong", text:"Grayscale at night cuts my scrolling."},
+    {uid:"alex222",   who:"Alex (1 mo)",  title:"1-Month Steady", text:"Marking Success each night keeps me honest."}
+  ];
+  ex.forEach((m,i)=>{
+    const div=document.createElement("div");
+    div.className="chat-msg";
+    const cls = titleClassFrom(m.title);
+    div.innerHTML=`<strong class="chat-name" data-uid="${m.uid}"><span class="title-badge ${cls}">[${escapeHTML(m.title)}]</span> ${escapeHTML(m.who)}</strong>: ${escapeHTML(m.text)} <small>${new Date(now-((5-i)*60000)).toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+function nameWithTitle(name, isSelf=false, titleOverride=""){
+  const title = titleOverride || (isSelf ? currentTitle() : "");
+  if(!title) return name;
+  return `<span class="title-badge ${titleClassFrom(title)}">[${escapeHTML(title)}]</span> ${escapeHTML(name)}`;
+}
+function titleClassFrom(title){
+  const t=String(title||"").toLowerCase();
+  if(t.includes("1-week")) return "tb-w1";
+  if(t.includes("1-month")) return "tb-m1";
+  if(t.includes("2-month")) return "tb-m2";
+  if(t.includes("quarter")) return "tb-qtr";
+  if(t.includes("momentum")) return "tb-mom";
+  if(t.includes("five-month")) return "tb-m5";
+  if(t.includes("half-year")) return "tb-hy";
+  if(t.includes("1-year")) return "tb-y1";
+  if(t.includes("coach")) return "tb-coach";
+  if(t.includes("calm")) return "tb-calm";
+  if(t.includes("peer")) return "tb-peer";
+  return "tb-default";
+}
+function wireCommunity(){
+  const box = $("#globalChat");
+  if (!box) return;
+  box.innerHTML = "";
+  seedChat(box);
+
+  $("#globalForm").onsubmit=(e)=>{
+    e.preventDefault();
+    const msg=(new FormData(e.target).get("msg")||"").toString().trim();
+    if(!msg) return;
+    state.social.chatted=true; save(); renderBadges();
+
+    const rawName = (state.profile?.displayName || "").trim();
+    const whoYouAre = nameWithTitle(rawName ? rawName : "Anonymous", true);
+    const div=document.createElement("div");
+    div.className="chat-msg";
+    div.innerHTML = `<strong class="chat-name" data-uid="you">${whoYouAre}</strong>: ${escapeHTML(msg)} <small>${new Date().toLocaleTimeString()}</small>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    e.target.reset();
+  };
+
+  $("#globalChat").onclick=(e)=>{
+    const n=e.target.closest(".chat-name"); if(!n) return;
+    const uid=n.getAttribute("data-uid"); if(!uid) return;
+    state.social.friended=true; save(); renderBadges();
+    addLocalRequest(uid, n.textContent.replace(/^\[[^\]]+\]\s*/,"").trim());
+    alert((state.i18n==="es")?"Solicitud de amistad enviada.":"Friend request sent.");
+    renderFriendsLocal();
+  };
 }
 
-/* Navigation */
-const views = ["onboarding","home","calendar","checkin","sos","guide","badges","research","community","friends","settings","notes"];
+/* ---------------- Badges page render ---------------- */
+function renderBadges(){
+  updateSobrietyBadges();
+  const earned = new Set(JSON.parse(localStorage.getItem(STORAGE.BADGES)||"[]"));
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const sob = $("#sobrietyGrid"); if(!sob) return; sob.innerHTML="";
+  SOBRIETY.forEach(b=>{
+    const lock = !earned.has(`S:${b.days}`);
+    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
+    const icon=document.createElement("div"); icon.className="badge-icon success"; icon.innerHTML="🏅";
+    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.labelES:b.labelEN);
+    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?`Marca ${b.labelES} de Logro.`:`Mark ${b.labelEN} of Success.`);
+    card.append(icon,name,desc); sob.appendChild(card);
+  });
+  const soc=$("#socialGrid"); if(!soc) return; soc.innerHTML="";
+  SOCIAL_BADGES.forEach(b=>{
+    const lock = (b.key==="chat" && !state.social.chatted) || (b.key==="friend" && !state.social.friended);
+    const card=document.createElement("div"); card.className="badge-card"+(lock?" locked":"");
+    const icon=document.createElement("div"); icon.className="badge-icon social"; icon.innerHTML = (b.key==="chat"?"💬":"🤝");
+    const name=document.createElement("div"); name.className="badge-name"; name.textContent = (L==="es"?b.nameES:b.nameEN);
+    const desc=document.createElement("div"); desc.className="badge-desc"; desc.textContent = (L==="es"?b.descES:b.descEN);
+    card.append(icon,name,desc); soc.appendChild(card);
+  });
+  $("#currentTitle").textContent = currentTitle();
+}
+
+/* ---------------- Navigation & Wiring ---------------- */
+const views = ["onboarding","home","calendar","checkin","sos","guide","program","badges","research","community","friends","settings","notes"];
 function setActiveDrawer(target){
   $$(".drawer-link").forEach(b=>{
     if(b.getAttribute("data-nav")===target) b.classList.add("active");
@@ -463,15 +730,16 @@ function show(v){
   setActiveDrawer(v);
   setActiveTabbar(v);
 
-  if(v==="home"){ renderCalendar("calendarGrid","monthLabel","streakWrap"); renderHomeSteps(); }
+  if(v==="home"){ renderCalendar("calendarGrid","monthLabel"); renderHomeStepsChoice(); renderHomeSteps(); }
   if(v==="calendar"){ renderCalendarFull(); }
-  if(v==="guide"){ renderGuide(); }
+  if(v==="guide"){ renderGuide(); wireGuideTabs(); }
+  if(v==="program"){ renderMaterials(); }
   if(v==="checkin"){ renderCheckin(); }
   if(v==="badges"){ renderBadges(); }
   if(v==="research"){ renderResearch(); }
   if(v==="community"){ wireCommunity(); }
-  if(v==="friends"){ renderFriendsLocal(); }
   if(v==="notes"){ renderNotes(); }
+  if(v==="friends"){ renderFriendsLocal(); }
   if(v==="settings"){ renderSettings(); }
 
   window.scrollTo({top:0,behavior:"smooth"});
@@ -484,6 +752,7 @@ function renderSettings(){
   f.displayName.value = state.profile?.displayName || "";
   const set=new Set(state.profile?.addictions||[]);
   $$('input[name="addictions"]').forEach(i=>{ i.checked=set.has(i.value); });
+
   f.onsubmit=(e)=>{
     e.preventDefault();
     const fd=new FormData(f);
@@ -493,9 +762,12 @@ function renderSettings(){
     state.profile = {...(state.profile||{}), displayName: (fd.get("displayName")||"").trim(), addictions:adds, primary};
     save();
     alert((state.i18n==="es")?"Ajustes guardados.":"Settings saved.");
-    renderHomeSteps(); renderGuide(); renderResearch();
   };
 }
+
+/* Drawer + global nav */
+function openDrawer(){ $("#drawer").classList.add("open"); $("#backdrop").hidden=false; $("#drawer").setAttribute("aria-hidden","false"); }
+function closeDrawer(){ $("#drawer").classList.remove("open"); $("#backdrop").hidden=true; $("#drawer").setAttribute("aria-hidden","true"); }
 
 /* SOS */
 function wireSOS(){
@@ -510,80 +782,88 @@ function wireSOS(){
   const chipsES=["Beber agua","Agua fría en la cara","Caminar 5 min","Escribir a un amigo","Respiración 4-6"];
   const L=document.documentElement.getAttribute("data-lang")||"en";
   const chips = L==="es" ? chipsES : chipsEN;
+
   const wrap=$("#copingChips"); wrap.innerHTML="";
-  chips.forEach(c=>{ const b=document.createElement("button"); b.className="chip"; b.type="button"; b.textContent=c; b.onclick=()=>{ $("#sosNote").value = ($("#sosNote").value+"\nTried: "+c).trim(); }; wrap.appendChild(b); });
+  chips.forEach(c=>{ const b=document.createElement("button"); b.className="chip"; b.type="button"; b.textContent=c; b.onclick=()=>{ $("#sosNote").value = ($("#sosNote").value+"\n"+(L==="es"?"Probado: ":"Tried: ")+c).trim(); }; wrap.appendChild(b); });
+  upd();
 }
 
-/* Boot + wiring */
-function openDrawer(){ $("#drawer").classList.add("open"); $("#backdrop").hidden=false; }
-function closeDrawer(){ $("#drawer").classList.remove("open"); $("#backdrop").hidden=true; }
+/* ---------------- Boot ---------------- */
+load();
+window.addEventListener("DOMContentLoaded", ()=>{
+  if(!state.profile) show("onboarding"); else show("home");
 
-function wire(){
-  // drawer + nav buttons
-  $("#menuBtn").onclick=openDrawer;
-  $("#closeDrawer").onclick=closeDrawer;
-  $("#backdrop").onclick=closeDrawer;
-
-  $$(".tabbar [data-nav], [data-nav].drawer-link").forEach(b=>{
-    b.addEventListener("click",()=>{
-      const target=b.getAttribute("data-nav");
+  // Global nav
+  document.querySelectorAll("[data-nav]").forEach((btn)=>{
+    btn.addEventListener("click",(e)=>{
+      e.preventDefault();
+      const target = btn.getAttribute("data-nav");
       if(target){ closeDrawer(); show(target); }
     });
   });
 
-  // onboarding
+  // Drawer controls
+  $("#menuBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); openDrawer(); });
+  $("#closeDrawer")?.addEventListener("click", (e)=>{ e.preventDefault(); closeDrawer(); });
+  $("#backdrop")?.addEventListener("click", closeDrawer);
+
+  // Onboarding
   $("#onboardingForm")?.addEventListener("submit",(e)=>{
     e.preventDefault();
     const chosen = $$('input[name="focus"]:checked').map(i=>i.value).filter(v=>ADDICTIONS.includes(v));
-    if(!chosen.length) { alert(state.i18n==="es" ? "Elige al menos un enfoque." : "Pick at least one focus."); return; }
+    if(!chosen.length) { alert("Pick at least one focus."); return; }
     const fd=new FormData(e.target);
     state.profile = {
       displayName: "",
       primary: chosen[0],
       addictions: chosen,
-      quitDate: fd.get("quitDate") || todayISO(),
+      quitDate: fd.get("quitDate"),
       motivation: (fd.get("motivation")||"").trim(),
       lang: document.documentElement.getAttribute("data-lang")||"en"
     };
     save(); applyI18N(); show("home");
   });
 
-  // language
-  $("#langSelect").value = state.i18n;
-  $("#langSelect").onchange = (e)=>{
-    const lang=e.target.value;
-    document.documentElement.setAttribute("data-lang", lang);
-    state.profile = {...(state.profile||{}), lang};
-    save(); applyI18N();
-    renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
-  };
-
-  // check-in form
-  $("#checkinForm")?.addEventListener("submit",(e)=>{
-    e.preventDefault();
-    const fd=new FormData(e.target);
-    const entry = {
-      ts: Date.now(),
-      mood: Number(fd.get("mood")), urge: Number(fd.get("urge")),
-      sleep: Number(fd.get("sleep")), window: fd.get("window"),
-      exposure: fd.get("exposure"),
-      action: (fd.get("action")||"").trim(),
-      text: (fd.get("note")||"").trim()
+  // Language
+  const ls=$("#langSelect");
+  if(ls){
+    ls.value = state.i18n;
+    ls.onchange = (e)=>{
+      const lang=e.target.value;
+      document.documentElement.setAttribute("data-lang", lang);
+      state.profile = {...(state.profile||{}), lang};
+      save(); applyI18N();
+      renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes();
+      renderHomeStepsChoice(); renderHomeSteps();
+      renderStreak("streakLabel"); renderStreak("streakLabel2");
     };
-    state.journal.push({id:crypto.randomUUID(), text:`[CHK] mood ${entry.mood}/urge ${entry.urge} | sleep ${entry.sleep}h | ${entry.window}/${entry.exposure} | ${entry.action} | ${entry.text}`, ts: entry.ts});
-    save(); alert((state.i18n==="es")?"Guardado.":"Saved."); renderCheckin(); renderNotes();
+  }
+
+  // Quick mark on Check-in page (also gated by checklist for Success)
+  $("#markTodayOk2")?.addEventListener("click", ()=>{
+    if(!tryToggleToday("ok")) return;
+    const iso=todayISO(); state.cal[iso]="ok";
+    state.journal.push({id:crypto.randomUUID(), text:`[CHK] success`, ts:Date.now()});
+    save(); renderCheckin(); renderCalendar(); renderCalendarFull(); renderNotes();
+    renderStreak("streakLabel"); renderStreak("streakLabel2");
+  });
+  $("#markTodaySlip2")?.addEventListener("click", ()=>{
+    const iso=todayISO(); state.cal[iso]="slip";
+    state.journal.push({id:crypto.randomUUID(), text:`[CHK] slip`, ts:Date.now()});
+    save(); renderCheckin(); renderCalendar(); renderCalendarFull(); renderNotes();
+    renderStreak("streakLabel"); renderStreak("streakLabel2");
   });
 
-  // footer year
-  $("#year").textContent = new Date().getFullYear();
-
-  // SOS widgets
+  // SOS
   wireSOS();
-}
 
-load();
-window.addEventListener("DOMContentLoaded", ()=>{
-  if(!state.profile) show("onboarding"); else show("home");
-  wire();
+  // Footer year & i18n
+  $("#year").textContent = new Date().getFullYear();
   applyI18N();
+
+  // Initial streak
+  renderStreak("streakLabel"); renderStreak("streakLabel2");
 });
+
+/* ---------------- Utils ---------------- */
+function escapeHTML(s){return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
