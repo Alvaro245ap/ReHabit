@@ -13,13 +13,6 @@
 </head>
 <body>
     <!-- Top-right gear menu for Settings -->
-    <div id="topRightMenu" class="top-right-menu">
-        <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn">
-            <span class="gear-icon">⚙️</span>
-        </button>
-        <div id="gearPanel" class="gear-panel" hidden>
-            
-        </div>
     </div>
     
   <header class="app-header">
@@ -40,7 +33,14 @@
   </header>
 
   <!-- Drawer -->
-  <aside id="drawer" class="drawer" aria-hidden="true">
+  <div id="topRightMenu" class="top-right-menu">
+        <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn">
+            <span class="gear-icon">⚙️</span>
+        </button>
+        <div id="gearPanel" class="gear-panel" hidden>
+            
+        </div>
+    <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <strong class="fancy">Menu</strong>
       <button id="closeDrawer" class="btn subtle" aria-label="Close">×</button>
@@ -131,9 +131,8 @@
           <div class="pill-title center" data-i18n="monthCard">Calendar (this month)</div>
           <div class="calendar-head">
             <div id="monthLabel"></div>
-<div id="streakWrap" class="streak center"></div>
-
-          </div>
+<div id="streakWrap" class="streak-wrap"></div>
+</div>
           <div id="calendarGrid" class="calendar"></div>
           
         </div>
