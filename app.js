@@ -13,13 +13,15 @@ const STORAGE = {
 };
 const state = {
   profile:null, cal:{}, journal:[], social:{chatted:false,friended:false}, i18n:"en",
-  researchChoice:null, guideChoice:null
+  researchChoice:null, guideChoice:null,
+  check:{} // per-day 10-steps checklist, keyed by ISO date
 };
 
 function load(){
   state.profile = JSON.parse(localStorage.getItem(STORAGE.PROFILE)||"null");
   state.cal     = JSON.parse(localStorage.getItem(STORAGE.CAL)||"{}");
   state.journal = JSON.parse(localStorage.getItem(STORAGE.JOURNAL)||"[]");
+  state.check   = JSON.parse(localStorage.getItem("rehabit_check")||"{}");
   state.social  = JSON.parse(localStorage.getItem(STORAGE.SOCIAL)||'{"chatted":false,"friended":false}');
   state.i18n    = state.profile?.lang || "en";
   document.documentElement.setAttribute("data-lang", state.i18n);
@@ -29,6 +31,7 @@ function save(){
   localStorage.setItem(STORAGE.CAL, JSON.stringify(state.cal));
   localStorage.setItem(STORAGE.JOURNAL, JSON.stringify(state.journal));
   localStorage.setItem(STORAGE.SOCIAL, JSON.stringify(state.social));
+  localStorage.setItem("rehabit_check", JSON.stringify(state.check));
 }
 
 /* i18n */
@@ -143,6 +146,23 @@ let cursor = new Date();
 function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function firstDay(y,m){ return new Date(y,m,1).getDay(); }
 
+
+/* Checklist helpers */
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function getChecklist(iso=todayISO()){
+  if(!state.check[iso]) state.check[iso]=Array(10).fill(false);
+  return state.check[iso];
+}
+function setChecklistAt(idx, val, iso=todayISO()){
+  const arr=getChecklist(iso);
+  arr[idx]=!!val;
+  state.check[iso]=arr; save();
+}
+function checklistComplete(iso=todayISO()){
+  const arr=getChecklist(iso);
+  return arr.every(Boolean);
+}
+
 function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="streakWrap"){
   const grid = document.getElementById(gridId), label = document.getElementById(labelId);
   const y=cursor.getFullYear(), m=cursor.getMonth();
@@ -162,7 +182,11 @@ function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="s
     if(isToday){
       cell.addEventListener("click",()=>{
         const cur=state.cal[iso]||"";
-        const next= cur===""?"ok":(cur==="ok"?"slip":"");
+        let next = cur===""?"ok":(cur==="ok"?"slip":"");
+        if(next==="ok" && !checklistComplete(iso)){
+          alert((state.i18n==="es")?"Marca todas las casillas de los 10 Pasos antes de completar el día.":"Complete all 10 Steps checkboxes before marking success.");
+          return;
+        }
         state.cal[iso]=next; save(); renderCalendar(gridId,labelId,streakId); updateSobrietyBadges();
       });
     }
@@ -189,6 +213,19 @@ function renderStreak(id){
   const s = currentStreak();
   el.innerHTML = s ? `🔥 <strong>${s}</strong> day${s>1?"s":""} streak` : "—";
 }
+
+
+/* Extra content to enrich Guide & Research */
+const EXTRA_GUIDE_LINES = {
+  en:[
+    "Set a tiny daily promise and keep it.",
+    "Write one sentence about why you chose this goal."
+  ],
+  es:[
+    "Haz una promesa diaria pequeña y cúmplela.",
+    "Escribe una frase sobre por qué elegiste este objetivo."
+  ]
+};
 
 /* Guide helpers */
 function translateAddiction(a){
@@ -252,11 +289,12 @@ function renderResearch(){
   const a = researchCurrentAddiction();
   const L = document.documentElement.getAttribute("data-lang") || "en";
   const lines = (STEPS[a] && STEPS[a][L]) ? STEPS[a][L] : STEPS.Technology.en;
-  renderPillList($("#researchBody"), lines);
+  const add = (state.i18n==="es")?EXTRA_GUIDE_LINES.es:EXTRA_GUIDE_LINES.en; renderPillList($("#researchBody"), lines.concat(add));
 }
 
 /* Notes */
 function renderNotes(){
+  const L=document.documentElement.getAttribute("data-lang")||"en";
   const ul=$("#notesList"); ul.innerHTML="";
   const rec=[...state.journal].filter(j=>j.text.startsWith("[CHK]")||j.text.startsWith("[SOS]")).sort((a,b)=>b.ts-a.ts);
   if(!rec.length){ ul.innerHTML=`<li class="pill-item center">—</li>`; return; }
@@ -440,7 +478,15 @@ function renderHomeSteps(){
     sel.onchange = ()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
   }
   const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  list.innerHTML = steps.map(s=>`<li class="pill-item">${escapeHTML(s)}</li>`).join("");
+  const iso=todayISO(); const arr=getChecklist(iso);
+  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
+  list.querySelectorAll("input[type=\"checkbox\"]").forEach(cb=>{
+    cb.addEventListener("change", (e)=>{
+      const i=Number(e.target.getAttribute("data-step"));
+      setChecklistAt(i, e.target.checked, iso);
+      renderStreak("streakWrap"); // refresh badges if needed
+    });
+  });
 }
 
 /* Navigation */
@@ -587,3 +633,36 @@ window.addEventListener("DOMContentLoaded", ()=>{
   wire();
   applyI18N();
 });
+
+
+/* Override: Home 10 Steps with checkboxes & completion gating */
+function renderHomeSteps(){
+  const adds = state.profile?.addictions || [];
+  const L=document.documentElement.getAttribute("data-lang")||"en";
+  const choiceWrap = document.getElementById("homeStepsChoice");
+  const sel = document.getElementById("homeStepsSelect");
+  const list = document.getElementById("homeStepsList");
+  if(!list) return;
+  const cur = adds.length? (state.guideChoice || adds[0]) : (state.profile?.primary || "Technology");
+  if(adds.length<=1){ choiceWrap && (choiceWrap.hidden=true); }
+  else {
+    choiceWrap && (choiceWrap.hidden=false);
+    sel.innerHTML="";
+    adds.forEach(a=>{
+      const o=document.createElement("option");
+      o.value=a; o.textContent=translateAddiction(a);
+      if(a===cur) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
+  }
+  const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
+  const iso=todayISO(); const arr=getChecklist(iso);
+  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener("change",(e)=>{
+      const i=Number(e.target.getAttribute("data-step"));
+      setChecklistAt(i, e.target.checked, iso);
+    });
+  });
+}
