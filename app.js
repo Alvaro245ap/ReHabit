@@ -107,7 +107,7 @@ const STEPS = {
           es:["Evalúa seguridad","Abstinencia o reducción","Retira parafernalia","Estructura diaria","Kit de afrontamiento","Demora + surf","Identifica disparadores","Responsabilidad","Registra calendario","Ajuste semanal"]}
 };
 
-/* Badges & titles */
+/* Badges & titles (simple) */
 const SOBRIETY = [
   {days:7,   labelEN:"1 week",   labelES:"1 semana",  title:"1-Week Strong"},
   {days:30,  labelEN:"1 month",  labelES:"1 mes",     title:"1-Month Steady"},
@@ -148,11 +148,7 @@ function renderCalendar(gridId="calendarGrid", labelId="monthLabel", streakId="s
   const y=cursor.getFullYear(), m=cursor.getMonth();
   label.textContent = new Date(y,m,1).toLocaleString(undefined,{month:"long",year:"numeric"});
   grid.innerHTML="";
-  const wnames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const wnamesES=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-  const isES = (document.documentElement.getAttribute("data-lang")||"en")==="es";
-  const useW = isES?wnamesES:wnames;
-  for(let i=0;i<7;i++){ const hd=document.createElement("div"); hd.className="m"; hd.textContent=useW[i]; grid.appendChild(hd); }
+  for(let i=0;i<7;i++){ const hd=document.createElement("div"); hd.className="m"; hd.textContent=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]; grid.appendChild(hd); }
   for(let i=0;i<firstDay(y,m);i++){ const blank=document.createElement("div"); grid.appendChild(blank); }
   const days=daysInMonth(y,m); const today=todayISO();
 
@@ -178,6 +174,7 @@ function renderCalendarFull(){ renderCalendar("calendarGrid2","monthLabel2","str
 
 /* Streak (visual & centered) */
 function currentStreak(){
+  // count consecutive "ok" days ending today
   let streak=0;
   let d=new Date();
   while(true){
@@ -228,6 +225,8 @@ function renderGuideCore(){
   renderPillList($("#tab-deep"), (DEEP[a][L]||[]));
 }
 function renderGuide(){ renderGuideChoice(); renderGuideCore(); }
+
+/* Materials merged into tips already */
 
 /* Research */
 function renderResearchChoice(){
