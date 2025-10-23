@@ -555,7 +555,7 @@ function wire(){
     document.documentElement.setAttribute("data-lang", lang);
     state.profile = {...(state.profile||{}), lang};
     save(); applyI18N();
-    renderCalendar(); renderStreak(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
+    renderCalendar(); renderGuide(); renderCheckin(); renderBadges(); renderResearch(); renderNotes(); renderHomeSteps();
   };
 
   // check-in form
@@ -589,98 +589,66 @@ window.addEventListener("DOMContentLoaded", ()=>{
 });
 
 
-/*** Top-right gear menu behavior ***/
+/*** Gear button navigates directly to Settings ***/
 document.addEventListener('DOMContentLoaded', () => {
   const gearBtn = document.getElementById('gearBtn');
-  const gearPanel = document.getElementById('gearPanel');
-  if(gearBtn && gearPanel){
-    const toggle = () => { gearPanel.hidden = !gearPanel.hidden; };
-    gearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
-    document.addEventListener('click', ()=>{ if(!gearPanel.hidden) gearPanel.hidden = true; });
-    const settingsBtn = gearPanel.querySelector('[data-route="settings"]');
-    if(settingsBtn){
-      settingsBtn.addEventListener('click', ()=>{
-        gearPanel.hidden = true;
-        if(typeof navigate === 'function'){ navigate('settings'); }
-      });
-    }
-  }
-});
-
-
-/*** Streak computation & rendering ***/
-function computeStreak(){
-  try{
-    const map = JSON.parse(localStorage.getItem('calendarStatus')||"{}");
-    const today = new Date();
-    let s = 0;
-    for(let d=new Date(today); ; d.setDate(d.getDate()-1)){
-      const iso = d.toISOString().slice(0,10);
-      if(map[iso]==='success'){ s++; } else { break; }
-    }
-    return s;
-  }catch(e){ return 0; }
-}
-function renderStreak(){
-  const el = document.getElementById('streakWrap');
-  if(!el) return;
-  const s = computeStreak();
-  el.textContent = s ? `Streak: ${s} ${s===1?'day':'days'}` : 'Streak: 0 days';
-}
-try{ renderStreak(); }catch(e){}
-
-/*** Daily check-in layout enhancer ***/
-document.addEventListener('DOMContentLoaded', () => {
-  const left = document.getElementById('dailyLeft');
-  if(left && !left.classList.contains('daily-grid')){
-    left.classList.add('daily-grid');
-    Array.from(left.children).forEach(el=>{
-      if(!el.classList.contains('actions')) el.classList.add('daily-field');
+  if(gearBtn){
+    gearBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      if(typeof navigate === 'function'){ navigate('settings'); }
     });
-    const note = left.querySelector('textarea');
-    if(note) (note.closest('.daily-field')||note.parentElement).classList.add('full');
-    const actions = left.querySelector('.actions, .buttons');
-    if(actions) actions.classList.add('daily-actions','full');
   }
 });
 
-/*** Append more info for Guide (advice & deep) and Research ***/
-document.addEventListener('DOMContentLoaded', () => {
-  const guide = document.getElementById('guideAdvice');
-  if(guide && !guide.dataset.enriched){
-    guide.dataset.enriched = '1';
-    const extra = document.createElement('section');
-    extra.innerHTML = `<h4>Consejos prácticos</h4>
-      <ul>
-        <li>Define una acción siguiente de menos de 2 minutos.</li>
-        <li>Usa recordatorios situacionales (señales) para anclar el hábito.</li>
-        <li>Tras un desliz, anota un aprendizaje de una línea.</li>
-      </ul>`;
-    guide.appendChild(extra);
+/*** Add more steps (content only) to Guide (>=20) ***/
+document.addEventListener('DOMContentLoaded', ()=>{
+  const ul = document.getElementById('guideSteps');
+  if(ul && !ul.dataset.extra20){
+    ul.dataset.extra20 = '1';
+    const items = [
+      'Set a 2-minute starter task.',
+      'Prepare your environment the night before.',
+      'Identify your #1 trigger and plan a response.',
+      'Use a temptation bundling pair (habit + reward).',
+      'Schedule a fixed time window for the hardest task.',
+      'Write a one-line slip lesson if you lapse.',
+      'Share your goal with one accountability buddy.',
+      'Use visual cues in the places you need them.',
+      'Rate your craving 0–10 and watch it change.',
+      'Practice one minute of paced breathing during urges.',
+      'Do urge surfing for 90 seconds.',
+      'Move your body for 60 seconds to reset state.',
+      'Track your streak and % days done weekly.',
+      'Make check-ins take < 2 minutes.',
+      'Keep all tools in one “recovery kit” bag.',
+      'Create “if-then” scripts for 3 risky contexts.',
+      'Anchor new habits to an existing routine.',
+      'Review your values in one sentence daily.',
+      'Celebrate tiny wins immediately.',
+      'Use a phone downtime mode in risk hours.',
+      'Do a weekly reflection: keep / tweak / drop.'
+    ];
+    items.forEach(txt=>{
+      const li = document.createElement('li');
+      li.textContent = txt;
+      ul.appendChild(li);
+    });
   }
-  const deep = document.getElementById('guideDeep');
-  if(deep && !deep.dataset.enriched){
-    deep.dataset.enriched = '1';
-    const extra2 = document.createElement('section');
-    extra2.innerHTML = `<h4>Guía profunda – añadidos</h4>
-      <ol>
-        <li>Valores y propósito: por qué este cambio importa ahora.</li>
-        <li>Top 3 contextos de riesgo y plan si‑entonces.</li>
-        <li>Revisión semanal con métricas simples (streak, % de cumplimiento).</li>
-      </ol>`;
-    deep.appendChild(extra2);
-  }
-  const research = document.getElementById('researchContent');
-  if(research && !research.dataset.enriched){
-    research.dataset.enriched = '1';
-    const ex = document.createElement('section');
-    ex.innerHTML = `<h4>Research highlights</h4>
-      <ul>
-        <li>La exposición graduada reduce la reactividad con práctica repetida.</li>
-        <li>Los hábitos se refuerzan con señales y recompensas inmediatas.</li>
-        <li>La autocompasión mejora la adherencia tras deslices.</li>
-      </ul>`;
-    research.appendChild(ex);
+});
+
+/*** Enrich Research entries with 'why it works' notes ***/
+document.addEventListener('DOMContentLoaded', ()=>{
+  const list = document.querySelectorAll('#researchContent .research-item');
+  if(list && !document.body.dataset.researchWhy){
+    document.body.dataset.researchWhy = '1';
+    list.forEach((el)=>{
+      if(el.querySelector('.why')) return;
+      const why = document.createElement('div');
+      why.className = 'why';
+      // Pick some generic mechanism-based rationale
+      why.innerHTML = '<strong>Why it works:</strong> It targets a specific mechanism (cue control, reinforcement, or exposure). Repetition under safe conditions reduces reactivity and builds automaticity.';
+      el.appendChild(why);
+    });
   }
 });
 
@@ -689,14 +657,30 @@ function sendFriendRequest(username){
   const list=JSON.parse(localStorage.getItem(key)||'[]');
   if(!list.includes(username)) list.push(username);
   localStorage.setItem(key, JSON.stringify(list));
-  // reciprocal for bots
-  try{
-    const to = (username||'').toLowerCase();
-    if(/(bot|helper|coach|rehabitbot)/i.test(to)){
-      const incomingKey='incomingFriendRequests';
-      const arr=JSON.parse(localStorage.getItem(incomingKey)||'[]');
-      if(!arr.includes(to)) arr.push(to);
-      localStorage.setItem(incomingKey, JSON.stringify(arr));
-    }
-  }catch(e){}
+  // Mirror incoming
+  const incomingKey='incomingFriendRequests';
+  const inc=JSON.parse(localStorage.getItem(incomingKey)||'[]');
+  if(!inc.includes(username.toLowerCase())) inc.push(username.toLowerCase());
+  localStorage.setItem(incomingKey, JSON.stringify(inc));
 }
+
+function acceptFriendRequest(user){
+  const incomingKey='incomingFriendRequests';
+  let inc=JSON.parse(localStorage.getItem(incomingKey)||'[]').filter(x=>x!==user.toLowerCase());
+  localStorage.setItem(incomingKey, JSON.stringify(inc));
+  const friendsKey='friends';
+  const friends=JSON.parse(localStorage.getItem(friendsKey)||'[]');
+  if(!friends.includes(user)) friends.push(user);
+  localStorage.setItem(friendsKey, JSON.stringify(friends));
+}
+
+function checklistCompleteToday(){
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    const checks = JSON.parse(localStorage.getItem('todayChecklist')||'{}');
+    let count=0;
+    for(let i=1;i<=10;i++){ if(checks['step'+i]) count++; }
+    return count>=10;
+  }catch(e){ return false; }
+}
+function canMarkSuccessToday(){ return checklistCompleteToday(); }
