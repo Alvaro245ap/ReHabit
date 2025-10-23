@@ -12,16 +12,10 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-    <!-- Top-right gear menu for Settings -->
-    <div id="topRightMenu" class="top-right-menu">
-        <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn">
-            <span class="gear-icon">⚙️</span>
-        </button>
-        <div id="gearPanel" class="gear-panel" hidden>
-            
+        <div id="topRightMenu" class="top-right-menu">
+            <button id="gearBtn" aria-label="Settings" title="Settings" class="icon-btn"><span class="gear-icon">⚙️</span></button>
         </div>
-    </div>
-    
+        
   <header class="app-header">
     <button id="menuBtn" class="hamburger" aria-label="Menu" aria-haspopup="true" aria-controls="drawer">☰</button>
 
@@ -129,14 +123,13 @@
       <div class="grid-2 home-pills">
         <div class="pill-card">
           <div class="pill-title center" data-i18n="monthCard">Calendar (this month)</div>
+<div id="streakWrap" class="streak-wrap"></div>
+
           <div class="calendar-head">
             <div id="monthLabel"></div>
-<div id="streakWrap" class="streak center"></div>
-
           </div>
           <div id="calendarGrid" class="calendar"></div>
-          
-        </div>
+          </div>
 
         <div class="pill-card">
           <div class="pill-title center" data-i18n="steps">10 Steps</div>
