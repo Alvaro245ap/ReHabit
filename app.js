@@ -1,9 +1,10 @@
 /* ReHabit — app.js (full) */
 console.log("app.js loaded");
 // ==== BACKEND CONFIG (ADD) ====
-const API_BASE = 'https://YOUR-RENDER-APP.onrender.com'; // <-- change to your Render URL
+const API_BASE = 'https://rehabit.onrender.com'; // <-- change to your Render URL
 let myServerUser = null;  // { id, code, display_name }
-let ws = null;
+let ws = null;                 // single, shared socket
+window.__WS_READY = false;     // guard flag: don’t reconnect on every render
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -824,22 +825,36 @@ function renderHomeSteps(){
 }
 // ==== REGISTER WITH SERVER + OPEN WS (ADD) ====
 document.addEventListener('DOMContentLoaded', async () => {
-  try{
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (window.__WS_READY) return;   // <-- prevents re-initializing on nav
+    window.__WS_READY = true;
+
     const kp = await loadOrCreateKeyPair();
     const code = ($("#myUid")?.textContent && $("#myUid").textContent !== "—")
       ? $("#myUid").textContent.trim()
       : (state.profile?.code || localStorage.getItem('my_code') || `RH-${crypto.randomUUID().slice(0,6).toUpperCase()}`);
 
-    // keep visible code
     localStorage.setItem('my_code', code);
     if($("#myUid")) $("#myUid").textContent = code;
 
     const displayName = state.profile?.name || state.profile?.displayName || "User";
     const res = await fetch(`${API_BASE}/api/register`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ code, displayName, publicKeyJwk: kp.publicJwk })
+      body: JSON.stringify({ code, displayName, publicKeyJwk: (await loadOrCreateKeyPair()).publicJwk })
     });
     myServerUser = await res.json();
+
+    if (!ws || ws.readyState > 1) {
+      ws = new WebSocket(API_BASE.replace('http','ws'));
+      ws.addEventListener('open', ()=> {
+        ws.send(JSON.stringify({type:'hello', code}));
+      });
+      ws.addEventListener('message', onWsMessage); // see handler below
+    }
+  } catch(e) { console.error('register/init failed', e); }
+});
+
 
     // WebSocket hello
     ws = new WebSocket(API_BASE.replace('http','ws'));
@@ -860,3 +875,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }catch(e){ console.error('register/init failed', e); }
 });
+
+function onWsMessage(e){
+  (async ()=>{
+    const data = JSON.parse(e.data);
+    if(data.type==='msg'){
+      const peerJwk = await getPublicKeyJwkOf(data.fromCode);
+      const peerPub = await importPeerPublicKey(peerJwk);
+      const { privateKey } = await loadOrCreateKeyPair();
+      const shared = await deriveSharedSecret(privateKey, peerPub);
+      const text = await decryptFor(shared, data.ciphertext, data.nonce);
+      appendChatBubble(data.fromCode, text);
+    }
+  })().catch(console.error);
+}
