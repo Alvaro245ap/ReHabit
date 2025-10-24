@@ -1,7 +1,9 @@
 /* ReHabit — app.js (full) */
 console.log("app.js loaded");
 // ==== BACKEND CONFIG (ADD) ====
-const API_BASE = 'https://rehabit.onrender.com'; // <-- change to your Render URL
+// use same-origin API now that frontend is served by the same service
+const API_BASE = "";  // all fetches go to /api/...
+
 let myServerUser = null;  // { id, code, display_name }
 let ws = null;                 // single, shared socket
 window.__WS_READY = false;     // guard flag: don’t reconnect on every render
@@ -850,7 +852,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     myServerUser = await res.json();
 
     if (!ws || ws.readyState > 1) {
-      ws = new WebSocket(API_BASE.replace('http','ws'));
+     ws = new WebSocket(location.origin.replace('http', 'ws'));
+
       ws.addEventListener('open', ()=> {
         ws.send(JSON.stringify({type:'hello', code}));
       });
@@ -861,7 +864,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // WebSocket hello
-    ws = new WebSocket(API_BASE.replace('http','ws'));
+  ws = new WebSocket(location.origin.replace('http', 'ws'));
+
     ws.addEventListener('open', ()=> {
       ws.send(JSON.stringify({type:'hello', code}));
     });
