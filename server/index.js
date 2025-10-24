@@ -19,6 +19,28 @@ const hash = async (input) => {
 };
 const chatKey = (a, b) => (a < b) ? `${a}-${b}` : `${b}-${a}`;
 
+// --- ADD: ensure a user exists by code; create if missing (uses a simple display name)
+async function ensureUser(code, displayName = null) {
+  const got = await q('SELECT id, code FROM users WHERE code=$1', [code]);
+  if (got.rows.length) return got.rows[0];
+
+  // choose a label if not provided
+  const label = displayName || (
+    code === 'RH-COACH' ? 'Coach Bot' :
+    code === 'RH-CALM'  ? 'Calm Bot'  :
+    code === 'RH-PEER'  ? 'Peer Bot'  :
+    code                 // fallback: use code
+  );
+
+  const ins = await q(
+    'INSERT INTO users(code, display_name) VALUES($1,$2) RETURNING id, code',
+    [code, label]
+  );
+  // We don’t have a public key for bots. If you want them to “chat back”
+  // later, you can seed a static JWK into user_keys here.
+  return ins.rows[0];
+}
+
 // ---- REST
 
 // Register (or login) by code + displayName + publicKeyJwk
@@ -61,19 +83,23 @@ app.get('/api/user/:code', async (req,res)=>{
 // Send a friend request (by code)
 app.post('/api/friends/request', async (req,res)=>{
   const { fromCode, toCode } = req.body;
-  const { rows: R1 } = await q('SELECT id FROM users WHERE code=$1',[fromCode]);
-  const { rows: R2 } = await q('SELECT id FROM users WHERE code=$1',[toCode]);
-  if(!R1.length || !R2.length) return res.status(404).json({error:'user not found'});
-  const from = R1[0].id, to = R2[0].id;
+
+  // ensure both users exist (creates bots or new users if missing)
+  const from = await ensureUser(fromCode);
+  const to   = await ensureUser(toCode);
+
   await q(`INSERT INTO friend_requests(from_user,to_user,status)
            VALUES ($1,$2,'pending')
-           ON CONFLICT (from_user,to_user) DO NOTHING`, [from,to]);
-  // Mirror request back so the other user sees it, like you asked
+           ON CONFLICT (from_user,to_user) DO NOTHING`, [from.id, to.id]);
+
+  // mirror request back so the receiver also sees it
   await q(`INSERT INTO friend_requests(from_user,to_user,status)
            VALUES ($1,$2,'pending')
-           ON CONFLICT (from_user,to_user) DO NOTHING`, [to,from]);
+           ON CONFLICT (from_user,to_user) DO NOTHING`, [to.id, from.id]);
+
   res.json({ok:true});
 });
+
 
 // Accept request
 app.post('/api/friends/accept', async (req,res)=>{
