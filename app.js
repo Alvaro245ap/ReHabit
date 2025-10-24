@@ -889,24 +889,55 @@ function onWsMessage(e){
     }
   })().catch(console.error);
 }
-/* Onboarding form handler (Start ReHabit) */
-document.addEventListener('DOMContentLoaded', ()=>{
-  const f = document.getElementById('onboardingForm');
-  if(!f) return;
-  f.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const selected = Array.from(document.querySelectorAll('input[name="focus"]:checked')).map(i=>i.value);
-    const quitDate = f.querySelector('input[name="quitDate"]').value || "";
-    const motivation = f.querySelector('input[name="motivation"]').value || "";
+/* Onboarding form handler (Start ReHabit) — ROBUST */
+(function(){
+  // Single function that reads the form, saves, and navigates
+  function handleStartRehabit(){
+    const f = document.getElementById('onboardingForm');
+    if(!f) return;
 
-    // Save into profile
+    // read selections safely
+    const selected = Array.from(document.querySelectorAll('#onboardingForm input[name="focus"]:checked'))
+      .map(i => i.value);
+    const quitDate = (f.querySelector('input[name="quitDate"]')?.value || "").trim();
+    const motivation = (f.querySelector('input[name="motivation"]')?.value || "").trim();
+
+    // store to profile
+    window.state = window.state || {};
     state.profile = state.profile || {};
     state.profile.addictions = selected;
     state.profile.quitDate = quitDate;
     state.profile.motivation = motivation;
-    localStorage.setItem(STORAGE.PROFILE, JSON.stringify(state.profile));
 
-    // Go to Home
-    navigate('home');
+    // STORAGE.PROFILE should already exist in your app; if not, fallback key:
+    const PROFILE_KEY = (typeof STORAGE !== 'undefined' && STORAGE.PROFILE) ? STORAGE.PROFILE : 'rehabit_profile';
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
+
+    // go home
+    if (typeof navigate === 'function') navigate('home');
+  }
+
+  // 1) Attach to form submit (works if button is type="submit")
+  document.addEventListener('submit', function(e){
+    const f = e.target;
+    if (f && f.id === 'onboardingForm'){
+      e.preventDefault();
+      handleStartRehabit();
+    }
   });
-});
+
+  // 2) Fallback: attach to clicks on any button inside onboardingForm
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('#onboardingForm button');
+    if (btn){
+      // prevent accidental page reloads
+      e.preventDefault();
+      handleStartRehabit();
+    }
+  });
+
+  // 3) Also run once when DOM is ready (covers cases where the view is present immediately)
+  document.addEventListener('DOMContentLoaded', function(){
+    // no-op; listeners above are already active at document level
+  });
+})();
