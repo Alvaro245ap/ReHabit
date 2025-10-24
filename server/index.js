@@ -4,6 +4,10 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import pkg from 'pg';
 const { Pool } = pkg;
+// ADD THESE TWO LINES ↓↓↓
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
@@ -196,6 +200,18 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', ()=>{ if(ws.uid) sockets.delete(ws.uid); });
+});
+// === STATIC FRONTEND (ADD THIS BLOCK) ===
+// the frontend folder is at repo root /ReHabit-main
+const staticDir = path.join(__dirname, '..', 'ReHabit-main');
+
+// serve assets (css, js, images, service-worker, etc.)
+app.use(express.static(staticDir));
+
+// IMPORTANT: SPA fallback — any non-API route should return index.html
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next(); // keep API routes working
+  res.sendFile(path.join(staticDir, 'index.html'));
 });
 
 const port = process.env.PORT || 10000;
