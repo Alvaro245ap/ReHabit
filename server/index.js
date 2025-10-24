@@ -201,18 +201,29 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', ()=>{ if(ws.uid) sockets.delete(ws.uid); });
 });
-// === STATIC FRONTEND (ADD THIS BLOCK) ===
-// the frontend folder is at repo root /ReHabit-main
-const staticDir = path.join(__dirname, '..', 'ReHabit-main');
+// === STATIC FRONTEND (robust) ===
+// Set STATIC_DIR (Render env var) to the folder that contains index.html (relative to repo root).
+// Examples: 'ReHabit-main', 'frontend', 'client', 'public'
+const STATIC_DIR = process.env.STATIC_DIR || 'ReHabit-main';
+const staticDir = path.resolve(__dirname, '..', STATIC_DIR);
+console.log('Serving static from:', staticDir);
 
 // serve assets (css, js, images, service-worker, etc.)
 app.use(express.static(staticDir));
 
-// IMPORTANT: SPA fallback — any non-API route should return index.html
+// SPA fallback — any non-API route returns index.html
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next(); // keep API routes working
-  res.sendFile(path.join(staticDir, 'index.html'));
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(staticDir, 'index.html'), (err) => {
+    if (err) {
+      console.error('index.html not found at', path.join(staticDir, 'index.html'));
+      res
+        .status(500)
+        .send('index.html not found. Set STATIC_DIR env var to your frontend folder (relative to repo root).');
+    }
+  });
 });
+
 
 const port = process.env.PORT || 10000;
 server.listen(port, ()=>console.log('server on', port));
