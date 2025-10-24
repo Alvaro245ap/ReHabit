@@ -889,3 +889,24 @@ function onWsMessage(e){
     }
   })().catch(console.error);
 }
+/* Onboarding form handler (Start ReHabit) */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const f = document.getElementById('onboardingForm');
+  if(!f) return;
+  f.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const selected = Array.from(document.querySelectorAll('input[name="focus"]:checked')).map(i=>i.value);
+    const quitDate = f.querySelector('input[name="quitDate"]').value || "";
+    const motivation = f.querySelector('input[name="motivation"]').value || "";
+
+    // Save into profile
+    state.profile = state.profile || {};
+    state.profile.addictions = selected;
+    state.profile.quitDate = quitDate;
+    state.profile.motivation = motivation;
+    localStorage.setItem(STORAGE.PROFILE, JSON.stringify(state.profile));
+
+    // Go to Home
+    navigate('home');
+  });
+});
