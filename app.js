@@ -1,5 +1,9 @@
 /* ReHabit — app.js (full) */
 console.log("app.js loaded");
+// ==== BACKEND CONFIG (ADD) ====
+const API_BASE = 'https://YOUR-RENDER-APP.onrender.com'; // <-- change to your Render URL
+let myServerUser = null;  // { id, code, display_name }
+let ws = null;
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -321,6 +325,66 @@ function renderCheckin(){
   if(!rec.length){ list.innerHTML=`<li class="pill-item center">—</li>`; return; }
   rec.forEach(j=>{ const li=document.createElement("li"); li.className="pill-item"; li.innerHTML=`<div class="meta center">${new Date(j.ts).toLocaleString()}</div><div>${escapeHTML(j.text)}</div>`; list.appendChild(li); });
 }
+// ==== E2E ENCRYPTION HELPERS (ADD) ====
+// We generate and store an ECDH P-256 keypair per device.
+// Private key is stored locally (optionally you can wrap with a password later).
+const ENC = {
+  algo: { name: 'ECDH', namedCurve: 'P-256' },
+  aes:  { name: 'AES-GCM', length: 256 }
+};
+
+async function loadOrCreateKeyPair(){
+  const existing = localStorage.getItem('rehabit_keypair');
+  if(existing){
+    const jwks = JSON.parse(existing);
+    const priv = await crypto.subtle.importKey('jwk', jwks.privateKey, ENC.algo, true, ['deriveKey']);
+    const pub  = await crypto.subtle.importKey('jwk', jwks.publicKey, ENC.algo, true, []);
+    return { privateKey:priv, publicKey:pub, publicJwk:jwks.publicKey };
+  }
+  const kp = await crypto.subtle.generateKey(ENC.algo, true, ['deriveKey']);
+  const pubJwk = await crypto.subtle.exportKey('jwk', kp.publicKey);
+  const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+  localStorage.setItem('rehabit_keypair', JSON.stringify({ publicKey:pubJwk, privateKey:privJwk }));
+  return { privateKey:kp.privateKey, publicKey:kp.publicKey, publicJwk:pubJwk };
+}
+
+async function getPublicKeyJwkOf(code){
+  const res = await fetch(`${API_BASE}/api/user/${encodeURIComponent(code)}`);
+  if(!res.ok) throw new Error('user not found');
+  const data = await res.json();
+  return data.public_key_jwk;
+}
+
+async function importPeerPublicKey(jwk){
+  return crypto.subtle.importKey('jwk', jwk, ENC.algo, true, []);
+}
+
+async function deriveSharedSecret(myPriv, peerPub){
+  return crypto.subtle.deriveKey(
+    { name:'ECDH', public: peerPub },
+    myPriv,
+    ENC.aes,
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function ub64(s){ return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); }
+
+async function encryptFor(sharedKey, text){
+  const enc = new TextEncoder().encode(text);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, sharedKey, enc);
+  return { ciphertext:b64(ct), nonce:b64(iv) };
+}
+
+async function decryptFor(sharedKey, ciphertextB64, nonceB64){
+  const ct = ub64(ciphertextB64);
+  const iv = ub64(nonceB64);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, sharedKey, ct);
+  return new TextDecoder().decode(pt);
+}
 
 /* Badges page */
 function renderBadges(){
@@ -412,57 +476,149 @@ function removeLocalRequest(uid){
   const r=getLocalRequests().filter(x=>x.uid!==uid);
   localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
 }
-function renderFriendsLocal(){
-  $("#myUid").textContent = "RH-" + (crypto.randomUUID().slice(0,6).toUpperCase());
+/* Friends (SERVER) -- REPLACE START */
+async function renderFriendsLocal(){
+  // Show my code
+  const code = localStorage.getItem('my_code');
+  if($("#myUid")) $("#myUid").textContent = code;
+
+  // Send request form
   const form = $("#addFriendForm");
   if(form){
-    form.onsubmit = (e)=>{
+    form.onsubmit = async (e)=>{
       e.preventDefault();
-      const code = (new FormData(form).get("code") || "").trim().toUpperCase();
-      if(!code) return;
-      addLocalRequest(code, code);
+      const toCode = (new FormData(form).get("code") || "").trim().toUpperCase();
+      if(!toCode) return;
+      await fetch(`${API_BASE}/api/friends/request`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ fromCode: code, toCode })
+      });
       alert((state.i18n==="es")?"Solicitud enviada.":"Request sent.");
-      form.reset(); renderFriendsLocal();
+      form.reset();
+      await renderFriendsLocal();
     };
   }
+
+  // Load lists
+  const res = await fetch(`${API_BASE}/api/friends/${encodeURIComponent(code)}`);
+  const data = await res.json();
+
   // Requests
-  const reqs = getLocalRequests();
-  const reqList=$("#requestsList"); reqList.innerHTML=reqs.length?"":`<li><span>No requests</span></li>`;
-  reqs.forEach(r=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<span>${escapeHTML(r.label||r.uid)}</span>
-      <div class="actions">
-        <button class="btn" data-acc="${r.uid}">Accept</button>
-        <button class="btn subtle" data-rej="${r.uid}">Decline</button>
-      </div>`;
-    reqList.appendChild(li);
-  });
-  reqList.onclick=(e)=>{
-    const acc=e.target.getAttribute("data-acc");
-    const rej=e.target.getAttribute("data-rej");
-    if(acc){
-      addLocalFriend(acc, acc);
-      removeLocalRequest(acc);
-      renderFriendsLocal();
-    }else if(rej){
-      removeLocalRequest(rej);
-      renderFriendsLocal();
-    }
-  };
+  const reqList=$("#requestsList"); reqList.innerHTML = "";
+  if(!data.requests.length){
+    reqList.innerHTML = `<li><span>No requests</span></li>`;
+  }else{
+    data.requests.forEach(r=>{
+      const li=document.createElement("li");
+      li.innerHTML=`<span>${escapeHTML(r.display_name)} (${r.code})</span>
+        <div class="actions">
+          <button class="btn" data-acc="${r.code}">Accept</button>
+          <button class="btn subtle" data-rej="${r.code}">Decline</button>
+        </div>`;
+      reqList.appendChild(li);
+    });
+    reqList.onclick = async (e)=>{
+      const acc=e.target.getAttribute("data-acc");
+      const rej=e.target.getAttribute("data-rej");
+      if(acc){
+        await fetch(`${API_BASE}/api/friends/accept`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ meCode: code, fromCode: acc })
+        });
+        await renderFriendsLocal();
+      }else if(rej){
+        alert('Decline not implemented server-side (optional).');
+      }
+    };
+  }
+
   // Friends
-  const fr=getLocalFriends();
-  const frList=$("#friendList"); frList.innerHTML=fr.length?"":`<li><span>No friends yet</span></li>`;
-  fr.forEach(x=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<span>${escapeHTML(x.label||x.uid)}</span><button class="btn subtle" data-rem="${x.uid}">Remove</button>`;
-    frList.appendChild(li);
-  });
-  frList.onclick=(e)=>{
-    const uid=e.target.getAttribute("data-rem"); if(!uid) return;
-    const next=getLocalFriends().filter(x=>x.uid!==uid);
-    setLocalFriends(next); renderFriendsLocal();
+  const frList=$("#friendList"); frList.innerHTML="";
+  if(!data.friends.length){
+    frList.innerHTML = `<li><span>No friends yet</span></li>`;
+  }else{
+    data.friends.forEach(f=>{
+      const li=document.createElement("li");
+      li.innerHTML=`<span>${escapeHTML(f.display_name)} (${f.code})</span>
+        <button class="btn" data-chat="${f.code}">Chat</button>`;
+      frList.appendChild(li);
+    });
+    frList.onclick = (e)=>{
+      const code = e.target.getAttribute('data-chat');
+      if(code) openChatWith(code);
+    };
+  }
+}
+/* Friends (SERVER) -- REPLACE END */
+
+// ==== Chat helpers (ADD) ====
+function openChatWith(peerCode){
+  // simple modal-less chat box; you can style as you wish
+  const box = document.createElement('div');
+  box.className = 'chat-box';
+  box.innerHTML = `
+    <div class="chat-head">Chat with ${escapeHTML(peerCode)}</div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-send"><input id="chatInput" placeholder="Type..."><button id="chatSend">Send</button></div>
+  `;
+  document.body.appendChild(box);
+
+  // load history
+  loadHistory(peerCode);
+
+  box.querySelector('#chatSend').onclick = async ()=>{
+    const text = box.querySelector('#chatInput').value.trim();
+    if(!text) return;
+    await sendEncrypted(peerCode, text);
+    appendChatBubble(localStorage.getItem('my_code'), text);
+    box.querySelector('#chatInput').value = '';
   };
 }
+
+function appendChatBubble(fromCode, text){
+  const body = document.getElementById('chatBody');
+  if(!body) return;
+  const mine = (fromCode === localStorage.getItem('my_code'));
+  const div = document.createElement('div');
+  div.className = 'bubble ' + (mine?'me':'them');
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+async function sendEncrypted(toCode, text){
+  const peerJwk = await getPublicKeyJwkOf(toCode);
+  const peerPub = await importPeerPublicKey(peerJwk);
+  const { privateKey } = await loadOrCreateKeyPair();
+  const shared = await deriveSharedSecret(privateKey, peerPub);
+  const { ciphertext, nonce } = await encryptFor(shared, text);
+
+  ws?.send(JSON.stringify({
+    type:'msg',
+    fromCode: localStorage.getItem('my_code'),
+    toCode,
+    ciphertext,
+    nonce
+  }));
+}
+
+async function loadHistory(peerCode){
+  const me = localStorage.getItem('my_code');
+  const res = await fetch(`${API_BASE}/api/history?aCode=${encodeURIComponent(me)}&bCode=${encodeURIComponent(peerCode)}`);
+  const data = await res.json();
+  const { privateKey } = await loadOrCreateKeyPair();
+  const peerJwk = await getPublicKeyJwkOf(peerCode);
+  const peerPub = await importPeerPublicKey(peerJwk);
+  const shared = await deriveSharedSecret(privateKey, peerPub);
+
+  const body = document.getElementById('chatBody');
+  if(body) body.innerHTML = '';
+  for(const m of data.rows){
+    const fromCode = (m.from_user === myServerUser.id) ? me : peerCode;
+    const text = await decryptFor(shared, Buffer.from(m.ciphertext,'base64').toString('base64'), Buffer.from(m.nonce,'base64').toString('base64'));
+    appendChatBubble(fromCode, text);
+  }
+}
+
 
 /* Home 10 steps panel */
 function renderHomeSteps(){
@@ -666,3 +822,41 @@ function renderHomeSteps(){
     });
   });
 }
+// ==== REGISTER WITH SERVER + OPEN WS (ADD) ====
+document.addEventListener('DOMContentLoaded', async () => {
+  try{
+    const kp = await loadOrCreateKeyPair();
+    const code = ($("#myUid")?.textContent && $("#myUid").textContent !== "—")
+      ? $("#myUid").textContent.trim()
+      : (state.profile?.code || localStorage.getItem('my_code') || `RH-${crypto.randomUUID().slice(0,6).toUpperCase()}`);
+
+    // keep visible code
+    localStorage.setItem('my_code', code);
+    if($("#myUid")) $("#myUid").textContent = code;
+
+    const displayName = state.profile?.name || state.profile?.displayName || "User";
+    const res = await fetch(`${API_BASE}/api/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, displayName, publicKeyJwk: kp.publicJwk })
+    });
+    myServerUser = await res.json();
+
+    // WebSocket hello
+    ws = new WebSocket(API_BASE.replace('http','ws'));
+    ws.addEventListener('open', ()=> {
+      ws.send(JSON.stringify({type:'hello', code}));
+    });
+    ws.addEventListener('message', async (e)=>{
+      const data = JSON.parse(e.data);
+      if(data.type==='msg'){
+        // decrypt and display
+        const peerJwk = await getPublicKeyJwkOf(data.fromCode);
+        const peerPub = await importPeerPublicKey(peerJwk);
+        const { privateKey } = await loadOrCreateKeyPair();
+        const shared = await deriveSharedSecret(privateKey, peerPub);
+        const text = await decryptFor(shared, data.ciphertext, data.nonce);
+        appendChatBubble(data.fromCode, text); // you'll add this UI helper below
+      }
+    });
+  }catch(e){ console.error('register/init failed', e); }
+});
