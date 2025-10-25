@@ -1,58 +1,68 @@
+// server/index.js
+
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import pkg from 'pg';
 const { Pool } = pkg;
-// ADD THESE TWO LINES ↓↓↓
+
+// WebCrypto (for SHA-256 hash chain)
+import { webcrypto as crypto } from 'crypto';
+
+// Filesystem + paths (ONE set of imports only)
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// ---------------- DB ----------------
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const q = (text, params = []) => pool.query(text, params);
 
-// ---- Helpers
-const q = (text, params=[]) => pool.query(text, params);
+// ---------------- Helpers ----------------
 const hash = async (input) => {
+  // input: Buffer
   const buf = await crypto.subtle.digest('SHA-256', input);
   return Buffer.from(buf);
 };
 const chatKey = (a, b) => (a < b) ? `${a}-${b}` : `${b}-${a}`;
 
-// --- ADD: ensure a user exists by code; create if missing (uses a simple display name)
+// Ensure a user exists by code; create if missing (bots too)
 async function ensureUser(code, displayName = null) {
   const got = await q('SELECT id, code FROM users WHERE code=$1', [code]);
   if (got.rows.length) return got.rows[0];
 
-  // choose a label if not provided
   const label = displayName || (
     code === 'RH-COACH' ? 'Coach Bot' :
     code === 'RH-CALM'  ? 'Calm Bot'  :
     code === 'RH-PEER'  ? 'Peer Bot'  :
-    code                 // fallback: use code
+    code
   );
 
   const ins = await q(
     'INSERT INTO users(code, display_name) VALUES($1,$2) RETURNING id, code',
     [code, label]
   );
-  // We don’t have a public key for bots. If you want them to “chat back”
-  // later, you can seed a static JWK into user_keys here.
   return ins.rows[0];
 }
 
-// ---- REST
+// ---------------- REST API ----------------
 
 // Register (or login) by code + displayName + publicKeyJwk
-app.post('/api/register', async (req,res) => {
+app.post('/api/register', async (req, res) => {
   const { code, displayName, publicKeyJwk } = req.body;
-  if(!code || !displayName || !publicKeyJwk) return res.status(400).json({error:'missing fields'});
+  if (!code || !displayName || !publicKeyJwk) {
+    return res.status(400).json({ error: 'missing fields' });
+  }
   const client = await pool.connect();
-  try{
+  try {
     await client.query('BEGIN');
     const upsertUser = `
       INSERT INTO users(code, display_name)
@@ -70,183 +80,209 @@ app.post('/api/register', async (req,res) => {
     await client.query(upsertKey, [user.id, publicKeyJwk]);
     await client.query('COMMIT');
     res.json(user);
-  }catch(e){
-    await client.query('ROLLBACK'); console.error(e); res.status(500).json({error:'register failed'});
-  }finally{ client.release(); }
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error(e);
+    res.status(500).json({ error: 'register failed' });
+  } finally {
+    client.release();
+  }
 });
 
 // Get public key & minimal profile by code
-app.get('/api/user/:code', async (req,res)=>{
-  const { rows } = await q(`SELECT u.id, u.code, u.display_name, k.public_key_jwk
-                             FROM users u LEFT JOIN user_keys k ON u.id=k.user_id
-                             WHERE u.code=$1`, [req.params.code]);
-  if(!rows.length) return res.status(404).json({error:'not found'});
+app.get('/api/user/:code', async (req, res) => {
+  const { rows } = await q(
+    `SELECT u.id, u.code, u.display_name, k.public_key_jwk
+       FROM users u LEFT JOIN user_keys k ON u.id = k.user_id
+      WHERE u.code = $1`,
+    [req.params.code]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'not found' });
   res.json(rows[0]);
 });
 
-// Send a friend request (by code)
-app.post('/api/friends/request', async (req,res)=>{
+// Send a friend request (by code) — mirrors a pending request back
+app.post('/api/friends/request', async (req, res) => {
   const { fromCode, toCode } = req.body;
-
-  // ensure both users exist (creates bots or new users if missing)
   const from = await ensureUser(fromCode);
   const to   = await ensureUser(toCode);
 
-  await q(`INSERT INTO friend_requests(from_user,to_user,status)
-           VALUES ($1,$2,'pending')
-           ON CONFLICT (from_user,to_user) DO NOTHING`, [from.id, to.id]);
+  await q(
+    `INSERT INTO friend_requests(from_user,to_user,status)
+     VALUES ($1,$2,'pending')
+     ON CONFLICT (from_user,to_user) DO NOTHING`,
+    [from.id, to.id]
+  );
 
-  // mirror request back so the receiver also sees it
-  await q(`INSERT INTO friend_requests(from_user,to_user,status)
-           VALUES ($1,$2,'pending')
-           ON CONFLICT (from_user,to_user) DO NOTHING`, [to.id, from.id]);
+  await q(
+    `INSERT INTO friend_requests(from_user,to_user,status)
+     VALUES ($1,$2,'pending')
+     ON CONFLICT (from_user,to_user) DO NOTHING`,
+    [to.id, from.id]
+  );
 
-  res.json({ok:true});
+  res.json({ ok: true });
 });
 
-
-// Accept request
-app.post('/api/friends/accept', async (req,res)=>{
+// Accept request → adds to friends (both sides)
+app.post('/api/friends/accept', async (req, res) => {
   const { meCode, fromCode } = req.body;
-  const me = (await q('SELECT id FROM users WHERE code=$1',[meCode])).rows[0]?.id;
-  const from = (await q('SELECT id FROM users WHERE code=$1',[fromCode])).rows[0]?.id;
-  if(!me || !from) return res.status(404).json({error:'not found'});
+  const me   = (await q('SELECT id FROM users WHERE code=$1', [meCode])).rows[0]?.id;
+  const from = (await q('SELECT id FROM users WHERE code=$1', [fromCode])).rows[0]?.id;
+  if (!me || !from) return res.status(404).json({ error: 'not found' });
 
-  await q(`UPDATE friend_requests SET status='accepted'
-           WHERE from_user=$1 AND to_user=$2 AND status='pending'`, [from, me]);
+  await q(
+    `UPDATE friend_requests SET status='accepted'
+      WHERE from_user=$1 AND to_user=$2 AND status='pending'`,
+    [from, me]
+  );
 
-  // create both sides friendship
   await q(`INSERT INTO friends(user_a,user_b) VALUES($1,$2) ON CONFLICT DO NOTHING`, [me, from]);
   await q(`INSERT INTO friends(user_a,user_b) VALUES($1,$2) ON CONFLICT DO NOTHING`, [from, me]);
-  res.json({ok:true});
+  res.json({ ok: true });
 });
 
-// List friends & pending
-app.get('/api/friends/:code', async (req,res)=>{
-  const meRow = await q('SELECT id FROM users WHERE code=$1',[req.params.code]);
-  if(!meRow.rows.length) return res.status(404).json({error:'not found'});
+// List friends & pending for a user code
+app.get('/api/friends/:code', async (req, res) => {
+  const meRow = await q('SELECT id FROM users WHERE code=$1', [req.params.code]);
+  if (!meRow.rows.length) return res.status(404).json({ error: 'not found' });
   const me = meRow.rows[0].id;
 
-  const friends = (await q(`SELECT u.code, u.display_name
-                            FROM friends f JOIN users u ON u.id=f.user_b
-                            WHERE f.user_a=$1`, [me])).rows;
+  const friends = (
+    await q(
+      `SELECT u.code, u.display_name
+         FROM friends f JOIN users u ON u.id = f.user_b
+        WHERE f.user_a = $1`,
+      [me]
+    )
+  ).rows;
 
-  const requests = (await q(`SELECT u.code, u.display_name
-                             FROM friend_requests r JOIN users u ON u.id=r.from_user
-                             WHERE r.to_user=$1 AND r.status='pending'`, [me])).rows;
+  const requests = (
+    await q(
+      `SELECT u.code, u.display_name
+         FROM friend_requests r JOIN users u ON u.id = r.from_user
+        WHERE r.to_user = $1 AND r.status = 'pending'`,
+      [me]
+    )
+  ).rows;
 
   res.json({ friends, requests });
 });
 
-// Fetch history (ciphertexts) for a chat pair
-app.get('/api/history', async (req,res)=>{
+// Fetch encrypted history for a pair
+app.get('/api/history', async (req, res) => {
   const { aCode, bCode } = req.query;
-  const a = (await q('SELECT id FROM users WHERE code=$1',[aCode])).rows[0]?.id;
-  const b = (await q('SELECT id FROM users WHERE code=$1',[bCode])).rows[0]?.id;
-  if(!a || !b) return res.status(404).json({error:'not found'});
+  const a = (await q('SELECT id FROM users WHERE code=$1', [aCode])).rows[0]?.id;
+  const b = (await q('SELECT id FROM users WHERE code=$1', [bCode])).rows[0]?.id;
+  if (!a || !b) return res.status(404).json({ error: 'not found' });
   const key = chatKey(a, b);
-  const rows = (await q(`SELECT from_user, to_user, ciphertext, nonce, prev_hash, hash, created_at
-                         FROM messages WHERE chat_key=$1 ORDER BY id ASC`, [key])).rows;
+  const rows = (
+    await q(
+      `SELECT from_user, to_user, ciphertext, nonce, prev_hash, hash, created_at
+         FROM messages
+        WHERE chat_key = $1
+        ORDER BY id ASC`,
+      [key]
+    )
+  ).rows;
   res.json({ rows });
 });
 
-// ---- WebSocket for live messages (encrypted)
-
+// ---------------- WebSocket ----------------
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 const sockets = new Map(); // userId -> ws
 
-wss.on('connection', (ws, req) => {
-  // client must send: {type:"hello", code:"RH-XXXX"}
-  ws.on('message', async msg => {
-    try{
+wss.on('connection', (ws) => {
+  ws.on('message', async (msg) => {
+    try {
       const data = JSON.parse(msg.toString());
-      if(data.type === 'hello'){
-        const u = await q('SELECT id FROM users WHERE code=$1',[data.code]);
-        if(!u.rows.length){ ws.close(); return; }
+
+      if (data.type === 'hello') {
+        const u = await q('SELECT id FROM users WHERE code=$1', [data.code]);
+        if (!u.rows.length) { ws.close(); return; }
         const uid = u.rows[0].id;
         sockets.set(uid, ws);
         ws.uid = uid;
-        ws.send(JSON.stringify({type:'ready'}));
+        ws.send(JSON.stringify({ type: 'ready' }));
+        return;
       }
-      // {type:"msg", toCode, ciphertext(base64), nonce(base64)}
-      if(data.type === 'msg' && ws.uid){
-        const to = (await q('SELECT id FROM users WHERE code=$1',[data.toCode])).rows[0]?.id;
-        if(!to) return;
-        const key = chatKey(ws.uid, to);
-        const prev = (await q(`SELECT hash FROM messages WHERE chat_key=$1 ORDER BY id DESC LIMIT 1`, [key])).rows[0]?.hash;
+
+      // { type: "msg", fromCode, toCode, ciphertext(base64), nonce(base64) }
+      if (data.type === 'msg' && ws.uid) {
+        const to = (await q('SELECT id FROM users WHERE code=$1', [data.toCode])).rows[0]?.id;
+        if (!to) return;
+
+        const key  = chatKey(ws.uid, to);
+        const prev = (await q(
+          `SELECT hash FROM messages WHERE chat_key=$1 ORDER BY id DESC LIMIT 1`,
+          [key]
+        )).rows[0]?.hash;
+
         const ts = Buffer.from(new Date().toISOString());
         const toHashInput = Buffer.concat([
-          Buffer.from(prev || ''), Buffer.from(data.ciphertext,'base64'),
-          Buffer.from(data.nonce,'base64'), ts
+          Buffer.from(prev || ''),
+          Buffer.from(data.ciphertext, 'base64'),
+          Buffer.from(data.nonce, 'base64'),
+          ts
         ]);
         const h = await hash(toHashInput);
-        await q(`INSERT INTO messages(chat_key,from_user,to_user,ciphertext,nonce,prev_hash,hash)
-                 VALUES($1,$2,$3,$4,$5,$6,$7)`,
-          [key, ws.uid, to, Buffer.from(data.ciphertext,'base64'), Buffer.from(data.nonce,'base64'), prev || null, h]);
 
-        // push to recipient if online
+        await q(
+          `INSERT INTO messages(chat_key, from_user, to_user, ciphertext, nonce, prev_hash, hash)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            key, ws.uid, to,
+            Buffer.from(data.ciphertext, 'base64'),
+            Buffer.from(data.nonce, 'base64'),
+            prev || null, h
+          ]
+        );
+
         const rcpt = sockets.get(to);
-        if(rcpt){
+        if (rcpt) {
           rcpt.send(JSON.stringify({
-            type:'msg', fromCode:data.fromCode, ciphertext:data.ciphertext, nonce:data.nonce
+            type: 'msg',
+            fromCode: data.fromCode,
+            ciphertext: data.ciphertext,
+            nonce: data.nonce
           }));
         }
       }
-    }catch(e){
+    } catch (e) {
       console.error('ws error', e);
     }
   });
 
-  ws.on('close', ()=>{ if(ws.uid) sockets.delete(ws.uid); });
+  ws.on('close', () => { if (ws.uid) sockets.delete(ws.uid); });
 });
-// === STATIC FRONTEND (repo root contains index.html) ===
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/*
-  Your frontend files (index.html, app.js, styles.css) are at the repo root,
-  which is the parent folder of /server.
-  You can override with env STATIC_DIR ('.' means repo root).
-*/
+// ---------------- Static Frontend ----------------
+// Frontend lives at repo root (parent of /server). Override with STATIC_DIR env var if needed.
 const STATIC_DIR = process.env.STATIC_DIR || '.';
-const staticDir = path.resolve(__dirname, '..', STATIC_DIR);
-
+const staticDir  = path.resolve(__dirname, '..', STATIC_DIR);
 console.log('Serving static from:', staticDir);
 
-// ✅ Serve assets (css/js/images/sw/etc.)
+// serve assets (css/js/images/sw/etc.)
 app.use(express.static(staticDir));
 
-// ✅ Explicit route for "/" to remove any ambiguity
+// explicit route for /
 app.get('/', (req, res) => {
   const idx = path.join(staticDir, 'index.html');
   if (!fs.existsSync(idx)) {
-    // Useful, human-readable diagnostics in Render logs
-    const entries = fs.readdirSync(staticDir, { withFileTypes: true })
-                      .map(d => (d.isDirectory() ? d.name + '/' : d.name));
     console.error('index.html NOT FOUND at:', idx);
-    console.error('Directory listing of staticDir:', entries);
-    return res.status(500).send('index.html not found at repo root. Set STATIC_DIR if needed.');
+    return res.status(500).send('index.html not found at staticDir. Set STATIC_DIR env var if needed.');
   }
   res.sendFile(idx);
 });
 
-// ✅ SPA fallback for any non-API route (keeps /api/* intact)
+// SPA fallback (keep API endpoints intact)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  const idx = path.join(staticDir, 'index.html');
-  res.sendFile(idx, (err) => {
-    if (err) {
-      console.error('SPA fallback could not find:', idx);
-      res.status(500).send('SPA index not found.');
-    }
-  });
+  res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-
-
+// ---------------- Start ----------------
 const port = process.env.PORT || 10000;
-server.listen(port, ()=>console.log('server on', port));
+server.listen(port, () => console.log('server on', port));
