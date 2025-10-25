@@ -201,28 +201,51 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', ()=>{ if(ws.uid) sockets.delete(ws.uid); });
 });
-// === STATIC FRONTEND (robust) ===
-// Set STATIC_DIR (Render env var) to the folder that contains index.html (relative to repo root).
-// Examples: 'ReHabit-main', 'frontend', 'client', 'public'
-const STATIC_DIR = process.env.STATIC_DIR || 'ReHabit-main';
+// === STATIC FRONTEND (repo root contains index.html) ===
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/*
+  Your frontend files (index.html, app.js, styles.css) are at the repo root,
+  which is the parent folder of /server.
+  You can override with env STATIC_DIR ('.' means repo root).
+*/
+const STATIC_DIR = process.env.STATIC_DIR || '.';
 const staticDir = path.resolve(__dirname, '..', STATIC_DIR);
+
 console.log('Serving static from:', staticDir);
 
-// serve assets (css, js, images, service-worker, etc.)
+// ✅ Serve assets (css/js/images/sw/etc.)
 app.use(express.static(staticDir));
 
-// SPA fallback — any non-API route returns index.html
+// ✅ Explicit route for "/" to remove any ambiguity
+app.get('/', (req, res) => {
+  const idx = path.join(staticDir, 'index.html');
+  if (!fs.existsSync(idx)) {
+    // Useful, human-readable diagnostics in Render logs
+    const entries = fs.readdirSync(staticDir, { withFileTypes: true })
+                      .map(d => (d.isDirectory() ? d.name + '/' : d.name));
+    console.error('index.html NOT FOUND at:', idx);
+    console.error('Directory listing of staticDir:', entries);
+    return res.status(500).send('index.html not found at repo root. Set STATIC_DIR if needed.');
+  }
+  res.sendFile(idx);
+});
+
+// ✅ SPA fallback for any non-API route (keeps /api/* intact)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(staticDir, 'index.html'), (err) => {
+  const idx = path.join(staticDir, 'index.html');
+  res.sendFile(idx, (err) => {
     if (err) {
-      console.error('index.html not found at', path.join(staticDir, 'index.html'));
-      res
-        .status(500)
-        .send('index.html not found. Set STATIC_DIR env var to your frontend folder (relative to repo root).');
+      console.error('SPA fallback could not find:', idx);
+      res.status(500).send('SPA index not found.');
     }
   });
 });
+
 
 
 const port = process.env.PORT || 10000;
