@@ -863,9 +863,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-    // WebSocket hello
-  ws = new WebSocket(location.origin.replace('http', 'ws'));
-
     ws.addEventListener('open', ()=> {
       ws.send(JSON.stringify({type:'hello', code}));
     });
