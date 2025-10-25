@@ -1,6 +1,6 @@
 /* ReHabit — app.js (full) */
 console.log("app.js loaded");
-// ==== BACKEND CONFIG (ADD) ====
+// ==== BACKEND CONFIG ====
 // use same-origin API now that frontend is served by the same service
 const API_BASE = "";  // all fetches go to /api/...
 
@@ -16,7 +16,6 @@ function escapeHTML(s){
   const map = { "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#039;" };
   return String(s).replace(/[&<>"']/g, ch => map[ch]);
 }
-
 
 const STORAGE = {
   PROFILE:"rehabit_profile", CAL:"rehabit_calendar", JOURNAL:"rehabit_journal",
@@ -157,9 +156,7 @@ let cursor = new Date();
 function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
 function firstDay(y,m){ return new Date(y,m,1).getDay(); }
 
-
 /* Checklist helpers */
-function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function getChecklist(iso=todayISO()){
   if(!state.check[iso]) state.check[iso]=Array(10).fill(false);
   return state.check[iso];
@@ -225,7 +222,6 @@ function renderStreak(id){
   el.innerHTML = s ? `🔥 <strong>${s}</strong> day${s>1?"s":""} streak` : "—";
 }
 
-
 /* Extra content to enrich Guide & Research */
 const EXTRA_GUIDE_LINES = {
   en:[
@@ -273,8 +269,6 @@ function renderGuideCore(){
   renderPillList($("#tab-deep"), (DEEP[a][L]||[]));
 }
 function renderGuide(){ renderGuideChoice(); renderGuideCore(); }
-
-/* Materials merged into tips already */
 
 /* Research */
 function renderResearchChoice(){
@@ -332,14 +326,12 @@ function renderCheckin(){
   if(!rec.length){ list.innerHTML=`<li class="pill-item center">—</li>`; return; }
   rec.forEach(j=>{ const li=document.createElement("li"); li.className="pill-item"; li.innerHTML=`<div class="meta center">${new Date(j.ts).toLocaleString()}</div><div>${escapeHTML(j.text)}</div>`; list.appendChild(li); });
 }
-// ==== E2E ENCRYPTION HELPERS (ADD) ====
-// We generate and store an ECDH P-256 keypair per device.
-// Private key is stored locally (optionally you can wrap with a password later).
+
+// ==== E2E ENCRYPTION HELPERS ====
 const ENC = {
   algo: { name: 'ECDH', namedCurve: 'P-256' },
   aes:  { name: 'AES-GCM', length: 256 }
 };
-
 async function loadOrCreateKeyPair(){
   const existing = localStorage.getItem('rehabit_keypair');
   if(existing){
@@ -354,38 +346,24 @@ async function loadOrCreateKeyPair(){
   localStorage.setItem('rehabit_keypair', JSON.stringify({ publicKey:pubJwk, privateKey:privJwk }));
   return { privateKey:kp.privateKey, publicKey:kp.publicKey, publicJwk:pubJwk };
 }
-
 async function getPublicKeyJwkOf(code){
   const res = await fetch(`${API_BASE}/api/user/${encodeURIComponent(code)}`);
   if(!res.ok) throw new Error('user not found');
   const data = await res.json();
   return data.public_key_jwk;
 }
-
-async function importPeerPublicKey(jwk){
-  return crypto.subtle.importKey('jwk', jwk, ENC.algo, true, []);
-}
-
+async function importPeerPublicKey(jwk){ return crypto.subtle.importKey('jwk', jwk, ENC.algo, true, []); }
 async function deriveSharedSecret(myPriv, peerPub){
-  return crypto.subtle.deriveKey(
-    { name:'ECDH', public: peerPub },
-    myPriv,
-    ENC.aes,
-    false,
-    ['encrypt','decrypt']
-  );
+  return crypto.subtle.deriveKey({ name:'ECDH', public: peerPub }, myPriv, ENC.aes, false, ['encrypt','decrypt']);
 }
-
 function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
 function ub64(s){ return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); }
-
 async function encryptFor(sharedKey, text){
   const enc = new TextEncoder().encode(text);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, sharedKey, enc);
   return { ciphertext:b64(ct), nonce:b64(iv) };
 }
-
 async function decryptFor(sharedKey, ciphertextB64, nonceB64){
   const ct = ub64(ciphertextB64);
   const iv = ub64(nonceB64);
@@ -466,30 +444,11 @@ function wireCommunity(){
   };
 }
 
-/* Friends (local demo) */
-const LOCAL_FRIENDS_KEY = "rehabit_local_friends";
-const LOCAL_REQUESTS_KEY = "rehabit_local_requests";
-function getLocalFriends(){ return JSON.parse(localStorage.getItem(LOCAL_FRIENDS_KEY) || "[]"); }
-function setLocalFriends(arr){ localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stringify(arr)); }
-function addLocalFriend(uid, label){
-  const f=getLocalFriends(); if(!f.find(x=>x.uid===uid)) f.push({uid,label}); setLocalFriends(f);
-}
-function getLocalRequests(){ return JSON.parse(localStorage.getItem(LOCAL_REQUESTS_KEY) || "[]"); }
-function addLocalRequest(uid, label){
-  const r=getLocalRequests(); if(!r.find(x=>x.uid===uid)) r.push({uid,label});
-  localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
-}
-function removeLocalRequest(uid){
-  const r=getLocalRequests().filter(x=>x.uid!==uid);
-  localStorage.setItem(LOCAL_REQUESTS_KEY, JSON.stringify(r));
-}
-/* Friends (SERVER) -- REPLACE START */
+/* Friends (SERVER) */
 async function renderFriendsLocal(){
-  // Show my code
   const code = localStorage.getItem('my_code');
   if($("#myUid")) $("#myUid").textContent = code;
 
-  // Send request form
   const form = $("#addFriendForm");
   if(form){
     form.onsubmit = async (e)=>{
@@ -506,11 +465,9 @@ async function renderFriendsLocal(){
     };
   }
 
-  // Load lists
   const res = await fetch(`${API_BASE}/api/friends/${encodeURIComponent(code)}`);
   const data = await res.json();
 
-  // Requests
   const reqList=$("#requestsList"); reqList.innerHTML = "";
   if(!data.requests.length){
     reqList.innerHTML = `<li><span>No requests</span></li>`;
@@ -539,7 +496,6 @@ async function renderFriendsLocal(){
     };
   }
 
-  // Friends
   const frList=$("#friendList"); frList.innerHTML="";
   if(!data.friends.length){
     frList.innerHTML = `<li><span>No friends yet</span></li>`;
@@ -556,11 +512,9 @@ async function renderFriendsLocal(){
     };
   }
 }
-/* Friends (SERVER) -- REPLACE END */
 
-// ==== Chat helpers (ADD) ====
+// ==== Chat helpers ====
 function openChatWith(peerCode){
-  // simple modal-less chat box; you can style as you wish
   const box = document.createElement('div');
   box.className = 'chat-box';
   box.innerHTML = `
@@ -570,7 +524,6 @@ function openChatWith(peerCode){
   `;
   document.body.appendChild(box);
 
-  // load history
   loadHistory(peerCode);
 
   box.querySelector('#chatSend').onclick = async ()=>{
@@ -581,7 +534,6 @@ function openChatWith(peerCode){
     box.querySelector('#chatInput').value = '';
   };
 }
-
 function appendChatBubble(fromCode, text){
   const body = document.getElementById('chatBody');
   if(!body) return;
@@ -598,7 +550,6 @@ async function sendEncrypted(toCode, text){
   const { privateKey } = await loadOrCreateKeyPair();
   const shared = await deriveSharedSecret(privateKey, peerPub);
   const { ciphertext, nonce } = await encryptFor(shared, text);
-
   ws?.send(JSON.stringify({
     type:'msg',
     fromCode: localStorage.getItem('my_code'),
@@ -607,7 +558,6 @@ async function sendEncrypted(toCode, text){
     nonce
   }));
 }
-
 async function loadHistory(peerCode){
   const me = localStorage.getItem('my_code');
   const res = await fetch(`${API_BASE}/api/history?aCode=${encodeURIComponent(me)}&bCode=${encodeURIComponent(peerCode)}`);
@@ -616,38 +566,44 @@ async function loadHistory(peerCode){
   const peerJwk = await getPublicKeyJwkOf(peerCode);
   const peerPub = await importPeerPublicKey(peerJwk);
   const shared = await deriveSharedSecret(privateKey, peerPub);
-
   const body = document.getElementById('chatBody');
   if(body) body.innerHTML = '';
   for(const m of data.rows){
     const fromCode = (m.from_user === myServerUser.id) ? me : peerCode;
-    const text = await decryptFor(shared, Buffer.from(m.ciphertext,'base64').toString('base64'), Buffer.from(m.nonce,'base64').toString('base64'));
+    // Expect ciphertext/nonce as base64 strings in API payload
+    const text = await decryptFor(shared, m.ciphertext, m.nonce);
     appendChatBubble(fromCode, text);
   }
 }
 
-
-/* Home 10 steps panel */
+/* Home 10 steps panel (single definition) */
 function renderHomeSteps(){
   const adds = state.profile?.addictions || [];
   const L=document.documentElement.getAttribute("data-lang")||"en";
-  const choiceWrap = $("#homeStepsChoice");
-  const sel = $("#homeStepsSelect");
-  const list = $("#homeStepsList");
+  const choiceWrap = document.getElementById("homeStepsChoice");
+  const sel = document.getElementById("homeStepsSelect");
+  const list = document.getElementById("homeStepsList");
+  if(!list) return;
   const cur = adds.length? (state.guideChoice || adds[0]) : (state.profile?.primary || "Technology");
-  if(adds.length<=1){ choiceWrap.hidden=true; } else {
-    choiceWrap.hidden=false; sel.innerHTML="";
-    adds.forEach(a=>{ const o=document.createElement("option"); o.value=a; o.textContent=translateAddiction(a); if(a===cur) o.selected=true; sel.appendChild(o); });
-    sel.onchange = ()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
+  if(adds.length<=1){ choiceWrap && (choiceWrap.hidden=true); }
+  else {
+    choiceWrap && (choiceWrap.hidden=false);
+    sel.innerHTML="";
+    adds.forEach(a=>{
+      const o=document.createElement("option");
+      o.value=a; o.textContent=translateAddiction(a);
+      if(a===cur) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
   }
   const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
   const iso=todayISO(); const arr=getChecklist(iso);
   list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
-  list.querySelectorAll("input[type=\"checkbox\"]").forEach(cb=>{
-    cb.addEventListener("change", (e)=>{
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener("change",(e)=>{
       const i=Number(e.target.getAttribute("data-step"));
       setChecklistAt(i, e.target.checked, iso);
-      renderStreak("streakWrap"); // refresh badges if needed
     });
   });
 }
@@ -723,10 +679,11 @@ function wireSOS(){
   chips.forEach(c=>{ const b=document.createElement("button"); b.className="chip"; b.type="button"; b.textContent=c; b.onclick=()=>{ $("#sosNote").value = ($("#sosNote").value+"\nTried: "+c).trim(); }; wrap.appendChild(b); });
 }
 
-/* Boot + wiring */
+/* Drawer controls */
 function openDrawer(){ $("#drawer").classList.add("open"); $("#backdrop").hidden=false; }
 function closeDrawer(){ $("#drawer").classList.remove("open"); $("#backdrop").hidden=true; }
 
+/* ---- One-time wiring + register + open WS ---- */
 function wire(){
   // drawer + nav buttons
   $("#menuBtn").onclick=openDrawer;
@@ -790,61 +747,22 @@ function wire(){
   wireSOS();
 }
 
-load();
-window.addEventListener("DOMContentLoaded", ()=>{
-  if(!state.profile) show("onboarding"); else show("home");
-  wire();
-  applyI18N();
-});
-
-
-/* Override: Home 10 Steps with checkboxes & completion gating */
-function renderHomeSteps(){
-  const adds = state.profile?.addictions || [];
-  const L=document.documentElement.getAttribute("data-lang")||"en";
-  const choiceWrap = document.getElementById("homeStepsChoice");
-  const sel = document.getElementById("homeStepsSelect");
-  const list = document.getElementById("homeStepsList");
-  if(!list) return;
-  const cur = adds.length? (state.guideChoice || adds[0]) : (state.profile?.primary || "Technology");
-  if(adds.length<=1){ choiceWrap && (choiceWrap.hidden=true); }
-  else {
-    choiceWrap && (choiceWrap.hidden=false);
-    sel.innerHTML="";
-    adds.forEach(a=>{
-      const o=document.createElement("option");
-      o.value=a; o.textContent=translateAddiction(a);
-      if(a===cur) o.selected=true;
-      sel.appendChild(o);
-    });
-    sel.onchange=()=>{ state.guideChoice=sel.value; renderHomeSteps(); };
-  }
-  const steps = (STEPS[cur] && STEPS[cur][L]) ? STEPS[cur][L] : STEPS.Technology.en;
-  const iso=todayISO(); const arr=getChecklist(iso);
-  list.innerHTML = steps.map((s,i)=>`<li class="pill-item"><label class="chk"><input type="checkbox" data-step="${i}" ${arr[i]?"checked":""}/> <span>${escapeHTML(s)}</span></label></li>`).join("");
-  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
-    cb.addEventListener("change",(e)=>{
-      const i=Number(e.target.getAttribute("data-step"));
-      setChecklistAt(i, e.target.checked, iso);
-    });
-  });
-}
-// ==== REGISTER WITH SERVER + OPEN WS (ADD) ====
-document.addEventListener('DOMContentLoaded', async () => {
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    if (window.__WS_READY) return;   // <-- prevents re-initializing on nav
+/* Register with server + open single WS */
+async function registerAndOpenWS(){
+  try{
+    if (window.__WS_READY) return;
     window.__WS_READY = true;
 
-    const kp = await loadOrCreateKeyPair();
-    const code = ($("#myUid")?.textContent && $("#myUid").textContent !== "—")
+    await loadOrCreateKeyPair();
+
+    let code = ($("#myUid")?.textContent && $("#myUid").textContent !== "—")
       ? $("#myUid").textContent.trim()
       : (state.profile?.code || localStorage.getItem('my_code') || `RH-${crypto.randomUUID().slice(0,6).toUpperCase()}`);
 
     localStorage.setItem('my_code', code);
     if($("#myUid")) $("#myUid").textContent = code;
 
-    const displayName = state.profile?.name || state.profile?.displayName || "User";
+    const displayName = state.profile?.displayName || "User";
     const res = await fetch(`${API_BASE}/api/register`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ code, displayName, publicKeyJwk: (await loadOrCreateKeyPair()).publicJwk })
@@ -852,35 +770,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     myServerUser = await res.json();
 
     if (!ws || ws.readyState > 1) {
-     ws = new WebSocket(location.origin.replace('http', 'ws'));
-
+      ws = new WebSocket(location.origin.replace('http','ws'));
       ws.addEventListener('open', ()=> {
         ws.send(JSON.stringify({type:'hello', code}));
       });
-      ws.addEventListener('message', onWsMessage); // see handler below
+      ws.addEventListener('message', onWsMessage);
     }
-  } catch(e) { console.error('register/init failed', e); }
-});
-
-
-    ws.addEventListener('open', ()=> {
-      ws.send(JSON.stringify({type:'hello', code}));
-    });
-    ws.addEventListener('message', async (e)=>{
-      const data = JSON.parse(e.data);
-      if(data.type==='msg'){
-        // decrypt and display
-        const peerJwk = await getPublicKeyJwkOf(data.fromCode);
-        const peerPub = await importPeerPublicKey(peerJwk);
-        const { privateKey } = await loadOrCreateKeyPair();
-        const shared = await deriveSharedSecret(privateKey, peerPub);
-        const text = await decryptFor(shared, data.ciphertext, data.nonce);
-        appendChatBubble(data.fromCode, text); // you'll add this UI helper below
-      }
-    });
   }catch(e){ console.error('register/init failed', e); }
-});
+}
 
+/* WS message handler */
 function onWsMessage(e){
   (async ()=>{
     const data = JSON.parse(e.data);
@@ -894,35 +793,31 @@ function onWsMessage(e){
     }
   })().catch(console.error);
 }
-/* Onboarding form handler (Start ReHabit) — ROBUST */
+
+/* Boot */
+load();
+window.addEventListener("DOMContentLoaded", ()=>{
+  if(!state.profile) show("onboarding"); else show("home");
+  wire();
+  applyI18N();
+  registerAndOpenWS();
+});
+
+/* Robust onboarding (delegated) — ensures Start button always works even if button type differs */
 (function(){
-  // Single function that reads the form, saves, and navigates
   function handleStartRehabit(){
     const f = document.getElementById('onboardingForm');
     if(!f) return;
-
-    // read selections safely
-    const selected = Array.from(document.querySelectorAll('#onboardingForm input[name="focus"]:checked'))
-      .map(i => i.value);
+    const selected = Array.from(document.querySelectorAll('#onboardingForm input[name="focus"]:checked')).map(i => i.value);
     const quitDate = (f.querySelector('input[name="quitDate"]')?.value || "").trim();
     const motivation = (f.querySelector('input[name="motivation"]')?.value || "").trim();
-
-    // store to profile
-    window.state = window.state || {};
     state.profile = state.profile || {};
     state.profile.addictions = selected;
-    state.profile.quitDate = quitDate;
+    state.profile.quitDate = quitDate || todayISO();
     state.profile.motivation = motivation;
-
-    // STORAGE.PROFILE should already exist in your app; if not, fallback key:
-    const PROFILE_KEY = (typeof STORAGE !== 'undefined' && STORAGE.PROFILE) ? STORAGE.PROFILE : 'rehabit_profile';
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
-
-    // go home
-    if (typeof navigate === 'function') navigate('home');
+    localStorage.setItem(STORAGE.PROFILE, JSON.stringify(state.profile));
+    show('home'); // use show(), not navigate()
   }
-
-  // 1) Attach to form submit (works if button is type="submit")
   document.addEventListener('submit', function(e){
     const f = e.target;
     if (f && f.id === 'onboardingForm'){
@@ -930,19 +825,11 @@ function onWsMessage(e){
       handleStartRehabit();
     }
   });
-
-  // 2) Fallback: attach to clicks on any button inside onboardingForm
   document.addEventListener('click', function(e){
     const btn = e.target.closest('#onboardingForm button');
     if (btn){
-      // prevent accidental page reloads
       e.preventDefault();
       handleStartRehabit();
     }
-  });
-
-  // 3) Also run once when DOM is ready (covers cases where the view is present immediately)
-  document.addEventListener('DOMContentLoaded', function(){
-    // no-op; listeners above are already active at document level
   });
 })();
